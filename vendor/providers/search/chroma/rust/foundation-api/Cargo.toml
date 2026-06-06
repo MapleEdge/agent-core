@@ -1,0 +1,31 @@
+[package]
+name = "foundation-api"
+version = "1.0.0"
+edition = "2021"
+
+[[bin]]
+name = "foundation_service"
+path = "src/bin/foundation_service.rs"
+
+[dependencies]
+async-trait = { workspace = true }
+axum = { workspace = true }
+figment = { workspace = true }
+opentelemetry = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tower-http = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }
+
+chroma-api-types = { workspace = true }
+chroma-config = { workspace = true }
+chroma-error = { workspace = true, features = ["validator", "http"] }
+chroma-sysdb = { workspace = true }
+chroma-system = { workspace = true }
+chroma-tracing = { workspace = true, features = ["middleware"] }
+chroma-types = { workspace = true }
+frontend-core = { workspace = true }
+mdac = { workspace = true }

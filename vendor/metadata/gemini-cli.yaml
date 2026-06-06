@@ -1,0 +1,27 @@
+name: gemini-cli
+upstream: https://github.com/google-gemini/gemini-cli
+commit_sha: HEAD
+license: Apache-2.0
+category: routing
+vendor_path: vendor/providers/routing/gemini-cli
+
+why_included: >
+  Reference for classifier/router strategy patterns. Demonstrates how to classify
+  task intent, determine complexity, and route to appropriate execution strategies.
+  Informs our mock classifier endpoint.
+
+relevant_files:
+  - src/ (classification and routing logic)
+  - CLI entry points
+
+dependency_type: reference_only
+
+code_patterns_to_adapt:
+  - Task classification schema (intent, task_type, complexity, risk, ambiguity)
+  - Routing strategy pattern (select executor based on classification)
+  - Structured classification output format
+
+risks_and_caveats:
+  - Large repo — not committed to git, reproduced via vendor script
+  - Gemini API integration and terminal UI not relevant
+  - We only adapt the classification schema and routing pattern

@@ -1,0 +1,26 @@
+name: pageindex
+upstream: https://github.com/VectifyAI/PageIndex
+commit_sha: HEAD
+license: MIT
+category: search
+vendor_path: vendor/providers/search/pageindex
+
+why_included: >
+  Document/tree retrieval reference. Shows how to index and retrieve hierarchical
+  document structures, relevant for context tree search. Optional provider —
+  included for future reference.
+
+relevant_files:
+  - Core indexing and retrieval modules
+  - Configuration files
+
+dependency_type: reference_only
+
+code_patterns_to_adapt:
+  - Hierarchical document retrieval patterns
+  - Tree-based indexing for structured context
+
+risks_and_caveats:
+  - Small repo — may be vendored and committed if feasible
+  - Optional provider — may not be needed
+  - Limited documentation

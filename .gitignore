@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.db
+*.sqlite
+.env
+.env.local
+# Vendor provider .git dirs (we commit source snapshots, not submodules)
+vendor/providers/**/.git/

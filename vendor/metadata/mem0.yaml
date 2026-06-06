@@ -1,0 +1,31 @@
+name: mem0
+upstream: https://github.com/mem0ai/mem0
+commit_sha: HEAD  # pinned at vendor time by vendor_providers.sh
+license: Apache-2.0
+category: memory
+vendor_path: vendor/providers/memory/mem0
+
+why_included: >
+  Primary reference for memory extraction, retrieval, metadata filters, and procedural memory.
+  mem0 defines the patterns for identifying durable facts from conversations and sessions,
+  including scope-based organization, memory lifecycle, and search with metadata filtering.
+
+relevant_files:
+  - mem0/memory/
+  - mem0/configs/
+  - mem0/embeddings/
+  - mem0/utils/
+
+dependency_type: adapter_target
+# direct_dependency | reference_only | future_adapter_target | adapter_target
+
+code_patterns_to_adapt:
+  - Memory write/search/extract API patterns
+  - Metadata filtering and scope-based organization
+  - Memory lifecycle (create, update, delete, promote)
+  - Candidate memory extraction from session text
+
+risks_and_caveats:
+  - Large repo — not committed to git, reproduced via vendor script
+  - Includes LLM provider integrations we do not need
+  - Embedding model management belongs to future platform, not agent-core

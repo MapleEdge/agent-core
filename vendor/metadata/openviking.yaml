@@ -1,0 +1,29 @@
+name: openviking
+upstream: https://github.com/volcengine/OpenViking
+commit_sha: HEAD
+license: Apache-2.0
+category: context
+vendor_path: vendor/providers/context/openviking
+
+why_included: >
+  Reference for structured context filesystems and hierarchical retrieval.
+  Demonstrates how to organize repo knowledge as a navigable tree with
+  relations between nodes. Informs our context tree onboarding, search,
+  and cross-repo linking.
+
+relevant_files:
+  - Core retrieval and indexing modules
+  - Configuration and schema definitions
+
+dependency_type: adapter_target
+
+code_patterns_to_adapt:
+  - Context tree structure and node schema
+  - Hierarchical node organization
+  - Search within tree structures
+  - Cross-document and cross-repo linking
+
+risks_and_caveats:
+  - Large repo — not committed to git, reproduced via vendor script
+  - Production indexing infrastructure not relevant to phase 1
+  - May have limited English documentation

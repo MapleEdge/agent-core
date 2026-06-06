@@ -1,0 +1,29 @@
+name: parlant
+upstream: https://github.com/emcie-co/parlant
+commit_sha: HEAD
+license: Apache-2.0
+category: policy
+vendor_path: vendor/providers/policy/parlant
+
+why_included: >
+  Reference for guideline and policy matching. Shows how to define rules, match
+  actions against policies, and return structured allow/deny decisions. Informs
+  our mock policy checker and future platform policy engine.
+
+relevant_files:
+  - Guideline matching engine
+  - Policy evaluation modules
+  - Rule definition schemas
+
+dependency_type: reference_only
+
+code_patterns_to_adapt:
+  - Policy rule definition schema
+  - Action-to-policy matching logic
+  - Structured policy check responses (allowed, requires_approval, reason)
+  - Rule scope and precedence
+
+risks_and_caveats:
+  - Large repo — not committed to git, reproduced via vendor script
+  - Full conversation engine and NLU pipeline not relevant
+  - Customer-facing features not in scope
