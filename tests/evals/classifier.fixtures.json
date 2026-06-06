@@ -1,0 +1,92 @@
+[
+  {
+    "prompt": "Fix a failing login test",
+    "expected": {
+      "intent": "do",
+      "task_type": "debug",
+      "risk_range": [10, 50],
+      "complexity_range": [10, 60]
+    }
+  },
+  {
+    "prompt": "What does the authenticate function do?",
+    "expected": {
+      "intent": "ask",
+      "task_type": "answer",
+      "risk_range": [1, 20],
+      "complexity_range": [1, 40]
+    }
+  },
+  {
+    "prompt": "Add a new API endpoint for user profile updates",
+    "expected": {
+      "intent": "do",
+      "task_type": "code_edit",
+      "risk_range": [15, 60],
+      "complexity_range": [20, 70]
+    }
+  },
+  {
+    "prompt": "Deploy the staging branch to production",
+    "expected": {
+      "intent": "do",
+      "task_type": "deploy",
+      "risk_range": [50, 100],
+      "complexity_range": [10, 60]
+    }
+  },
+  {
+    "prompt": "Refactor the payment processing module to use Stripe v3",
+    "expected": {
+      "intent": "do",
+      "task_type": "payment_sensitive",
+      "risk_range": [60, 100],
+      "complexity_range": [30, 90]
+    }
+  },
+  {
+    "prompt": "How do I configure the database connection pool?",
+    "expected": {
+      "intent": "ask",
+      "task_type": "answer",
+      "risk_range": [1, 20],
+      "complexity_range": [1, 50]
+    }
+  },
+  {
+    "prompt": "The integration tests are failing after the ORM upgrade, need to fix them",
+    "expected": {
+      "intent": "do",
+      "task_type": "test_fix",
+      "risk_range": [15, 50],
+      "complexity_range": [20, 70]
+    }
+  },
+  {
+    "prompt": "Design the architecture for a microservices migration",
+    "expected": {
+      "intent": "do",
+      "task_type": "architecture",
+      "risk_range": [30, 70],
+      "complexity_range": [50, 100]
+    }
+  },
+  {
+    "prompt": "There's a bug where users get charged twice during checkout",
+    "expected": {
+      "intent": "do",
+      "task_type": "payment_sensitive",
+      "risk_range": [70, 100],
+      "complexity_range": [30, 80]
+    }
+  },
+  {
+    "prompt": "Why is the CI pipeline taking 45 minutes?",
+    "expected": {
+      "intent": "ask",
+      "task_type": "answer",
+      "risk_range": [1, 25],
+      "complexity_range": [5, 50]
+    }
+  }
+]
