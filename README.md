@@ -84,6 +84,24 @@ curl -s http://localhost:3210/sessions/$SESSION/timeline
 | Chroma | Search | Retrieval backend reference |
 | PageIndex | Search | Document/tree retrieval reference |
 
+## Provider integration status
+
+| Provider | Interface | Strategy | Status |
+|----------|-----------|----------|--------|
+| mem0 | MemoryProvider | Sidecar planned | Mocked — SQLite LIKE search fallback |
+| claude-mem | SessionProvider | Direct (partial) | Timeline adapter extracted; session CRUD mocked |
+| OpenViking | ContextProvider | Reference only | Mocked — static context tree |
+| Letta | RuleSolverProvider, ActionProvider | Direct integration | Mocked — ToolRulesSolver port planned |
+| cognee | TraceProvider | Reference only | Mocked — SQLite trace store |
+| Gemini CLI | ClassifierProvider | Direct integration | Mocked — keyword classifier |
+| Parlant | PolicyMatcherProvider | Reference only | Mocked — static policy rules |
+| Chroma | (backing store) | Reference only | Not integrated |
+| PageIndex | (backing store) | Reference only | Not integrated |
+
+Provider interfaces: `src/providers/` — 8 typed interfaces (MemoryProvider, SessionProvider, ContextProvider, ActionProvider, RuleSolverProvider, TraceProvider, ClassifierProvider, PolicyMatcherProvider).
+
+See [docs/provider-integration-audit.md](docs/provider-integration-audit.md) for the full audit and [docs/decisions/0004-provider-adapter-strategy.md](docs/decisions/0004-provider-adapter-strategy.md) for the adapter strategy policy.
+
 ## Structure
 
 ```

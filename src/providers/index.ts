@@ -1,0 +1,17 @@
+export type { MemoryProvider, MemoryRecord, MemorySearchResult, MemoryWriteParams, MemorySearchParams } from "./MemoryProvider.js";
+export type { SessionProvider, SessionRecord, SessionEvent, TimelineItem } from "./SessionProvider.js";
+export type { ContextProvider, ContextNode, ContextSearchResult, ContextLink } from "./ContextProvider.js";
+export type { ActionProvider, ActionSchema, ActionValidationResult, ActionExecutionResult } from "./ActionProvider.js";
+export type { RuleSolverProvider, ToolRule, AllowedActionsResult, SequenceValidationResult } from "./RuleSolverProvider.js";
+export type { TraceProvider, TraceRecord } from "./TraceProvider.js";
+export type { ClassifierProvider, ClassificationResult } from "./ClassifierProvider.js";
+export type { PolicyMatcherProvider, PolicyRule, PolicyMatchResult } from "./PolicyMatcherProvider.js";
+
+export {
+  registerProvider,
+  getProvider,
+  hasProvider,
+  getCapabilityMatrix,
+  listRegisteredProviders,
+} from "./registry.js";
+export type { ProviderCapability } from "./registry.js";
