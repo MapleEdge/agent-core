@@ -40,6 +40,17 @@ export const MemoryPatchInput = z.object({
   metadata: z.record(z.unknown()).optional(),
 });
 
+export const MemoryExtractionResult = z.object({
+  candidates: z.array(
+    z.object({
+      content: z.string().min(1),
+      confidence: z.number().min(0).max(1),
+      scope: MemoryScope.optional(),
+    }),
+  ),
+});
+
+export type MemoryExtractionResultType = z.infer<typeof MemoryExtractionResult>;
 export type MemoryWriteInputType = z.infer<typeof MemoryWriteInput>;
 export type MemorySearchInputType = z.infer<typeof MemorySearchInput>;
 export type MemoryExtractInputType = z.infer<typeof MemoryExtractInput>;

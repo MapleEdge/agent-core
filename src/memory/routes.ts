@@ -7,7 +7,9 @@ import {
   MemoryExtractInput,
   MemoryPromoteInput,
   MemoryPatchInput,
+  MemoryExtractionResult,
 } from "../schemas/memory.js";
+import { isDeepSeekConfigured, DeepSeekClient, llmJson } from "../llm/index.js";
 
 export async function memoryRoutes(app: FastifyInstance): Promise<void> {
   app.post("/memory/write", async (req, reply) => {
@@ -48,6 +50,14 @@ export async function memoryRoutes(app: FastifyInstance): Promise<void> {
 
   app.post("/memory/extract", async (req) => {
     const input = MemoryExtractInput.parse(req.body);
+
+    if (isDeepSeekConfigured() && process.env.ENABLE_LLM_EXTRACT === "true") {
+      const llmResult = await extractWithLLM(input.text);
+      if (llmResult) {
+        return { session_id: input.session_id, candidates: llmResult };
+      }
+    }
+
     const candidates = extractCandidates(input.text);
     return {
       session_id: input.session_id,
@@ -110,6 +120,41 @@ export async function memoryRoutes(app: FastifyInstance): Promise<void> {
     reply.code(204);
     return;
   });
+}
+
+async function extractWithLLM(
+  text: string,
+): Promise<Array<{ content: string; confidence: number; scope?: string }> | null> {
+  const client = new DeepSeekClient();
+  const result = await llmJson(client, MemoryExtractionResult, [
+    {
+      role: "system",
+      content: `You are a memory extraction system for a software development agent platform.
+Given text from a coding session, extract durable facts, conventions, patterns, and lessons worth remembering.
+
+Return valid JSON matching this schema:
+{
+  "candidates": [
+    {
+      "content": "The extracted fact or convention",
+      "confidence": 0.0-1.0 float indicating relevance/importance,
+      "scope": optional, one of "user", "repo", "branch", "task", "session", "executor", "global_policy"
+    }
+  ]
+}
+
+Guidelines:
+- Extract facts that would be useful in future sessions (conventions, patterns, gotchas, preferences)
+- Confidence: 0.9+ for explicit rules ("always", "never", "must"), 0.6-0.8 for conventions, 0.3-0.5 for observations
+- Scope: "repo" for repo-specific facts, "user" for user preferences, "global_policy" for universal rules
+- Return at most 10 candidates, sorted by confidence descending
+- Skip trivial or ephemeral facts`,
+    },
+    { role: "user", content: text },
+  ]);
+
+  if (result.success) return result.data.candidates;
+  return null;
 }
 
 function extractCandidates(text: string): { content: string; confidence: number }[] {

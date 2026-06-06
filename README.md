@@ -84,6 +84,30 @@ curl -s http://localhost:3210/sessions/$SESSION/timeline
 | Chroma | Search | Retrieval backend reference |
 | PageIndex | Search | Document/tree retrieval reference |
 
+## Provider integration status
+
+| Provider | Interface | Strategy | Status |
+|----------|-----------|----------|--------|
+| mem0 | MemoryProvider | Sidecar planned | Mocked — SQLite LIKE search fallback |
+| claude-mem | SessionProvider | Direct partial utility extraction | Timeline utility extracted (proof-of-concept, does not call claude-mem runtime); session CRUD mocked |
+| OpenViking | ContextProvider | Reference only | Mocked — static context tree |
+| Letta | RuleSolverProvider | Direct integration | Active — deterministic TS port of ToolRulesSolver |
+| Letta | ActionProvider | Direct integration planned | Mocked — action registry/schemas planned |
+| cognee | TraceProvider | Reference only | Mocked — SQLite trace store |
+| Gemini CLI | ClassifierProvider | Direct integration | Mocked — keyword classifier |
+| Parlant | PolicyMatcherProvider | Reference only | Mocked — static policy rules |
+| Chroma | (backing store) | Reference only | Not integrated |
+| PageIndex | (backing store) | Reference only | Not integrated |
+| DeepSeek | LLMClient | Direct integration | Active — classify/task and memory/extract (opt-in via env vars) |
+
+Provider interfaces: `src/providers/` — 8 typed interfaces (MemoryProvider, SessionProvider, ContextProvider, ActionProvider, RuleSolverProvider, TraceProvider, ClassifierProvider, PolicyMatcherProvider).
+
+LLM client: `src/llm/` — provider-neutral `LLMClient` interface with DeepSeek adapter and schema-constrained JSON helper. See [docs/deepseek.md](docs/deepseek.md).
+
+Evaluation: `pnpm eval:llm` — fixture-based LLM eval runner (requires `ENABLE_LLM_EVALS=true` and `DEEPSEEK_API_KEY`). See [docs/evaluation.md](docs/evaluation.md).
+
+See [docs/provider-integration-audit.md](docs/provider-integration-audit.md) for the full audit and [docs/decisions/0004-provider-adapter-strategy.md](docs/decisions/0004-provider-adapter-strategy.md) for the adapter strategy policy.
+
 ## Structure
 
 ```

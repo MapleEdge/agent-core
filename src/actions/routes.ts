@@ -86,6 +86,7 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
       };
     }
     const result = executeMockAction(input.action_name, input.params);
-    return { executed: true, action_name: input.action_name, result };
+    const execution_mode = input.action_name === "read_file" ? "local_safe" : "mock";
+    return { executed: true, action_name: input.action_name, execution_mode, result };
   });
 }

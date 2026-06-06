@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "lint": "eslint src/ tests/",
     "typecheck": "tsc --noEmit",
-    "smoke": "bash scripts/smoke_test.sh"
+    "smoke": "bash scripts/smoke_test.sh",
+    "eval:llm": "tsx scripts/eval_llm.ts"
   },
   "engines": {
     "node": ">=18"

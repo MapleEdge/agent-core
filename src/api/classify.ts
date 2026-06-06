@@ -1,13 +1,52 @@
 import { FastifyInstance } from "fastify";
-import { ClassifyTaskInput } from "../schemas/classify.js";
+import { ClassifyTaskInput, ClassifyResult } from "../schemas/classify.js";
 import type { ClassifyResultType } from "../schemas/classify.js";
+import { isDeepSeekConfigured, DeepSeekClient, llmJson } from "../llm/index.js";
 
 export async function classifyRoutes(app: FastifyInstance): Promise<void> {
   app.post("/classify/task", async (req) => {
     const input = ClassifyTaskInput.parse(req.body);
-    const result = classifyMock(input.prompt);
-    return result;
+
+    if (isDeepSeekConfigured() && process.env.ENABLE_LLM_CLASSIFY === "true") {
+      const llmResult = await classifyWithLLM(input.prompt);
+      if (llmResult) return llmResult;
+    }
+
+    return classifyMock(input.prompt);
   });
+}
+
+async function classifyWithLLM(prompt: string): Promise<ClassifyResultType | null> {
+  const client = new DeepSeekClient();
+  const result = await llmJson(client, ClassifyResult, [
+    {
+      role: "system",
+      content: `You are a task classifier for a software development agent platform.
+Given a user prompt, classify it into a structured result.
+
+Return valid JSON matching this schema:
+{
+  "intent": "ask" or "do",
+  "task_type": one of "answer", "code_edit", "debug", "test_fix", "architecture", "provider_setup", "deploy", "payment_sensitive",
+  "complexity_score": 1-100 integer,
+  "risk_score": 1-100 integer,
+  "ambiguity_score": 1-100 integer,
+  "estimated_steps": positive integer,
+  "requires_approval": string array of approval types needed (e.g. ["deploy_approval"]),
+  "suggested_sequence": string array of recommended action names,
+  "reasoning": brief explanation of classification
+}
+
+Guidelines:
+- "ask" intent = information request; "do" intent = action request
+- risk_score: low (1-20) for reads/answers, medium (21-50) for code edits, high (51-80) for deploys, critical (81-100) for payments
+- suggested_sequence should use action names: classify_task, read_file, grep, write_file, run_tests, summarize_diff, request_approval, commit, retrieve_context, search_memory`,
+    },
+    { role: "user", content: prompt },
+  ]);
+
+  if (result.success) return result.data;
+  return null;
 }
 
 function classifyMock(prompt: string): ClassifyResultType {

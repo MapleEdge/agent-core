@@ -1,0 +1,50 @@
+[
+  {
+    "text": "We always run pnpm lint before committing. The repo uses ESLint 9 with flat config. Never push directly to main — always use feature branches.",
+    "expected_min_candidates": 2,
+    "expected_keywords": ["lint", "eslint", "main", "branch"],
+    "expected_min_confidence": 0.5
+  },
+  {
+    "text": "The database connection string must be set via DATABASE_URL environment variable. We use PostgreSQL 15 with pgvector for embeddings. Remember to run migrations before starting the server.",
+    "expected_min_candidates": 2,
+    "expected_keywords": ["DATABASE_URL", "PostgreSQL", "migration"],
+    "expected_min_confidence": 0.5
+  },
+  {
+    "text": "I noticed the tests take about 30 seconds to run. The build output goes to dist/. TypeScript strict mode is enabled.",
+    "expected_min_candidates": 1,
+    "expected_keywords": ["strict", "TypeScript"],
+    "expected_min_confidence": 0.3
+  },
+  {
+    "text": "Important: the API rate limit is 100 requests per minute per user. Authentication uses JWT tokens with RS256. Tokens expire after 24 hours. Never store tokens in localStorage — use httpOnly cookies.",
+    "expected_min_candidates": 3,
+    "expected_keywords": ["rate limit", "JWT", "cookie", "localStorage"],
+    "expected_min_confidence": 0.6
+  },
+  {
+    "text": "The frontend uses React 18 with Next.js 14. We prefer server components by default. Client components should be marked with 'use client' directive. Tailwind CSS v3 for styling. Always use the cn() utility for conditional classes.",
+    "expected_min_candidates": 2,
+    "expected_keywords": ["React", "server component", "Tailwind", "cn()"],
+    "expected_min_confidence": 0.5
+  },
+  {
+    "text": "Today I fixed a bug in the login handler. The user reported they couldn't log in. It turned out the session cookie was being set with the wrong domain. I changed line 42 in auth.ts.",
+    "expected_min_candidates": 0,
+    "expected_keywords": [],
+    "expected_min_confidence": 0.3
+  },
+  {
+    "text": "Convention: all API routes must return JSON. Error responses follow the format { error: string, code: number }. Status 422 for validation errors, 401 for auth, 403 for authorization. Never return stack traces in production.",
+    "expected_min_candidates": 3,
+    "expected_keywords": ["JSON", "error", "422", "stack trace"],
+    "expected_min_confidence": 0.6
+  },
+  {
+    "text": "The monorepo uses pnpm workspaces. Packages: @app/api, @app/web, @app/shared. Shared types go in @app/shared/types. Each package has its own tsconfig that extends the root. Build order matters — always build shared first.",
+    "expected_min_candidates": 2,
+    "expected_keywords": ["pnpm", "workspace", "shared", "build order"],
+    "expected_min_confidence": 0.5
+  }
+]
