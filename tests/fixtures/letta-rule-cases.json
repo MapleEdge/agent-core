@@ -1,0 +1,247 @@
+[
+  {
+    "name": "first_action_with_init_rules",
+    "description": "Init rules restrict allowed first actions",
+    "rules": [
+      { "type": "run_first", "tool_name": "classify_task" },
+      { "type": "constrain_child_tools", "tool_name": "classify_task", "children": ["read_file", "grep"] }
+    ],
+    "history": [],
+    "available_tools": ["classify_task", "read_file", "grep", "write_file"],
+    "expected_allowed": ["classify_task"],
+    "expected_reason_contains": "Init rules"
+  },
+  {
+    "name": "child_transition_after_parent",
+    "description": "After classify_task, only children (read_file, grep) are allowed",
+    "rules": [
+      { "type": "run_first", "tool_name": "classify_task" },
+      { "type": "constrain_child_tools", "tool_name": "classify_task", "children": ["read_file", "grep"] }
+    ],
+    "history": ["classify_task"],
+    "available_tools": ["classify_task", "read_file", "grep", "write_file"],
+    "expected_allowed_sorted": ["grep", "read_file"],
+    "expected_reason_contains": "Allowed after"
+  },
+  {
+    "name": "parent_constraint_blocks_children_before_parent",
+    "description": "ParentToolRule: children blocked until parent is called",
+    "rules": [
+      { "type": "parent_last_tool", "tool_name": "authenticate", "children": ["deploy", "commit"] }
+    ],
+    "history": [],
+    "available_tools": ["authenticate", "deploy", "commit", "read_file"],
+    "expected_allowed_sorted": ["authenticate", "read_file"],
+    "expected_reason_contains": "No history"
+  },
+  {
+    "name": "parent_constraint_allows_children_after_parent",
+    "description": "ParentToolRule: children allowed after parent is called",
+    "rules": [
+      { "type": "parent_last_tool", "tool_name": "authenticate", "children": ["deploy", "commit"] }
+    ],
+    "history": ["authenticate"],
+    "available_tools": ["authenticate", "deploy", "commit", "read_file"],
+    "expected_allowed_sorted": ["commit", "deploy"],
+    "expected_reason_contains": "Allowed after"
+  },
+  {
+    "name": "required_before_exit_uncalled",
+    "description": "Required-before-exit tools not yet called appear in uncalled_required",
+    "rules": [
+      { "type": "required_before_exit", "tool_name": "summarize_diff" },
+      { "type": "required_before_exit", "tool_name": "run_tests" }
+    ],
+    "history": ["classify_task", "read_file"],
+    "available_tools": ["classify_task", "read_file", "summarize_diff", "run_tests"],
+    "expected_uncalled_required_sorted": ["run_tests", "summarize_diff"]
+  },
+  {
+    "name": "required_before_exit_called",
+    "description": "Required-before-exit tools already called are not in uncalled_required",
+    "rules": [
+      { "type": "required_before_exit", "tool_name": "summarize_diff" },
+      { "type": "required_before_exit", "tool_name": "run_tests" }
+    ],
+    "history": ["classify_task", "run_tests", "summarize_diff"],
+    "available_tools": ["classify_task", "read_file", "summarize_diff", "run_tests"],
+    "expected_uncalled_required_sorted": []
+  },
+  {
+    "name": "approval_required_tools",
+    "description": "Approval-required tools are reported when they appear in allowed set",
+    "rules": [
+      { "type": "requires_approval", "tool_name": "commit" },
+      { "type": "requires_approval", "tool_name": "deploy" }
+    ],
+    "history": [],
+    "available_tools": ["commit", "deploy", "read_file"],
+    "expected_requires_approval_sorted": ["commit", "deploy"]
+  },
+  {
+    "name": "terminal_tool_detection",
+    "description": "Terminal tool causes is_terminal=true when it was last called",
+    "rules": [
+      { "type": "exit_loop", "tool_name": "send_response" },
+      { "type": "constrain_child_tools", "tool_name": "read_file", "children": ["send_response"] }
+    ],
+    "history": ["read_file", "send_response"],
+    "available_tools": ["read_file", "send_response"],
+    "expected_is_terminal": true
+  },
+  {
+    "name": "terminal_tool_not_last",
+    "description": "is_terminal=false when terminal tool was not last called",
+    "rules": [
+      { "type": "exit_loop", "tool_name": "send_response" }
+    ],
+    "history": ["read_file"],
+    "available_tools": ["read_file", "send_response"],
+    "expected_is_terminal": false
+  },
+  {
+    "name": "unavailable_tool_filtering",
+    "description": "Allowed tools are intersected with available tools",
+    "rules": [
+      { "type": "constrain_child_tools", "tool_name": "classify_task", "children": ["read_file", "grep", "write_file"] }
+    ],
+    "history": ["classify_task"],
+    "available_tools": ["classify_task", "read_file"],
+    "expected_allowed": ["read_file"]
+  },
+  {
+    "name": "empty_history_no_init_rules",
+    "description": "No history and no init rules: all available tools allowed",
+    "rules": [
+      { "type": "constrain_child_tools", "tool_name": "read_file", "children": ["grep"] }
+    ],
+    "history": [],
+    "available_tools": ["read_file", "grep", "write_file"],
+    "expected_allowed_sorted": ["grep", "read_file", "write_file"],
+    "expected_reason_contains": "No history, no init rules"
+  },
+  {
+    "name": "max_count_per_step_blocks_after_limit",
+    "description": "MaxCountPerStepToolRule blocks tool after reaching limit",
+    "rules": [
+      { "type": "max_count_per_step", "tool_name": "read_file", "max_count_limit": 2 }
+    ],
+    "history": ["read_file", "read_file"],
+    "available_tools": ["read_file", "grep", "write_file"],
+    "expected_allowed_sorted": ["grep", "write_file"]
+  },
+  {
+    "name": "max_count_per_step_allows_under_limit",
+    "description": "MaxCountPerStepToolRule allows tool when under limit",
+    "rules": [
+      { "type": "max_count_per_step", "tool_name": "read_file", "max_count_limit": 3 }
+    ],
+    "history": ["read_file"],
+    "available_tools": ["read_file", "grep"],
+    "expected_allowed_sorted": ["grep", "read_file"]
+  },
+  {
+    "name": "conditional_tool_default_child",
+    "description": "ConditionalToolRule falls back to default_child when no response match",
+    "rules": [
+      {
+        "type": "conditional",
+        "tool_name": "check_status",
+        "default_child": "fallback_tool",
+        "child_output_mapping": { "success": "deploy", "failure": "rollback" }
+      }
+    ],
+    "history": ["check_status"],
+    "available_tools": ["deploy", "rollback", "fallback_tool"],
+    "last_function_response": "{\"message\": \"unknown\"}",
+    "expected_allowed": ["fallback_tool"]
+  },
+  {
+    "name": "conditional_tool_matched_output",
+    "description": "ConditionalToolRule matches output to mapped child",
+    "rules": [
+      {
+        "type": "conditional",
+        "tool_name": "check_status",
+        "default_child": "fallback_tool",
+        "child_output_mapping": { "success": "deploy", "failure": "rollback" }
+      }
+    ],
+    "history": ["check_status"],
+    "available_tools": ["deploy", "rollback", "fallback_tool"],
+    "last_function_response": "{\"message\": \"success\"}",
+    "expected_allowed": ["deploy"]
+  },
+  {
+    "name": "invalid_sequence_validation",
+    "description": "Sequence that violates child rules produces violations",
+    "rules": [
+      { "type": "run_first", "tool_name": "classify_task" },
+      { "type": "constrain_child_tools", "tool_name": "classify_task", "children": ["read_file"] },
+      { "type": "required_before_exit", "tool_name": "summarize_diff" }
+    ],
+    "validate_sequence": ["classify_task", "write_file"],
+    "available_tools": ["classify_task", "read_file", "write_file", "summarize_diff"],
+    "expected_valid": false,
+    "expected_violation_count_gte": 1
+  },
+  {
+    "name": "valid_sequence_validation",
+    "description": "Valid sequence produces no violations",
+    "rules": [
+      { "type": "run_first", "tool_name": "classify_task" },
+      { "type": "constrain_child_tools", "tool_name": "classify_task", "children": ["read_file"] },
+      { "type": "required_before_exit", "tool_name": "summarize_diff" }
+    ],
+    "validate_sequence": ["classify_task", "read_file", "summarize_diff"],
+    "available_tools": ["classify_task", "read_file", "write_file", "summarize_diff"],
+    "expected_valid": true
+  },
+  {
+    "name": "force_tool_call_at_init",
+    "description": "shouldForceToolCall is true when init rules exist and no history",
+    "rules": [
+      { "type": "run_first", "tool_name": "classify_task" }
+    ],
+    "history": [],
+    "available_tools": ["classify_task"],
+    "expected_should_force": true
+  },
+  {
+    "name": "force_tool_call_after_child_rule_parent",
+    "description": "shouldForceToolCall is true after calling a tool with child rules",
+    "rules": [
+      { "type": "constrain_child_tools", "tool_name": "classify_task", "children": ["read_file"] }
+    ],
+    "history": ["classify_task"],
+    "available_tools": ["classify_task", "read_file"],
+    "expected_should_force": true
+  },
+  {
+    "name": "no_force_tool_call_without_rules",
+    "description": "shouldForceToolCall is false when no constraining rules match",
+    "rules": [
+      { "type": "required_before_exit", "tool_name": "summarize_diff" }
+    ],
+    "history": ["read_file"],
+    "available_tools": ["read_file", "summarize_diff"],
+    "expected_should_force": false
+  },
+  {
+    "name": "compile_prompt_output",
+    "description": "compilePrompt produces readable rule summaries",
+    "rules": [
+      { "type": "run_first", "tool_name": "classify_task" },
+      { "type": "constrain_child_tools", "tool_name": "classify_task", "children": ["read_file", "grep"] },
+      { "type": "exit_loop", "tool_name": "send_response" },
+      { "type": "required_before_exit", "tool_name": "summarize_diff" }
+    ],
+    "expected_prompt_contains": [
+      "classify_task must be used first",
+      "After using classify_task",
+      "read_file, grep",
+      "send_response ends your response",
+      "summarize_diff must be called before ending"
+    ]
+  }
+]
