@@ -4,5 +4,5 @@ dist/
 *.sqlite
 .env
 .env.local
-vendor/providers/
-!vendor/providers/.gitkeep
+# Vendor provider .git dirs (we commit source snapshots, not submodules)
+vendor/providers/**/.git/
