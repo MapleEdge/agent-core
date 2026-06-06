@@ -12,7 +12,6 @@
  * Not ported:
  *   - Prefilled args cache (child_arg_nodes, per-rule args) — requires LLM integration
  *   - Block compilation (Letta Block type) — we produce plain string prompts
- *   - last_function_response for ConditionalToolRule — requires runtime response piping
  */
 
 import type {
@@ -30,6 +29,13 @@ import type {
 
 const COMPILED_PROMPT_DESCRIPTION =
   "The following constraints define rules for tool usage and guide desired behavior. These rules must be followed to ensure proper tool execution and workflow. A single response may contain multiple tool calls.";
+
+export class LettaRuleSolverError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "LettaRuleSolverError";
+  }
+}
 
 export interface LettaSolverResult {
   allowed: string[];
@@ -85,14 +91,7 @@ export class LettaRuleSolver {
     }
   }
 
-  /**
-   * Get allowed tool names given history and available tools.
-   *
-   * Follows Letta logic:
-   *   1. No history + init rules → init tool names only
-   *   2. Otherwise → intersection of child/parent/conditional/maxcount valid sets
-   *   3. Intersect with availableTools
-   */
+  /** Get allowed tool names given history and available tools. */
   getAllowedToolNames(
     toolCallHistory: string[],
     availableTools: Set<string>,
@@ -115,48 +114,32 @@ export class LettaRuleSolver {
       validSets.push(valid);
     }
 
-    let finalAllowed: Set<string>;
-    if (validSets.length > 0) {
-      finalAllowed = intersectSets(validSets);
-    } else {
-      finalAllowed = new Set(availableTools);
-    }
+    const finalAllowed = validSets.length > 0
+      ? intersectSets(validSets)
+      : new Set(availableTools);
 
-    // Restrict to available tools
-    finalAllowed = intersect(finalAllowed, availableTools);
-    return [...finalAllowed];
+    return [...intersect(finalAllowed, availableTools)];
   }
 
-  /**
-   * Full solver result matching the RuleSolverProvider interface.
-   */
+  /** Full solver result matching the RuleSolverProvider interface. */
   solve(
     toolCallHistory: string[],
     availableTools: Set<string>,
     lastFunctionResponse?: string,
   ): LettaSolverResult {
     const allowed = this.getAllowedToolNames(toolCallHistory, availableTools, lastFunctionResponse);
-
-    // Intersect allowed with availableTools (already done in getAllowedToolNames, but defensive)
     const allowedSet = new Set(allowed);
-
     const lastTool = toolCallHistory.length > 0 ? toolCallHistory[toolCallHistory.length - 1] : null;
-
-    const reason = this.buildReason(toolCallHistory, allowed);
-    const uncalled = this.getUncalledRequiredTools(toolCallHistory, availableTools);
-    const approvalTools = this.requiresApprovalRules
-      .map((r) => r.tool_name)
-      .filter((t) => allowedSet.has(t));
-    const isTerminal = lastTool !== null && this.isTerminalTool(lastTool);
-    const shouldForce = this.shouldForceToolCall(toolCallHistory);
 
     return {
       allowed,
-      reason,
-      uncalled_required: uncalled,
-      requires_approval: approvalTools,
-      is_terminal: isTerminal,
-      should_force_tool_call: shouldForce,
+      reason: this.buildReason(toolCallHistory, allowed),
+      uncalled_required: this.getUncalledRequiredTools(toolCallHistory, availableTools),
+      requires_approval: this.requiresApprovalRules
+        .map((r) => r.tool_name)
+        .filter((t) => allowedSet.has(t)),
+      is_terminal: lastTool !== null && this.isTerminalTool(lastTool),
+      should_force_tool_call: this.shouldForceToolCall(toolCallHistory),
     };
   }
 
@@ -184,7 +167,6 @@ export class LettaRuleSolver {
     if (this.requiredBeforeExitRules.length === 0) return [];
     const required = new Set(this.requiredBeforeExitRules.map((r) => r.tool_name));
     const called = new Set(toolCallHistory);
-    // Required tools that are available but not yet called
     return [...required].filter((t) => availableTools.has(t) && !called.has(t));
   }
 
@@ -206,9 +188,7 @@ export class LettaRuleSolver {
     return false;
   }
 
-  /**
-   * Compile readable prompt summaries of all rules.
-   */
+  /** Compile readable prompt summaries of all rules. */
   compilePrompt(): string | null {
     const lines: string[] = [];
 
@@ -216,50 +196,32 @@ export class LettaRuleSolver {
       lines.push(`<tool_rule>\n${rule.tool_name} must be used first\n</tool_rule>`);
     }
     for (const rule of this.continueRules) {
-      lines.push(
-        `<tool_rule>\n${rule.tool_name} requires continuing your response when called\n</tool_rule>`,
-      );
+      lines.push(`<tool_rule>\n${rule.tool_name} requires continuing your response when called\n</tool_rule>`);
     }
     for (const rule of this.childRules) {
-      const children = rule.children.join(", ");
-      lines.push(
-        `<tool_rule>\nAfter using ${rule.tool_name}, you must use one of these tools: ${children}\n</tool_rule>`,
-      );
+      lines.push(`<tool_rule>\nAfter using ${rule.tool_name}, you must use one of these tools: ${rule.children.join(", ")}\n</tool_rule>`);
     }
     for (const rule of this.conditionalRules) {
-      lines.push(
-        `<tool_rule>\n${rule.tool_name} will determine which tool to use next based on its output\n</tool_rule>`,
-      );
+      lines.push(`<tool_rule>\n${rule.tool_name} will determine which tool to use next based on its output\n</tool_rule>`);
     }
     for (const rule of this.maxCountRules) {
-      lines.push(
-        `<tool_rule>\n${rule.tool_name}: at most ${rule.max_count_limit} use(s) per response\n</tool_rule>`,
-      );
+      lines.push(`<tool_rule>\n${rule.tool_name}: at most ${rule.max_count_limit} use(s) per response\n</tool_rule>`);
     }
     for (const rule of this.parentRules) {
-      const children = rule.children.join(", ");
-      lines.push(
-        `<tool_rule>\n${children} can only be used after ${rule.tool_name}\n</tool_rule>`,
-      );
+      lines.push(`<tool_rule>\n${rule.children.join(", ")} can only be used after ${rule.tool_name}\n</tool_rule>`);
     }
     for (const rule of this.terminalRules) {
-      lines.push(
-        `<tool_rule>\n${rule.tool_name} ends your response (yields control) when called\n</tool_rule>`,
-      );
+      lines.push(`<tool_rule>\n${rule.tool_name} ends your response (yields control) when called\n</tool_rule>`);
     }
     for (const rule of this.requiredBeforeExitRules) {
-      lines.push(
-        `<tool_rule>${rule.tool_name} must be called before ending the conversation</tool_rule>`,
-      );
+      lines.push(`<tool_rule>${rule.tool_name} must be called before ending the conversation</tool_rule>`);
     }
 
     if (lines.length === 0) return null;
     return `${COMPILED_PROMPT_DESCRIPTION}\n${lines.join("\n")}`;
   }
 
-  /**
-   * Validate a proposed sequence against the rules.
-   */
+  /** Validate a proposed sequence against the rules. */
   validateSequence(
     sequence: string[],
     availableTools: Set<string>,
@@ -269,26 +231,27 @@ export class LettaRuleSolver {
 
     for (let i = 0; i < sequence.length; i++) {
       const tool = sequence[i];
-      const allowed = this.getAllowedToolNames(history, availableTools);
+      let allowed: string[];
+      try {
+        allowed = this.getAllowedToolNames(history, availableTools);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        violations.push(`Step ${i}: ${message}`);
+        allowed = [];
+      }
 
       if (allowed.length > 0 && !allowed.includes(tool)) {
-        violations.push(
-          `Step ${i}: "${tool}" not allowed (allowed: [${allowed.join(", ")}])`,
-        );
+        violations.push(`Step ${i}: "${tool}" not allowed (allowed: [${allowed.join(", ")}])`);
       }
       history.push(tool);
     }
 
-    // Check required-before-exit
-    const uncalled = this.getUncalledRequiredTools(history, availableTools);
-    for (const req of uncalled) {
+    for (const req of this.getUncalledRequiredTools(history, availableTools)) {
       violations.push(`Required before exit: "${req}" not in proposed sequence`);
     }
 
     return { valid: violations.length === 0, violations };
   }
-
-  // ── private helpers ────────────────────────────────────────────────
 
   private getValidTools(
     rule: LettaToolRule,
@@ -300,25 +263,19 @@ export class LettaRuleSolver {
 
     switch (rule.type) {
       case "constrain_child_tools":
-        return lastTool === rule.tool_name
-          ? new Set(rule.children)
-          : available;
-
+        return lastTool === rule.tool_name ? new Set(rule.children) : available;
       case "parent_last_tool":
         return lastTool === rule.tool_name
           ? new Set(rule.children)
           : difference(available, new Set(rule.children));
-
       case "conditional":
         return this.getConditionalValidTools(rule, lastTool, available, lastResponse);
-
       case "max_count_per_step": {
         const count = history.filter((t) => t === rule.tool_name).length;
         return count >= rule.max_count_limit
           ? difference(available, new Set([rule.tool_name]))
           : available;
       }
-
       default:
         return available;
     }
@@ -332,10 +289,11 @@ export class LettaRuleSolver {
   ): Set<string> {
     if (lastTool !== rule.tool_name) return available;
     if (!lastResponse) {
-      return rule.default_child ? new Set([rule.default_child]) : available;
+      throw new LettaRuleSolverError(
+        `Conditional tool rule for "${rule.tool_name}" requires lastFunctionResponse to determine the next tool`,
+      );
     }
 
-    // Try to parse JSON and extract message field (Letta convention)
     let output = lastResponse;
     try {
       const parsed = JSON.parse(lastResponse) as Record<string, unknown>;
@@ -343,11 +301,12 @@ export class LettaRuleSolver {
         output = parsed.message;
       }
     } catch {
-      // Use raw response
+      if (rule.require_output_mapping) return new Set();
+      return rule.default_child ? new Set([rule.default_child]) : available;
     }
 
     for (const [key, tool] of Object.entries(rule.child_output_mapping)) {
-      if (output === key) return new Set([tool]);
+      if (matchesConditionalKey(output, key)) return new Set([tool]);
     }
 
     if (rule.require_output_mapping) return new Set();
@@ -369,7 +328,15 @@ export class LettaRuleSolver {
   }
 }
 
-// ── Set utilities ──────────────────────────────────────────────────
+function matchesConditionalKey(output: string, key: string): boolean {
+  if (key === "true" || key === "false") return output.toLowerCase() === key;
+  const keyNumber = Number(key);
+  if (key.trim() !== "" && Number.isFinite(keyNumber)) {
+    const outputNumber = Number(output);
+    return Number.isFinite(outputNumber) && outputNumber === keyNumber;
+  }
+  return output === key;
+}
 
 function intersect(a: Set<string>, b: Set<string>): Set<string> {
   const result = new Set<string>();
