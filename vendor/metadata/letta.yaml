@@ -1,0 +1,31 @@
+name: letta
+upstream: https://github.com/letta-ai/letta
+commit_sha: HEAD
+license: Apache-2.0
+category: memory
+vendor_path: vendor/providers/memory/letta
+
+why_included: >
+  Reference for custom action registries, tool sequencing rules, and prompt assembly.
+  Letta's tool-rule system (init/terminate rules, allowed transitions, before-exit
+  requirements) directly informs our rules solver. Also provides patterns for
+  structured action schemas and risk metadata.
+
+relevant_files:
+  - letta/functions/
+  - letta/agent/
+  - letta/schemas/
+  - letta/services/tool_manager.py
+
+dependency_type: adapter_target
+
+code_patterns_to_adapt:
+  - Action registration with schema and metadata
+  - Tool-rule definitions (sequence, before_exit, approval_required)
+  - Action schema validation
+  - Prompt assembly from action context
+
+risks_and_caveats:
+  - Large repo — not committed to git, reproduced via vendor script
+  - Full agent loop and LLM integration not relevant to phase 1
+  - Production persistence layer uses Postgres, we use SQLite

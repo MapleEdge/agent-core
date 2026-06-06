@@ -1,0 +1,29 @@
+name: chroma
+upstream: https://github.com/chroma-core/chroma
+commit_sha: HEAD
+license: Apache-2.0
+category: search
+vendor_path: vendor/providers/search/chroma
+
+why_included: >
+  Retrieval backend reference. If the future platform needs vector similarity
+  search for memory retrieval, Chroma's API patterns will inform the adapter.
+  Optional provider — included for future reference.
+
+relevant_files:
+  - chromadb/api/
+  - chromadb/config.py
+  - chromadb/types.py
+
+dependency_type: future_adapter_target
+
+code_patterns_to_adapt:
+  - Collection/query API patterns
+  - Embedding storage and retrieval interface
+  - Metadata filtering on vector queries
+
+risks_and_caveats:
+  - Large repo — not committed to git, reproduced via vendor script
+  - Server infrastructure not relevant
+  - Embedding pipelines belong to future platform
+  - Optional provider — may not be needed if a different vector store is chosen

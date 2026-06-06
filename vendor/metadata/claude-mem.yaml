@@ -1,0 +1,27 @@
+name: claude-mem
+upstream: https://github.com/thedotmack/claude-mem
+commit_sha: HEAD
+license: MIT
+category: knowledge
+vendor_path: vendor/providers/knowledge/claude-mem
+
+why_included: >
+  Reference for coding-session persistence — how to record prompts, observations,
+  tool calls, and build session timelines. Demonstrates practical session memory
+  for development workflows.
+
+relevant_files:
+  - "*.ts"
+  - "*.json"
+
+dependency_type: reference_only
+
+code_patterns_to_adapt:
+  - Session event recording patterns
+  - Timeline assembly from heterogeneous events
+  - Observation extraction from session transcripts
+
+risks_and_caveats:
+  - Small, single-author repo — may go unmaintained
+  - Claude-specific prompt formatting not relevant to our implementation
+  - MCP protocol details are not in scope for phase 1

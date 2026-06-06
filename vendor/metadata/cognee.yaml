@@ -1,0 +1,29 @@
+name: cognee
+upstream: https://github.com/topoteretes/cognee
+commit_sha: HEAD
+license: Apache-2.0
+category: knowledge
+vendor_path: vendor/providers/knowledge/cognee
+
+why_included: >
+  Reference for skill traces, scoped tools, and progressive skill loading.
+  Shows how to build knowledge that improves with each session, relevant
+  to our trace store and future skill learning features.
+
+relevant_files:
+  - cognee/tasks/
+  - cognee/modules/
+  - cognee/infrastructure/
+
+dependency_type: future_adapter_target
+
+code_patterns_to_adapt:
+  - Skill trace patterns
+  - Progressive knowledge accumulation
+  - Scoped tool definitions
+  - Knowledge graph construction from session data
+
+risks_and_caveats:
+  - Large repo — not committed to git, reproduced via vendor script
+  - Graph database backends (Neo4j, etc.) not relevant to phase 1
+  - Production knowledge pipelines are complex; we only adapt patterns

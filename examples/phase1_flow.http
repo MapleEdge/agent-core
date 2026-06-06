@@ -1,0 +1,77 @@
+### Health check
+GET http://localhost:3210/health
+
+### Create session
+POST http://localhost:3210/sessions
+Content-Type: application/json
+
+{"repo_id": "demo"}
+
+### Onboard repo
+POST http://localhost:3210/context/repos/demo/onboard
+
+### Write memory
+POST http://localhost:3210/memory/write
+Content-Type: application/json
+
+{"scope": "repo", "scope_id": "demo", "content": "Always run tests before committing", "metadata": {"source": "convention"}}
+
+### Classify task
+POST http://localhost:3210/classify/task
+Content-Type: application/json
+
+{"prompt": "Fix a failing login test", "repo_id": "demo"}
+
+### Search memory
+POST http://localhost:3210/memory/search
+Content-Type: application/json
+
+{"query": "tests", "scope": "repo", "limit": 10}
+
+### Allowed next actions
+POST http://localhost:3210/rules/allowed-next-actions
+Content-Type: application/json
+
+{"task_type": "code_edit", "current_action": "classify_task"}
+
+### Execute action — read_file
+POST http://localhost:3210/actions/execute
+Content-Type: application/json
+
+{"action_name": "read_file", "params": {"path": "src/auth.ts"}}
+
+### Execute action — grep
+POST http://localhost:3210/actions/execute
+Content-Type: application/json
+
+{"action_name": "grep", "params": {"pattern": "login"}}
+
+### Execute action — run_tests
+POST http://localhost:3210/actions/execute
+Content-Type: application/json
+
+{"action_name": "run_tests", "params": {}}
+
+### Record trace
+POST http://localhost:3210/traces/tool-call
+Content-Type: application/json
+
+{"session_id": "REPLACE_SESSION_ID", "action_name": "read_file", "input": {"path": "src/auth.ts"}, "output": {"content": "..."}, "duration_ms": 42}
+
+### Extract memories
+POST http://localhost:3210/memory/extract
+Content-Type: application/json
+
+{"session_id": "REPLACE_SESSION_ID", "text": "We should always validate input. The auth module requires rate limiting."}
+
+### Mock platform — policy check
+POST http://localhost:3210/mock-platform/policy/check
+Content-Type: application/json
+
+{"session_id": "REPLACE_SESSION_ID", "action_name": "commit"}
+
+### Get session timeline
+GET http://localhost:3210/sessions/REPLACE_SESSION_ID/timeline
+
+### List actions
+GET http://localhost:3210/actions
