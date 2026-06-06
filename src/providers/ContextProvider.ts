@@ -33,6 +33,7 @@ export interface ContextLink {
 
 export interface ContextProvider {
   readonly name: string;
+  readonly status: import("./registry.js").ProviderStatus;
 
   onboard(repo_id: string): Promise<ContextNode>;
   getTree(repo_id: string): Promise<ContextNode | null>;

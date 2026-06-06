@@ -89,7 +89,7 @@ curl -s http://localhost:3210/sessions/$SESSION/timeline
 | Provider | Interface | Strategy | Status |
 |----------|-----------|----------|--------|
 | mem0 | MemoryProvider | Sidecar planned | Mocked — SQLite LIKE search fallback |
-| claude-mem | SessionProvider | Direct (partial) | Timeline adapter extracted; session CRUD mocked |
+| claude-mem | SessionProvider | Direct partial utility extraction | Timeline utility extracted (proof-of-concept, does not call claude-mem runtime); session CRUD mocked |
 | OpenViking | ContextProvider | Reference only | Mocked — static context tree |
 | Letta | RuleSolverProvider, ActionProvider | Direct integration | Mocked — ToolRulesSolver port planned |
 | cognee | TraceProvider | Reference only | Mocked — SQLite trace store |

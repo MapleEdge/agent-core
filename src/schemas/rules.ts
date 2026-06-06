@@ -10,8 +10,9 @@ export const ToolSequenceInput = z.object({
 
 export const AllowedNextInput = z.object({
   task_type: z.string().min(1),
-  current_action: z.string().min(1),
+  current_action: z.string().nullish(),
   completed_actions: z.array(z.string()).default([]),
+  available_actions: z.array(z.string()).optional(),
 });
 
 export const ValidateSequenceInput = z.object({

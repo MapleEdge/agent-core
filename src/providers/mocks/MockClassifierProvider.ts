@@ -1,4 +1,5 @@
 import type { ClassifierProvider, ClassificationResult } from "../ClassifierProvider.js";
+import type { ProviderStatus } from "../registry.js";
 
 const TASK_PATTERNS: Record<string, { task_type: string; risk: number }> = {
   fix: { task_type: "debug", risk: 30 },
@@ -18,6 +19,7 @@ const TASK_PATTERNS: Record<string, { task_type: string; risk: number }> = {
 
 export class MockClassifierProvider implements ClassifierProvider {
   readonly name = "mock-classifier";
+  readonly status: ProviderStatus = "mock";
 
   async classify(prompt: string): Promise<ClassificationResult> {
     const lower = prompt.toLowerCase();

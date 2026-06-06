@@ -1,11 +1,13 @@
 /**
- * Thin adapter extracted from claude-mem TimelineService.
+ * Proof-of-concept utility extraction from claude-mem TimelineService.
  *
  * Provides timeline building and depth-filtered windowing, adapted from:
  *   vendor/providers/knowledge/claude-mem/src/services/worker/TimelineService.ts
  *
- * This is agent-core's first real (non-mock) adapter, demonstrating that
- * vendored provider code can be practically integrated.
+ * This is a direct partial utility extraction — it does NOT call the
+ * claude-mem runtime, SessionStore, or SearchManager. It demonstrates
+ * that small, self-contained algorithms can be extracted from vendored
+ * providers without requiring their full runtime.
  */
 
 export interface TimelineEntry {

@@ -19,10 +19,14 @@
  *   - ParentToolRule: filter tools from available set
  */
 
+import type { ProviderStatus } from "./registry.js";
+
 export interface ToolRule {
   id: string;
   task_type: string;
   sequence: string[];
+  /** Actions allowed as the first call (empty = any in sequence). */
+  init_actions: string[];
   before_exit: string[];
   approval_required: string[];
   conditions: Record<string, unknown>;
@@ -42,8 +46,25 @@ export interface SequenceValidationResult {
 
 export interface RuleSolverProvider {
   readonly name: string;
+  readonly status: ProviderStatus;
 
   getRule(task_type: string): Promise<ToolRule | null>;
-  getAllowedNext(task_type: string, current_action: string, history?: string[]): Promise<AllowedActionsResult>;
+
+  /**
+   * Determine allowed next actions.
+   *
+   * @param task_type - Rule set to look up
+   * @param current_action - Last executed action, or null/undefined for first action
+   * @param history - Actions already executed in this session
+   * @param availableActions - Full set of actions the caller can choose from;
+   *   when provided, results are intersected with this set
+   */
+  getAllowedNext(
+    task_type: string,
+    current_action: string | null | undefined,
+    history?: string[],
+    availableActions?: string[],
+  ): Promise<AllowedActionsResult>;
+
   validateSequence(task_type: string, sequence: string[]): Promise<SequenceValidationResult>;
 }

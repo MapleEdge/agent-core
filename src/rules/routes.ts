@@ -56,22 +56,55 @@ export async function rulesRoutes(app: FastifyInstance): Promise<void> {
       return { allowed: [], reason: "No rules defined for this task type" };
     }
 
-    const allowed: string[] = [];
+    let allowed: string[] = [];
+    let reason: string;
+
     for (const rule of rules) {
       const sequence = JSON.parse(rule.sequence as string) as string[];
-      const idx = sequence.indexOf(input.current_action);
-      if (idx >= 0 && idx < sequence.length - 1) {
-        const next = sequence[idx + 1];
-        if (!allowed.includes(next)) {
-          allowed.push(next);
+      const beforeExit = JSON.parse(rule.before_exit as string) as string[];
+      const approvalRequired = JSON.parse(rule.approval_required as string) as string[];
+
+      if (!input.current_action) {
+        // First action — return first element of sequence
+        if (sequence.length > 0 && !allowed.includes(sequence[0])) {
+          allowed.push(sequence[0]);
+        }
+      } else {
+        const idx = sequence.indexOf(input.current_action);
+        if (idx >= 0 && idx < sequence.length - 1) {
+          const next = sequence[idx + 1];
+          if (!allowed.includes(next)) {
+            allowed.push(next);
+          }
         }
       }
+
+      // Intersect with available_actions when provided
+      if (input.available_actions) {
+        const availSet = new Set(input.available_actions);
+        allowed = allowed.filter((a) => availSet.has(a));
+      }
+
+      const calledSet = new Set(input.completed_actions);
+      const uncalled_required = beforeExit.filter((a) => !calledSet.has(a));
+      const allowedSet = new Set(allowed);
+      const requires_approval = approvalRequired.filter((a) => allowedSet.has(a));
+
+      reason = !input.current_action
+        ? "First action in sequence"
+        : `Next in sequence after "${input.current_action}"`;
+
+      return {
+        task_type: input.task_type,
+        current_action: input.current_action ?? null,
+        allowed,
+        reason,
+        uncalled_required,
+        requires_approval,
+      };
     }
-    return {
-      task_type: input.task_type,
-      current_action: input.current_action,
-      allowed,
-    };
+
+    return { allowed: [], reason: "No rules matched" };
   });
 
   app.post("/rules/validate-sequence", async (req) => {

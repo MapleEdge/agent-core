@@ -34,6 +34,7 @@ export interface TimelineItem {
 
 export interface SessionProvider {
   readonly name: string;
+  readonly status: import("./registry.js").ProviderStatus;
 
   create(repo_id?: string): Promise<SessionRecord>;
   get(id: string): Promise<SessionRecord | null>;

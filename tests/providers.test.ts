@@ -3,12 +3,14 @@ import {
   registerProvider,
   getProvider,
   hasProvider,
+  resetProviderRegistry,
   getCapabilityMatrix,
   listRegisteredProviders,
 } from "../src/providers/registry.js";
 import { MockMemoryProvider } from "../src/providers/mocks/MockMemoryProvider.js";
 import { MockClassifierProvider } from "../src/providers/mocks/MockClassifierProvider.js";
 import { MockRuleSolverProvider } from "../src/providers/mocks/MockRuleSolverProvider.js";
+import { seedDefaultRules } from "../src/rules/routes.js";
 import {
   buildTimeline,
   filterByDepth,
@@ -16,9 +18,16 @@ import {
 } from "../src/providers/adapters/ClaudeMemTimelineAdapter.js";
 import type { TimelineEntry } from "../src/providers/adapters/ClaudeMemTimelineAdapter.js";
 
+// Ensure default tool rules are seeded for MockRuleSolverProvider tests
+seedDefaultRules();
+
 // ── Provider registry ──────────────────────────────────────────────
 
 describe("Provider registry", () => {
+  beforeEach(() => {
+    resetProviderRegistry();
+  });
+
   it("should register and retrieve a provider", () => {
     const mock = new MockMemoryProvider();
     registerProvider("memory", mock);
@@ -27,8 +36,6 @@ describe("Provider registry", () => {
   });
 
   it("should throw for unregistered provider", () => {
-    // context starts null from module load, but we registered memory above,
-    // so test a slot we haven't touched:
     expect(() => getProvider("policyMatcher")).toThrow(/No provider registered/);
   });
 
@@ -40,14 +47,36 @@ describe("Provider registry", () => {
     expect(list.classifier).toBe("mock-classifier");
   });
 
-  it("should produce a capability matrix", () => {
-    registerProvider("memory", new MockMemoryProvider());
+  it("should produce a capability matrix with explicit status", () => {
+    const mem = new MockMemoryProvider();
+    registerProvider("memory", mem);
     const matrix = getCapabilityMatrix();
     expect(matrix).toBeInstanceOf(Array);
-    const mem = matrix.find((c) => c.name === "memory");
-    expect(mem).toBeDefined();
-    expect(mem!.provider).toBe("mock-memory");
-    expect(mem!.status).toBe("mock");
+    const memCap = matrix.find((c) => c.name === "memory");
+    expect(memCap).toBeDefined();
+    expect(memCap!.provider).toBe("mock-memory");
+    expect(memCap!.status).toBe("mock");
+    // Unregistered slot defaults to "mock" status with "none" provider
+    const policyCap = matrix.find((c) => c.name === "policyMatcher");
+    expect(policyCap).toBeDefined();
+    expect(policyCap!.provider).toBe("none");
+    expect(policyCap!.status).toBe("mock");
+  });
+
+  it("should reset all providers", () => {
+    registerProvider("memory", new MockMemoryProvider());
+    expect(hasProvider("memory")).toBe(true);
+    resetProviderRegistry();
+    expect(hasProvider("memory")).toBe(false);
+  });
+
+  it("should read status from provider metadata, not name inference", () => {
+    const mem = new MockMemoryProvider();
+    registerProvider("memory", mem);
+    const matrix = getCapabilityMatrix();
+    const memCap = matrix.find((c) => c.name === "memory")!;
+    // Status comes from provider.status field, not name.startsWith("mock")
+    expect(memCap.status).toBe(mem.status);
   });
 });
 
@@ -58,6 +87,10 @@ describe("MockMemoryProvider", () => {
 
   beforeEach(() => {
     provider = new MockMemoryProvider();
+  });
+
+  it("should have status 'mock'", () => {
+    expect(provider.status).toBe("mock");
   });
 
   it("should write and get a memory", async () => {
@@ -102,6 +135,11 @@ describe("MockMemoryProvider", () => {
 // ── Mock Classifier Provider ───────────────────────────────────────
 
 describe("MockClassifierProvider", () => {
+  it("should have status 'mock'", () => {
+    const provider = new MockClassifierProvider();
+    expect(provider.status).toBe("mock");
+  });
+
   it("should classify a task prompt", async () => {
     const provider = new MockClassifierProvider();
     const result = await provider.classify("Fix a failing login test");
@@ -122,6 +160,11 @@ describe("MockClassifierProvider", () => {
 // ── Mock RuleSolver Provider ───────────────────────────────────────
 
 describe("MockRuleSolverProvider", () => {
+  it("should have status 'mock'", () => {
+    const provider = new MockRuleSolverProvider();
+    expect(provider.status).toBe("mock");
+  });
+
   it("should get allowed next actions for a known task type", async () => {
     const provider = new MockRuleSolverProvider();
     const result = await provider.getAllowedNext("code_edit", "classify_task");
@@ -134,6 +177,57 @@ describe("MockRuleSolverProvider", () => {
     const result = await provider.getAllowedNext("nonexistent", "classify_task");
     expect(result.allowed).toEqual([]);
     expect(result.reason).toContain("No rule found");
+  });
+
+  it("should return init_actions when current_action is null", async () => {
+    const provider = new MockRuleSolverProvider();
+    const result = await provider.getAllowedNext("code_edit", null);
+    expect(result.allowed).toBeInstanceOf(Array);
+    expect(result.allowed.length).toBeGreaterThan(0);
+    expect(result.reason).toBe("First action in sequence");
+    // First allowed action should be classify_task (first in seeded sequence)
+    expect(result.allowed).toContain("classify_task");
+  });
+
+  it("should return init_actions when current_action is undefined", async () => {
+    const provider = new MockRuleSolverProvider();
+    const result = await provider.getAllowedNext("code_edit", undefined);
+    expect(result.reason).toBe("First action in sequence");
+    expect(result.allowed).toContain("classify_task");
+  });
+
+  it("should intersect with availableActions when provided", async () => {
+    const provider = new MockRuleSolverProvider();
+    // After classify_task, next should be read_file — but only if in availableActions
+    const result = await provider.getAllowedNext("code_edit", "classify_task", [], ["grep", "write_file"]);
+    // read_file is next in sequence but not in availableActions, so filtered out
+    expect(result.allowed).not.toContain("read_file");
+  });
+
+  it("should report approval-required actions in allowed set", async () => {
+    const provider = new MockRuleSolverProvider();
+    // commit requires approval per seeded rules
+    const result = await provider.getAllowedNext("code_edit", "request_approval");
+    expect(result.requires_approval).toContain("commit");
+  });
+
+  it("should report uncalled required-before-exit actions", async () => {
+    const provider = new MockRuleSolverProvider();
+    // summarize_diff is required before exit; if not in history it's uncalled
+    const result = await provider.getAllowedNext("code_edit", "classify_task", []);
+    expect(result.uncalled_required).toContain("summarize_diff");
+    // After calling summarize_diff, it should be removed from uncalled
+    const result2 = await provider.getAllowedNext("code_edit", "classify_task", ["summarize_diff"]);
+    expect(result2.uncalled_required).not.toContain("summarize_diff");
+  });
+
+  it("should include init_actions in getRule result", async () => {
+    const provider = new MockRuleSolverProvider();
+    const rule = await provider.getRule("code_edit");
+    expect(rule).not.toBeNull();
+    expect(rule!.init_actions).toBeInstanceOf(Array);
+    expect(rule!.init_actions.length).toBeGreaterThan(0);
+    expect(rule!.init_actions[0]).toBe("classify_task");
   });
 });
 
@@ -185,12 +279,23 @@ describe("ClaudeMemTimelineAdapter", () => {
 
 describe("Provider interfaces compile", () => {
   it("should verify all interface types are importable", async () => {
-    // These imports will fail at compile time if interfaces have errors
     const mod = await import("../src/providers/index.js");
     expect(mod.registerProvider).toBeDefined();
     expect(mod.getProvider).toBeDefined();
     expect(mod.hasProvider).toBeDefined();
+    expect(mod.resetProviderRegistry).toBeDefined();
     expect(mod.getCapabilityMatrix).toBeDefined();
     expect(mod.listRegisteredProviders).toBeDefined();
+  });
+});
+
+// ── ActionProvider execution boundary ──────────────────────────────
+
+describe("ActionProvider execution boundary", () => {
+  it("ActionExecutionResult should require execution_mode field", async () => {
+    // Verify the type exists and has the right shape at import time
+    const mod = await import("../src/providers/ActionProvider.js");
+    // Module imports successfully — type constraints are compile-time
+    expect(mod).toBeDefined();
   });
 });

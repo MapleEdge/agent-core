@@ -11,7 +11,8 @@ export {
   registerProvider,
   getProvider,
   hasProvider,
+  resetProviderRegistry,
   getCapabilityMatrix,
   listRegisteredProviders,
 } from "./registry.js";
-export type { ProviderCapability } from "./registry.js";
+export type { ProviderCapability, ProviderStatus, BaseProvider } from "./registry.js";

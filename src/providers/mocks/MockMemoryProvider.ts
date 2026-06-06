@@ -7,9 +7,11 @@ import type {
   MemoryWriteParams,
   MemorySearchParams,
 } from "../MemoryProvider.js";
+import type { ProviderStatus } from "../registry.js";
 
 export class MockMemoryProvider implements MemoryProvider {
   readonly name = "mock-memory";
+  readonly status: ProviderStatus = "mock";
 
   async write(params: MemoryWriteParams): Promise<MemoryRecord> {
     const db = getDb();

@@ -28,6 +28,7 @@ export interface ClassificationResult {
 
 export interface ClassifierProvider {
   readonly name: string;
+  readonly status: import("./registry.js").ProviderStatus;
 
   classify(prompt: string, context?: Record<string, unknown>): Promise<ClassificationResult>;
 }

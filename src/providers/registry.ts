@@ -15,10 +15,22 @@ import type { TraceProvider } from "./TraceProvider.js";
 import type { ClassifierProvider } from "./ClassifierProvider.js";
 import type { PolicyMatcherProvider } from "./PolicyMatcherProvider.js";
 
+/** Architectural integration status — declared by the provider, not inferred. */
+export type ProviderStatus = "mock" | "direct" | "sidecar" | "reference";
+
 export interface ProviderCapability {
+  /** Registry slot name (e.g. "memory", "classifier"). */
   name: string;
+  /** Provider implementation name (e.g. "mock-memory"). */
   provider: string;
-  status: "mock" | "direct" | "sidecar" | "reference";
+  /** Architectural integration status — set explicitly on registration. */
+  status: ProviderStatus;
+}
+
+/** All provider interfaces must declare name and status. */
+export interface BaseProvider {
+  readonly name: string;
+  readonly status: ProviderStatus;
 }
 
 interface ProviderRegistry {
@@ -32,16 +44,20 @@ interface ProviderRegistry {
   policyMatcher: PolicyMatcherProvider | null;
 }
 
-const registry: ProviderRegistry = {
-  memory: null,
-  session: null,
-  context: null,
-  action: null,
-  ruleSolver: null,
-  trace: null,
-  classifier: null,
-  policyMatcher: null,
-};
+function emptyRegistry(): ProviderRegistry {
+  return {
+    memory: null,
+    session: null,
+    context: null,
+    action: null,
+    ruleSolver: null,
+    trace: null,
+    classifier: null,
+    policyMatcher: null,
+  };
+}
+
+let registry: ProviderRegistry = emptyRegistry();
 
 export function registerProvider<K extends keyof ProviderRegistry>(
   key: K,
@@ -65,16 +81,27 @@ export function hasProvider(key: keyof ProviderRegistry): boolean {
   return registry[key] !== null;
 }
 
+/** Reset all provider slots to null. Use in tests to prevent leaked state. */
+export function resetProviderRegistry(): void {
+  registry = emptyRegistry();
+}
+
 export function getCapabilityMatrix(): ProviderCapability[] {
   const capabilities: ProviderCapability[] = [];
   for (const [key, provider] of Object.entries(registry)) {
-    capabilities.push({
-      name: key,
-      provider: provider ? provider.name : "none",
-      status: provider
-        ? provider.name.startsWith("mock") ? "mock" : "direct"
-        : "mock",
-    });
+    if (provider) {
+      capabilities.push({
+        name: key,
+        provider: provider.name,
+        status: (provider as BaseProvider).status,
+      });
+    } else {
+      capabilities.push({
+        name: key,
+        provider: "none",
+        status: "mock",
+      });
+    }
   }
   return capabilities;
 }

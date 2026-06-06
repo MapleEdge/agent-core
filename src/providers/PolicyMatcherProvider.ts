@@ -35,6 +35,7 @@ export interface PolicyMatchResult {
 
 export interface PolicyMatcherProvider {
   readonly name: string;
+  readonly status: import("./registry.js").ProviderStatus;
 
   match(action_name: string, context?: Record<string, unknown>): Promise<PolicyMatchResult>;
   checkPolicy(action_name: string, params: Record<string, unknown>): Promise<PolicyMatchResult>;

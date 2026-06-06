@@ -21,6 +21,7 @@ export interface TraceRecord {
 
 export interface TraceProvider {
   readonly name: string;
+  readonly status: import("./registry.js").ProviderStatus;
 
   recordToolCall(
     session_id: string,

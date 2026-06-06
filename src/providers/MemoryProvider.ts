@@ -43,6 +43,7 @@ export interface MemorySearchParams {
 
 export interface MemoryProvider {
   readonly name: string;
+  readonly status: import("./registry.js").ProviderStatus;
 
   write(params: MemoryWriteParams): Promise<MemoryRecord>;
   search(params: MemorySearchParams): Promise<MemorySearchResult[]>;
