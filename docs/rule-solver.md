@@ -4,7 +4,7 @@
 
 `LettaRuleSolver` is a deterministic TypeScript port of Letta's `ToolRulesSolver` (Python). It implements Letta-style tool rule constraints — controlling which tools an agent can call at each step of execution.
 
-This is a **direct** integration: the core algorithm was ported line-by-line from the Python source. No LLM calls, no live action execution, no platform authorization.
+This is a **direct** integration: the core algorithm was ported from the Python source. No LLM calls, no live action execution, no platform authorization.
 
 ## Source References
 
@@ -12,7 +12,7 @@ This is a **direct** integration: the core algorithm was ported line-by-line fro
 |------|----------|
 | `src/rules/lettaRuleTypes.ts` | `letta/schemas/tool_rule.py` + `letta/schemas/enums.py` |
 | `src/rules/lettaRuleSolver.ts` | `letta/helpers/tool_rule_solver.py` |
-| `src/providers/adapters/LettaRuleSolverProvider.ts` | Provider adapter (new) |
+| `src/providers/adapters/LettaRuleSolverProvider.ts` | Provider adapter |
 
 ## Rule Types
 
@@ -32,23 +32,40 @@ All 9 Letta rule types are supported:
 
 ## Core Algorithm
 
-The solver follows Letta's exact logic:
+The solver follows Letta's core logic:
 
 1. **No history + init rules** → only init tool names are allowed
 2. **Otherwise** → compute the intersection of all child/parent/conditional/max-count valid-tool sets
 3. **Continue/terminal/required-before-exit** are agent-loop flow controls, not tool restrictions
 
-```
+```text
 getAllowedToolNames(history, availableTools):
   if history.empty AND initRules.exist:
     return initRules.map(r => r.tool_name)
-  
+
   validSets = []
   for rule in [childRules, conditionalRules, maxCountRules, parentRules]:
     validSets.push(rule.getValidTools(history, availableTools))
-  
+
   return intersection(validSets) ∩ availableTools
 ```
+
+## ConditionalToolRule behavior
+
+Conditional rules require the previous tool's function response when the conditional tool was the last action.
+
+If the last action equals `rule.tool_name` and no `lastFunctionResponse` is provided, the core solver throws `LettaRuleSolverError`. The provider adapter converts that into a safe API result with `allowed: []` and a clear reason instead of returning `default_child`.
+
+This matches upstream Letta's behavior: a conditional rule cannot choose a next tool without the tool output it is supposed to inspect.
+
+Supported response matching:
+
+- JSON responses with a string `message` field, for example `{ "message": "success" }`
+- Raw string responses
+- String-keyed mappings
+- Boolean-like and numeric-like keys are matched from string keys where practical
+
+Partial parity note: upstream Letta supports dict keys with native bool/int/float types. JSON object keys in JavaScript are strings, so this port approximates bool/int/float matching from string keys.
 
 ## What Was Ported
 
@@ -61,7 +78,7 @@ getAllowedToolNames(history, availableTools):
 - `get_uncalled_required_tools()` → `getUncalledRequiredTools()`
 - `should_force_tool_call()` → `shouldForceToolCall()`
 - `compile_tool_rule_prompts()` → `compilePrompt()` (returns string, not Block)
-- `guess_rule_violation()` → not ported (used for LLM error recovery)
+- Conditional response routing via `lastFunctionResponse`
 - Sequence validation (new) — walks a proposed sequence step-by-step through the solver
 
 ## What Was Not Ported
@@ -72,7 +89,6 @@ getAllowedToolNames(history, availableTools):
 | `ToolCallNode` / `child_arg_nodes` | Per-child argument overrides for LLM invocation |
 | `guess_rule_violation()` | Used for LLM error recovery prompts; not needed without LLM execution |
 | `Block` compilation | Letta-specific `Block` type; we return plain strings |
-| `last_function_response` full support | ConditionalToolRule supports it, but production use requires runtime response piping |
 | `register_tool_call()` / mutable history | Solver is stateless; history is passed as parameter |
 
 ## Why These Were Not Ported
@@ -94,7 +110,7 @@ const solver = new LettaRuleSolver([
 ]);
 
 const result = solver.solve(
-  ["classify_task"],                                    // history
+  ["classify_task"],
   new Set(["classify_task", "read_file", "grep", "summarize_diff", "send_response"]),
 );
 // result.allowed = ["read_file", "grep"]
@@ -120,11 +136,31 @@ const result = await provider.getAllowedNext("code_edit", null, []);
 // result.allowed = ["classify_task"]
 ```
 
+### Conditional rule usage
+
+```typescript
+const provider = new LettaRuleSolverProvider();
+provider.setRules("deploy_flow", [
+  {
+    type: "conditional",
+    tool_name: "check_status",
+    default_child: "rollback",
+    child_output_mapping: { ok: "deploy" },
+  },
+]);
+
+const result = await provider.getAllowedNext("deploy_flow", "check_status", [], {
+  lastFunctionResponse: '{"message":"ok"}',
+});
+// result.allowed = ["deploy"]
+```
+
 ## Test Fixtures
 
 Golden test fixtures are in `tests/fixtures/letta-rule-cases.json`. Each fixture specifies:
+
 - Input rules, history, available tools
 - Expected allowed tools, uncalled required, approval status, terminal status
 - Expected prompt contents and sequence validation results
 
-The test suite runs all fixtures automatically, plus integration tests for the provider adapter and registry.
+The test suite runs all fixtures automatically, plus integration tests for the provider adapter, registry, route delegation, and conditional-rule parity.
