@@ -16,12 +16,10 @@ import type {
   SequenceValidationResult,
   GetAllowedNextOptions,
 } from "../RuleSolverProvider.js";
-import { LettaRuleSolver } from "../../rules/lettaRuleSolver.js";
+import { LettaRuleSolver, LettaRuleSolverError } from "../../rules/lettaRuleSolver.js";
 import type { LettaToolRule } from "../../rules/lettaRuleTypes.js";
 
-/**
- * Stores Letta-style rules per task_type and solves them using LettaRuleSolver.
- */
+/** Stores Letta-style rules per task_type and solves them using LettaRuleSolver. */
 export class LettaRuleSolverProvider implements RuleSolverProvider {
   readonly name = "letta-rule-solver";
   readonly status: ProviderStatus = "direct";
@@ -29,9 +27,7 @@ export class LettaRuleSolverProvider implements RuleSolverProvider {
   private readonly rulesByTaskType = new Map<string, LettaToolRule[]>();
   private readonly solverCache = new Map<string, LettaRuleSolver>();
 
-  /**
-   * Register Letta-style rules for a task type.
-   */
+  /** Register Letta-style rules for a task type. */
   setRules(taskType: string, rules: LettaToolRule[]): void {
     this.rulesByTaskType.set(taskType, rules);
     this.solverCache.delete(taskType);
@@ -53,7 +49,6 @@ export class LettaRuleSolverProvider implements RuleSolverProvider {
     const rules = this.rulesByTaskType.get(taskType);
     if (!rules) return null;
 
-    // Build a ToolRule-compatible object from the Letta rules
     const initActions = rules
       .filter((r) => r.type === "run_first")
       .map((r) => r.tool_name);
@@ -64,13 +59,10 @@ export class LettaRuleSolverProvider implements RuleSolverProvider {
       .filter((r) => r.type === "requires_approval")
       .map((r) => r.tool_name);
 
-    // Build sequence from child rules (approximate linear sequence)
-    const sequence = this.buildSequenceFromChildRules(rules);
-
     return {
       id: `letta-${taskType}`,
       task_type: taskType,
-      sequence,
+      sequence: this.buildSequenceFromChildRules(rules),
       init_actions: initActions,
       before_exit: beforeExit,
       approval_required: approvalRequired,
@@ -84,7 +76,6 @@ export class LettaRuleSolverProvider implements RuleSolverProvider {
     history?: string[],
     options?: string[] | GetAllowedNextOptions,
   ): Promise<AllowedActionsResult> {
-    // Backward compat: string[] → availableActions only
     const opts: GetAllowedNextOptions = Array.isArray(options)
       ? { availableActions: options }
       : options ?? {};
@@ -100,31 +91,37 @@ export class LettaRuleSolverProvider implements RuleSolverProvider {
     }
 
     const callHistory = history ?? [];
-    // If currentAction is provided but not in history, append it
-    const effectiveHistory =
-      currentAction && !callHistory.includes(currentAction)
-        ? [...callHistory, currentAction]
-        : [...callHistory];
+    const effectiveHistory = currentAction && !callHistory.includes(currentAction)
+      ? [...callHistory, currentAction]
+      : [...callHistory];
 
     const availSet = opts.availableActions
       ? new Set(opts.availableActions)
       : this.getAllToolNames();
 
-    const result = solver.solve(effectiveHistory, availSet, opts.lastFunctionResponse);
+    try {
+      const result = solver.solve(effectiveHistory, availSet, opts.lastFunctionResponse);
+      const allowed = opts.availableActions
+        ? result.allowed.filter((a) => new Set(opts.availableActions).has(a))
+        : result.allowed;
 
-    // Filter allowed by availableActions if provided
-    let allowed = result.allowed;
-    if (opts.availableActions) {
-      const avail = new Set(opts.availableActions);
-      allowed = allowed.filter((a) => avail.has(a));
+      return {
+        allowed,
+        reason: result.reason,
+        requires_approval: result.requires_approval,
+        uncalled_required: result.uncalled_required,
+      };
+    } catch (err) {
+      if (err instanceof LettaRuleSolverError) {
+        return {
+          allowed: [],
+          reason: err.message,
+          requires_approval: [],
+          uncalled_required: solver.getUncalledRequiredTools(effectiveHistory, availSet),
+        };
+      }
+      throw err;
     }
-
-    return {
-      allowed,
-      reason: result.reason,
-      requires_approval: result.requires_approval,
-      uncalled_required: result.uncalled_required,
-    };
   }
 
   async validateSequence(
@@ -136,47 +133,34 @@ export class LettaRuleSolverProvider implements RuleSolverProvider {
       return { valid: true, violations: [] };
     }
 
-    const availSet = this.getAllToolNames();
-    return solver.validateSequence(sequence, availSet);
+    return solver.validateSequence(sequence, this.getAllToolNames());
   }
 
-  /**
-   * Get compiled prompt summary of rules for a task type.
-   */
+  /** Get compiled prompt summary of rules for a task type. */
   compilePrompt(taskType: string): string | null {
     const solver = this.getSolver(taskType);
     if (!solver) return null;
     return solver.compilePrompt();
   }
 
-  // Collect all tool names from all rules
   private getAllToolNames(): Set<string> {
     const names = new Set<string>();
     for (const rules of this.rulesByTaskType.values()) {
       for (const rule of rules) {
         names.add(rule.tool_name);
         if ("children" in rule && Array.isArray(rule.children)) {
-          for (const child of rule.children) {
-            names.add(child);
-          }
+          for (const child of rule.children) names.add(child);
         }
         if ("child_output_mapping" in rule && rule.child_output_mapping) {
-          for (const child of Object.values(rule.child_output_mapping)) {
-            names.add(child);
-          }
+          for (const child of Object.values(rule.child_output_mapping)) names.add(child);
         }
-        if ("default_child" in rule && rule.default_child) {
-          names.add(rule.default_child);
-        }
+        if ("default_child" in rule && rule.default_child) names.add(rule.default_child);
       }
     }
     return names;
   }
 
-  /**
-   * Build an approximate linear sequence from child rules.
-   * Used for ToolRule compatibility — not the primary solver path.
-   */
+  /** Build an approximate linear sequence from child rules. Used for ToolRule compatibility. */
   private buildSequenceFromChildRules(rules: LettaToolRule[]): string[] {
     const childRules = rules.filter(
       (r): r is Extract<LettaToolRule, { type: "constrain_child_tools" }> =>
@@ -184,15 +168,11 @@ export class LettaRuleSolverProvider implements RuleSolverProvider {
     );
     if (childRules.length === 0) return [];
 
-    // Build adjacency: parent → first child
     const adj = new Map<string, string>();
     for (const rule of childRules) {
-      if (rule.children.length > 0) {
-        adj.set(rule.tool_name, rule.children[0]);
-      }
+      if (rule.children.length > 0) adj.set(rule.tool_name, rule.children[0]);
     }
 
-    // Find start: init rules or first parent not in any children set
     const initRules = rules.filter((r) => r.type === "run_first");
     const allChildren = new Set(childRules.flatMap((r) => r.children));
     let start: string | undefined;
