@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, beforeAll, afterAll } from "vitest";
 import {
   registerProvider,
   getProvider,
@@ -11,6 +11,7 @@ import { MockMemoryProvider } from "../src/providers/mocks/MockMemoryProvider.js
 import { MockClassifierProvider } from "../src/providers/mocks/MockClassifierProvider.js";
 import { MockRuleSolverProvider } from "../src/providers/mocks/MockRuleSolverProvider.js";
 import { seedDefaultRules } from "../src/rules/routes.js";
+import { closeDb } from "../src/db.js";
 import {
   buildTimeline,
   filterByDepth,
@@ -18,8 +19,14 @@ import {
 } from "../src/providers/adapters/ClaudeMemTimelineAdapter.js";
 import type { TimelineEntry } from "../src/providers/adapters/ClaudeMemTimelineAdapter.js";
 
-// Ensure default tool rules are seeded for MockRuleSolverProvider tests
-seedDefaultRules();
+beforeAll(() => {
+  process.env.AGENT_CORE_DB = ":memory:";
+  seedDefaultRules();
+});
+
+afterAll(() => {
+  closeDb();
+});
 
 // ── Provider registry ──────────────────────────────────────────────
 

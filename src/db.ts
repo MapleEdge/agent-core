@@ -1,13 +1,12 @@
 import Database from "better-sqlite3";
 import path from "node:path";
 
-const DB_PATH = process.env.AGENT_CORE_DB ?? path.join(process.cwd(), "agent-core.db");
-
 let db: Database.Database | null = null;
 
 export function getDb(): Database.Database {
   if (!db) {
-    db = new Database(DB_PATH);
+    const dbPath = process.env.AGENT_CORE_DB ?? path.join(process.cwd(), "agent-core.db");
+    db = new Database(dbPath);
     db.pragma("journal_mode = WAL");
     db.pragma("foreign_keys = ON");
     initSchema(db);
