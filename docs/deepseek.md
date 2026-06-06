@@ -8,7 +8,7 @@ agent-core uses DeepSeek as its first real LLM provider for classification and m
 |----------|----------|---------|-------------|
 | `DEEPSEEK_API_KEY` | Yes | — | API key from [platform.deepseek.com](https://platform.deepseek.com) |
 | `DEEPSEEK_BASE_URL` | No | `https://api.deepseek.com` | API base URL |
-| `DEEPSEEK_MODEL` | No | `deepseek-chat` | Model name |
+| `DEEPSEEK_MODEL` | No | `deepseek-v4-flash` | Model name |
 
 ## Feature Flags
 
@@ -47,6 +47,10 @@ This ensures all LLM outputs are type-safe and schema-validated before reaching 
 
 DeepSeek is used **only for classification and extraction** — never for executing actions.
 agent-core does not use LLMs to perform side effects. The future platform owns real action execution, authorization, and side-effect management.
+
+## Model Deprecation
+
+> **Note:** `deepseek-chat` is deprecated on **2026-07-24** per [official DeepSeek docs](https://api-docs.deepseek.com/news/news250617). The default has been changed to `deepseek-v4-flash`.
 
 ## Cost
 

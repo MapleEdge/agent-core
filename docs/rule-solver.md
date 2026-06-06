@@ -114,7 +114,7 @@ provider.setRules("code_edit", [
   { type: "constrain_child_tools", tool_name: "classify_task", children: ["read_file"] },
 ]);
 
-registerProvider("rule_solver", provider);
+registerProvider("ruleSolver", provider);
 
 const result = await provider.getAllowedNext("code_edit", null, []);
 // result.allowed = ["classify_task"]

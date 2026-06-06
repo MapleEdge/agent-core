@@ -39,6 +39,12 @@ export interface AllowedActionsResult {
   uncalled_required: string[];
 }
 
+/** Optional options bag for getAllowedNext — backward-compatible extension. */
+export interface GetAllowedNextOptions {
+  availableActions?: string[];
+  lastFunctionResponse?: string;
+}
+
 export interface SequenceValidationResult {
   valid: boolean;
   violations: string[];
@@ -56,14 +62,15 @@ export interface RuleSolverProvider {
    * @param task_type - Rule set to look up
    * @param current_action - Last executed action, or null/undefined for first action
    * @param history - Actions already executed in this session
-   * @param availableActions - Full set of actions the caller can choose from;
-   *   when provided, results are intersected with this set
+   * @param options - availableActions (intersect filter) and/or lastFunctionResponse
+   *   (for ConditionalToolRule). For backward compat, a string[] is treated as
+   *   availableActions.
    */
   getAllowedNext(
     task_type: string,
     current_action: string | null | undefined,
     history?: string[],
-    availableActions?: string[],
+    options?: string[] | GetAllowedNextOptions,
   ): Promise<AllowedActionsResult>;
 
   validateSequence(task_type: string, sequence: string[]): Promise<SequenceValidationResult>;

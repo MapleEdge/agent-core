@@ -4,6 +4,7 @@ import type {
   ToolRule,
   AllowedActionsResult,
   SequenceValidationResult,
+  GetAllowedNextOptions,
 } from "../RuleSolverProvider.js";
 import type { ProviderStatus } from "../registry.js";
 
@@ -33,8 +34,11 @@ export class MockRuleSolverProvider implements RuleSolverProvider {
     task_type: string,
     current_action: string | null | undefined,
     history?: string[],
-    availableActions?: string[],
+    options?: string[] | GetAllowedNextOptions,
   ): Promise<AllowedActionsResult> {
+    const availableActions = Array.isArray(options)
+      ? options
+      : options?.availableActions;
     const rule = await this.getRule(task_type);
     if (!rule) {
       return { allowed: [], reason: `No rule found for task_type "${task_type}"`, requires_approval: [], uncalled_required: [] };

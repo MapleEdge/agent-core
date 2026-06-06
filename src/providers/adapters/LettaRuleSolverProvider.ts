@@ -14,6 +14,7 @@ import type {
   ToolRule,
   AllowedActionsResult,
   SequenceValidationResult,
+  GetAllowedNextOptions,
 } from "../RuleSolverProvider.js";
 import { LettaRuleSolver } from "../../rules/lettaRuleSolver.js";
 import type { LettaToolRule } from "../../rules/lettaRuleTypes.js";
@@ -81,8 +82,13 @@ export class LettaRuleSolverProvider implements RuleSolverProvider {
     taskType: string,
     currentAction: string | null | undefined,
     history?: string[],
-    availableActions?: string[],
+    options?: string[] | GetAllowedNextOptions,
   ): Promise<AllowedActionsResult> {
+    // Backward compat: string[] → availableActions only
+    const opts: GetAllowedNextOptions = Array.isArray(options)
+      ? { availableActions: options }
+      : options ?? {};
+
     const solver = this.getSolver(taskType);
     if (!solver) {
       return {
@@ -100,16 +106,16 @@ export class LettaRuleSolverProvider implements RuleSolverProvider {
         ? [...callHistory, currentAction]
         : [...callHistory];
 
-    const availSet = availableActions
-      ? new Set(availableActions)
+    const availSet = opts.availableActions
+      ? new Set(opts.availableActions)
       : this.getAllToolNames();
 
-    const result = solver.solve(effectiveHistory, availSet);
+    const result = solver.solve(effectiveHistory, availSet, opts.lastFunctionResponse);
 
     // Filter allowed by availableActions if provided
     let allowed = result.allowed;
-    if (availableActions) {
-      const avail = new Set(availableActions);
+    if (opts.availableActions) {
+      const avail = new Set(opts.availableActions);
       allowed = allowed.filter((a) => avail.has(a));
     }
 

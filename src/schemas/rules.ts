@@ -13,6 +13,7 @@ export const AllowedNextInput = z.object({
   current_action: z.string().nullish(),
   completed_actions: z.array(z.string()).default([]),
   available_actions: z.array(z.string()).optional(),
+  last_function_response: z.string().optional(),
 });
 
 export const ValidateSequenceInput = z.object({

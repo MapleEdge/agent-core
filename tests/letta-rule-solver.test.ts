@@ -177,7 +177,7 @@ describe("LettaRuleSolverProvider", () => {
     expect(result.uncalled_required).toEqual(["summarize_diff"]);
   });
 
-  it("intersects with availableActions", async () => {
+  it("intersects with availableActions (string[] backward compat)", async () => {
     const result = await provider.getAllowedNext(
       "code_edit",
       "classify_task",
@@ -185,6 +185,34 @@ describe("LettaRuleSolverProvider", () => {
       ["read_file"],
     );
     expect(result.allowed).toEqual(["read_file"]);
+  });
+
+  it("intersects with availableActions (options object)", async () => {
+    const result = await provider.getAllowedNext(
+      "code_edit",
+      "classify_task",
+      [],
+      { availableActions: ["grep"] },
+    );
+    expect(result.allowed).toEqual(["grep"]);
+  });
+
+  it("passes lastFunctionResponse to conditional rules", async () => {
+    provider.setRules("conditional_test", [
+      {
+        type: "conditional",
+        tool_name: "check_status",
+        default_child: "fallback",
+        child_output_mapping: { success: "deploy", failure: "rollback" },
+      },
+    ]);
+    const result = await provider.getAllowedNext(
+      "conditional_test",
+      "check_status",
+      [],
+      { lastFunctionResponse: '{"message": "success"}' },
+    );
+    expect(result.allowed).toEqual(["deploy"]);
   });
 
   it("validates sequences", async () => {
@@ -240,5 +268,130 @@ describe("LettaRuleSolverProvider registry", () => {
     expect(entry).toBeDefined();
     expect(entry!.status).toBe("direct");
     expect(entry!.provider).toBe("letta-rule-solver");
+  });
+});
+
+// ── /rules endpoints with provider vs DB fallback ────────────────
+
+import Fastify, { FastifyInstance } from "fastify";
+import { rulesRoutes, seedDefaultRules } from "../src/rules/routes.js";
+import { seedLettaDefaultRules } from "../src/rules/lettaDefaults.js";
+
+describe("/rules endpoints with LettaRuleSolverProvider", () => {
+  let app: FastifyInstance;
+
+  beforeAll(async () => {
+    resetProviderRegistry();
+    const lettaProvider = new LettaRuleSolverProvider();
+    seedLettaDefaultRules(lettaProvider);
+    registerProvider("ruleSolver", lettaProvider);
+
+    app = Fastify();
+    await app.register(rulesRoutes);
+    seedDefaultRules();
+    await app.ready();
+  });
+
+  afterAll(async () => {
+    await app.close();
+    resetProviderRegistry();
+  });
+
+  it("uses LettaRuleSolverProvider for allowed-next-actions", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: "/rules/allowed-next-actions",
+      payload: { task_type: "code_edit", current_action: null },
+    });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    // Letta rules: init rule returns classify_task
+    expect(body.allowed).toEqual(["classify_task"]);
+    expect(body.reason).toContain("Init rules");
+    // Also has uncalled_required from Letta rules
+    expect(body.uncalled_required).toContain("summarize_diff");
+  });
+
+  it("uses LettaRuleSolverProvider for validate-sequence", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: "/rules/validate-sequence",
+      payload: {
+        task_type: "code_edit",
+        proposed_sequence: ["classify_task", "read_file", "write_file"],
+      },
+    });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    // Letta validates against child rules — this sequence should have violations
+    // because summarize_diff is required_before_exit
+    expect(body.violations).toBeDefined();
+  });
+
+  it("passes lastFunctionResponse through the endpoint", async () => {
+    // Register a conditional rule task type
+    const lettaProvider = getProvider("ruleSolver") as LettaRuleSolverProvider;
+    lettaProvider.setRules("conditional_endpoint", [
+      {
+        type: "conditional",
+        tool_name: "check_status",
+        default_child: "fallback",
+        child_output_mapping: { ok: "deploy" },
+      },
+    ]);
+    const res = await app.inject({
+      method: "POST",
+      url: "/rules/allowed-next-actions",
+      payload: {
+        task_type: "conditional_endpoint",
+        current_action: "check_status",
+        last_function_response: '{"message": "ok"}',
+      },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().allowed).toEqual(["deploy"]);
+  });
+});
+
+describe("/rules endpoints DB fallback (no provider)", () => {
+  let app: FastifyInstance;
+
+  beforeAll(async () => {
+    resetProviderRegistry();
+    app = Fastify();
+    await app.register(rulesRoutes);
+    seedDefaultRules();
+    await app.ready();
+  });
+
+  afterAll(async () => {
+    await app.close();
+    resetProviderRegistry();
+  });
+
+  it("falls back to DB-based mock rules", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: "/rules/allowed-next-actions",
+      payload: { task_type: "code_edit", current_action: "classify_task" },
+    });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    // DB-seeded sequence: classify_task -> read_file
+    expect(body.allowed).toContain("read_file");
+    expect(body.reason).toContain("Next in sequence");
+  });
+
+  it("DB fallback validate-sequence still works", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: "/rules/validate-sequence",
+      payload: {
+        task_type: "code_edit",
+        proposed_sequence: ["classify_task", "read_file", "grep", "write_file", "run_tests", "summarize_diff"],
+      },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().valid).toBe(true);
   });
 });

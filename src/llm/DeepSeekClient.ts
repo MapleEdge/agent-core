@@ -4,7 +4,7 @@
  * Configuration via environment variables:
  *   DEEPSEEK_API_KEY   — required
  *   DEEPSEEK_BASE_URL  — default: https://api.deepseek.com
- *   DEEPSEEK_MODEL     — default: deepseek-chat
+ *   DEEPSEEK_MODEL     — default: deepseek-v4-flash (deepseek-chat deprecated 2026-07-24)
  *
  * Uses the OpenAI-compatible chat/completions endpoint.
  */
@@ -16,7 +16,7 @@ export function getDeepSeekConfig() {
   return {
     apiKey: process.env.DEEPSEEK_API_KEY ?? "",
     baseUrl: process.env.DEEPSEEK_BASE_URL ?? "https://api.deepseek.com",
-    model: process.env.DEEPSEEK_MODEL ?? "deepseek-chat",
+    model: process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash",
   };
 }
 

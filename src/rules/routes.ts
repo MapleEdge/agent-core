@@ -6,6 +6,8 @@ import {
   AllowedNextInput,
   ValidateSequenceInput,
 } from "../schemas/rules.js";
+import { hasProvider, getProvider } from "../providers/registry.js";
+import type { RuleSolverProvider } from "../providers/RuleSolverProvider.js";
 
 export async function rulesRoutes(app: FastifyInstance): Promise<void> {
   app.post("/rules/tool-sequence", async (req, reply) => {
@@ -47,6 +49,27 @@ export async function rulesRoutes(app: FastifyInstance): Promise<void> {
 
   app.post("/rules/allowed-next-actions", async (req) => {
     const input = AllowedNextInput.parse(req.body);
+
+    // Use registered RuleSolverProvider when available
+    if (hasProvider("ruleSolver")) {
+      const provider = getProvider("ruleSolver") as RuleSolverProvider;
+      const result = await provider.getAllowedNext(
+        input.task_type,
+        input.current_action,
+        input.completed_actions,
+        {
+          availableActions: input.available_actions,
+          lastFunctionResponse: input.last_function_response,
+        },
+      );
+      return {
+        task_type: input.task_type,
+        current_action: input.current_action ?? null,
+        ...result,
+      };
+    }
+
+    // Fallback: DB-based mock sequence logic
     const db = getDb();
     const rules = db
       .prepare(`SELECT * FROM tool_rules WHERE task_type = ?`)
@@ -109,6 +132,14 @@ export async function rulesRoutes(app: FastifyInstance): Promise<void> {
 
   app.post("/rules/validate-sequence", async (req) => {
     const input = ValidateSequenceInput.parse(req.body);
+
+    // Use registered RuleSolverProvider when available
+    if (hasProvider("ruleSolver")) {
+      const provider = getProvider("ruleSolver") as RuleSolverProvider;
+      return provider.validateSequence(input.task_type, input.proposed_sequence);
+    }
+
+    // Fallback: DB-based mock sequence logic
     const db = getDb();
     const rules = db
       .prepare(`SELECT * FROM tool_rules WHERE task_type = ?`)
