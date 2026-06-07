@@ -1,8 +1,12 @@
 node_modules/
 dist/
 *.db
+*.db-wal
+*.db-shm
 *.sqlite
 .env
 .env.local
+benchmark-results.json
+retrieval-benchmark-results.json
 # Vendor provider .git dirs (we commit source snapshots, not submodules)
 vendor/providers/**/.git/

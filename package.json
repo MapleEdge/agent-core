@@ -14,7 +14,8 @@
     "typecheck": "tsc --noEmit",
     "smoke": "bash scripts/smoke_test.sh",
     "eval:llm": "tsx scripts/eval_llm.ts",
-    "memory:eval": "tsx scripts/memory-eval.ts"
+    "memory:eval": "tsx scripts/memory-eval.ts",
+    "bench": "tsx scripts/benchmark-runner.ts"
   },
   "engines": {
     "node": ">=18"

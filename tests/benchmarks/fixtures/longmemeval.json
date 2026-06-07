@@ -1,0 +1,286 @@
+{
+  "name": "LongMemEval",
+  "version": "1.0.0",
+  "description": "Long-term Memory Evaluation — tests information extraction, multi-session reasoning, temporal reasoning, knowledge update detection, and abstention over multi-session interactions.",
+  "target_metrics": {
+    "accuracy": 94.8,
+    "tokens_budget": 6800,
+    "latency_p50_ms": 1090
+  },
+  "questions": [
+    {
+      "id": "lme-ie-001",
+      "category": "information-extraction",
+      "question": "What is the user's preferred code formatting style?",
+      "gold_answer": "2-space indentation with semicolons and single quotes",
+      "context_entries": [
+        "User always formats code with 2-space indentation.",
+        "Prettier is configured with singleQuote: true.",
+        "Semicolons are required at the end of statements.",
+        "Max line length is set to 100 characters.",
+        "Import ordering follows ESLint alphabetical sorting."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "lme-ie-002",
+      "category": "information-extraction",
+      "question": "What CI checks must pass before merging?",
+      "gold_answer": "lint (ESLint), typecheck (tsc --noEmit), test (vitest), and smoke test",
+      "context_entries": [
+        "CI runs these checks in order: lint, typecheck, test, smoke.",
+        "ESLint checks all src/ and tests/ directories.",
+        "TypeScript compilation check uses tsc --noEmit.",
+        "Vitest runs the full test suite with coverage.",
+        "The smoke test starts the server and verifies /health."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "lme-ie-003",
+      "category": "information-extraction",
+      "question": "What are the user's naming conventions for test files?",
+      "gold_answer": "Test files use the pattern <module-name>.test.ts and are placed in the tests/ directory",
+      "context_entries": [
+        "Test files follow the pattern <module-name>.test.ts.",
+        "All tests live in the tests/ directory at the project root.",
+        "Test descriptions use describe/it blocks with clear names.",
+        "Fixtures are stored in tests/fixtures/ as JSON files."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "lme-ie-004",
+      "category": "information-extraction",
+      "question": "What deployment target does the application support?",
+      "gold_answer": "Single-node deployment with SQLite, requiring zero external services",
+      "context_entries": [
+        "The default deployment target is single-node SQLite.",
+        "No external vector database or message queue is required.",
+        "The application embeds its own FTS5 search capability.",
+        "Mem0 can optionally run as an embedded Python worker."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "lme-ie-005",
+      "category": "information-extraction",
+      "question": "What is the user's preferred error handling pattern?",
+      "gold_answer": "Structured error objects with error_type and message fields, using try/catch with graceful degradation",
+      "context_entries": [
+        "Errors are returned as structured objects with error_type.",
+        "Each error includes a human-readable message field.",
+        "Try/catch blocks wrap all external API calls.",
+        "The system degrades gracefully: fallback to simpler methods on failure.",
+        "Error responses follow a consistent JSON format across all endpoints."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "lme-ms-001",
+      "category": "multi-session",
+      "question": "Across multiple sessions, what has the user consistently asked about regarding memory search?",
+      "gold_answer": "The user has consistently focused on improving search quality through hybrid retrieval, semantic matching, and benchmarking retrieval accuracy",
+      "context_entries": [
+        "Session 1: User asked about FTS search quality and why synonyms don't match.",
+        "Session 2: User requested hybrid BM25 + vector search implementation.",
+        "Session 3: User asked about retrieval benchmark metrics (Recall@k, MRR).",
+        "Session 4: User requested comparison of mock provider vs mem0 recall.",
+        "Session 5: User asked about semantic matching for paraphrases and abbreviations."
+      ],
+      "capabilities": ["retrieval", "multi-hop"]
+    },
+    {
+      "id": "lme-ms-002",
+      "category": "multi-session",
+      "question": "What recurring issues has the user reported across sessions?",
+      "gold_answer": "Keyword-only search missing semantic matches, need for better metadata filtering, and concern about embedding service reliability",
+      "context_entries": [
+        "Session 1: Reported that searching 'database migration' doesn't find 'schema evolution process'.",
+        "Session 2: Reported that metadata filters using 'contains' operator were broken for arrays.",
+        "Session 3: Asked what happens when the embedding API goes down during search.",
+        "Session 4: Reported that FTS doesn't handle abbreviations like 'OAuth' matching 'authentication'.",
+        "Session 5: Asked about fallback behavior when vector search is unavailable."
+      ],
+      "capabilities": ["retrieval", "multi-hop"]
+    },
+    {
+      "id": "lme-ms-003",
+      "category": "multi-session",
+      "question": "What is the user's evolving strategy for memory providers?",
+      "gold_answer": "Started with mock SQLite provider, added mem0 as production backend with embedded transport, plans to replace mem0 components only when native implementations prove superior via benchmarks",
+      "context_entries": [
+        "Session 1: Started with MockMemoryProvider using SQLite FTS.",
+        "Session 2: Added EmbeddingProvider abstraction and hybrid search.",
+        "Session 3: Introduced Mem0MemoryProvider as a REST adapter.",
+        "Session 4: Refactored to embedded Python worker transport.",
+        "Session 5: Established benchmark gates: native must beat mem0 before replacing.",
+        "Session 6: Added capability audit to prevent rebuilding existing mem0 features."
+      ],
+      "capabilities": ["retrieval", "multi-hop"]
+    },
+    {
+      "id": "lme-temp-001",
+      "category": "temporal",
+      "question": "What was the memory search approach before hybrid retrieval was added?",
+      "gold_answer": "SQLite FTS5 keyword search with BM25 ranking and LIKE fallback",
+      "context_entries": [
+        "Before hybrid retrieval was added, the memory search approach used SQLite FTS5 with prefix matching.",
+        "The original search approach relied on BM25 ranking as the only relevance signal for memory retrieval.",
+        "LIKE search served as fallback for empty FTS results in the early search approach.",
+        "Sprint 2 added EmbeddingProvider and vector-based cosine similarity for hybrid retrieval.",
+        "After hybrid was added, scoring combines 0.7 vector + 0.3 BM25."
+      ],
+      "capabilities": ["retrieval", "temporal"]
+    },
+    {
+      "id": "lme-temp-002",
+      "category": "temporal",
+      "question": "When did the project add multi-provider support?",
+      "gold_answer": "Multi-provider support was added in Sprint 3 with the Mem0MemoryProvider, provider registry, and MEMORY_PROVIDER configuration",
+      "context_entries": [
+        "Sprint 1: The project had only MockMemoryProvider, no multi provider support.",
+        "Sprint 2: Added SQLiteHybridMemoryProvider with embedding support.",
+        "Sprint 3: The project added multi provider support by introducing Mem0MemoryProvider with REST transport.",
+        "Sprint 3: Added provider registry with MEMORY_PROVIDER env var selection to support multiple providers.",
+        "Sprint 3: Added feature flags for hybrid provider strategies."
+      ],
+      "capabilities": ["retrieval", "temporal"]
+    },
+    {
+      "id": "lme-ku-001",
+      "category": "knowledge-update",
+      "question": "What is the current status of the Mem0 transport implementation?",
+      "gold_answer": "The transport was initially REST-only, then refactored to support both embedded (Python worker, default) and REST (fallback) modes",
+      "context_entries": [
+        "V1: Mem0MemoryProvider used REST transport calling MEM0_BASE_URL.",
+        "V2: Added transport abstraction with Mem0Transport interface.",
+        "V2: Implemented Mem0EmbeddedTransport using child_process + JSON-RPC.",
+        "V2: MEM0_TRANSPORT=embedded is now the default mode.",
+        "V2: REST transport retained as fallback for shared deployments."
+      ],
+      "capabilities": ["retrieval", "knowledge-update"]
+    },
+    {
+      "id": "lme-ku-002",
+      "category": "knowledge-update",
+      "question": "Has the project's approach to memory deduplication changed?",
+      "gold_answer": "Initially no dedup existed, now deduplication is delegated to mem0 which uses MD5 hash comparison and LLM-based classification",
+      "context_entries": [
+        "Sprint 1: No deduplication. Duplicate writes create separate records.",
+        "Sprint 2: Added content hash but only for exact matches.",
+        "Sprint 3: Delegated dedup to mem0's MD5 hash + LLM classification pipeline.",
+        "Audit: Confirmed mem0's dedup as best-in-class; no native rebuild needed."
+      ],
+      "capabilities": ["retrieval", "knowledge-update"]
+    },
+    {
+      "id": "lme-ku-003",
+      "category": "knowledge-update",
+      "question": "What happened to the native contradiction detection implementation?",
+      "gold_answer": "It was initially implemented but then reverted after the capability audit showed it should adapt Parlant's CoherenceCheckDocument pattern instead",
+      "context_entries": [
+        "First attempt: Built ContradictionDetector.ts as a native implementation.",
+        "User paused: Requested capability audit before any new implementations.",
+        "Audit: Reverted native implementation, identified Parlant as best reference.",
+        "Recommendation: Adapt Parlant's pairwise {kind, first, second, issue, severity} structure."
+      ],
+      "capabilities": ["retrieval", "knowledge-update"]
+    },
+    {
+      "id": "lme-abs-001",
+      "category": "abstention",
+      "question": "What is the project's release schedule?",
+      "gold_answer": "",
+      "context_entries": [
+        "The project uses semantic versioning.",
+        "CI runs on every pull request.",
+        "Tests must pass before merging.",
+        "The main branch is protected."
+      ],
+      "capabilities": ["abstention"]
+    },
+    {
+      "id": "lme-abs-002",
+      "category": "abstention",
+      "question": "What cloud provider does the project use for deployment?",
+      "gold_answer": "",
+      "context_entries": [
+        "The default deployment target is single-node SQLite.",
+        "No external infrastructure is required.",
+        "The application runs as a standalone Node.js process."
+      ],
+      "capabilities": ["abstention"]
+    },
+    {
+      "id": "lme-abs-003",
+      "category": "abstention",
+      "question": "Who is the project manager for agent-core?",
+      "gold_answer": "",
+      "context_entries": [
+        "The project is a middleware service for agentic workflows.",
+        "It provides memory, action execution, and context retrieval.",
+        "The architecture follows an advisory principle."
+      ],
+      "capabilities": ["abstention"]
+    },
+    {
+      "id": "lme-ie-006",
+      "category": "information-extraction",
+      "question": "What validation library does the project use for API inputs?",
+      "gold_answer": "Zod",
+      "context_entries": [
+        "All API inputs are validated using Zod schemas.",
+        "Zod safeParse is used for non-throwing validation.",
+        "Schema types are inferred using z.infer for TypeScript types.",
+        "Validation errors include structured path and message information."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "lme-ie-007",
+      "category": "information-extraction",
+      "question": "What memory kinds are supported?",
+      "gold_answer": "observation, summary, prompt, and manual",
+      "context_entries": [
+        "Memory records have a kind field: observation, summary, prompt, or manual.",
+        "Observations are captured from tool usage events.",
+        "Summaries are generated from session decomposition.",
+        "Manual memories are explicitly written by users.",
+        "Prompts are stored user instructions or preferences."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "lme-ms-004",
+      "category": "multi-session",
+      "question": "How has the action system evolved across development sessions?",
+      "gold_answer": "Sprint 1 added Zod schema validation, audit records, rationale field, and timeline integration, followed by a comprehensive parity benchmark suite comparing against Letta and cognee patterns",
+      "context_entries": [
+        "The action system evolved across development sessions starting with Zod schema validation for action payloads.",
+        "Across sessions the action system added audit records with status transitions for tracking.",
+        "The action system development added rationale field preservation through the pipeline.",
+        "Action system evolved to include timeline event integration across sessions.",
+        "A comprehensive 116-test parity benchmark suite was added for the action system.",
+        "The parity suite compares the action system against Letta and cognee patterns."
+      ],
+      "capabilities": ["retrieval", "multi-hop"]
+    },
+    {
+      "id": "lme-temp-003",
+      "category": "temporal",
+      "question": "What benchmarks are currently gating CI and what benchmarks are planned for the future?",
+      "gold_answer": "Current CI gates: Recall@1/3/5, MRR, nDCG, latency, metadata filtering, FTS fallback. Future gates: LoCoMo, LongMemEval, BEAM (deferred until extraction, dedup, multi-hop, answer generation are implemented)",
+      "context_entries": [
+        "Benchmarks currently gating CI include Recall@1, Recall@3, Recall@5, MRR, and nDCG metrics.",
+        "Current CI benchmark gates also include latency p50/p95/p99 for search.",
+        "Benchmarks for metadata filtering correctness are gating CI now.",
+        "Current benchmarks gating CI include FTS fallback behavior verification.",
+        "Benchmarks planned for the future include LoCoMo, which is partially runnable but needs answer generation.",
+        "Future planned benchmarks include LongMemEval (needs memory extraction) and BEAM 1M/10M (needs ANN indexing).",
+        "The benchmark roadmap documents a 6-phase gate sequence for planned future benchmarks."
+      ],
+      "capabilities": ["retrieval", "temporal"]
+    }
+  ]
+}
