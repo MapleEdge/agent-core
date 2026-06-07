@@ -13,7 +13,11 @@
     "lint": "eslint src/ tests/",
     "typecheck": "tsc --noEmit",
     "smoke": "bash scripts/smoke_test.sh",
-    "eval:llm": "tsx scripts/eval_llm.ts"
+    "eval:llm": "tsx scripts/eval_llm.ts",
+    "test:parity": "vitest run tests/parity/",
+    "test:perf": "vitest run tests/performance/",
+    "test:all": "vitest run",
+    "parity-report": "tsx scripts/parity-report.ts"
   },
   "engines": {
     "node": ">=18"

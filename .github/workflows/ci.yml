@@ -19,6 +19,17 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm test
+      - name: Parity tests
+        run: pnpm test:parity
+      - name: Performance tests
+        run: pnpm test:perf
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: benchmark-results.json
+          if-no-files-found: ignore
 
   smoke:
     runs-on: ubuntu-latest
