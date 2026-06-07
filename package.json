@@ -14,6 +14,8 @@
     "typecheck": "tsc --noEmit",
     "smoke": "bash scripts/smoke_test.sh",
     "eval:llm": "tsx scripts/eval_llm.ts",
+    "test:retrieval": "vitest run tests/retrieval/",
+    "retrieval-benchmark": "tsx scripts/retrieval-benchmark.ts",
     "test:parity": "vitest run tests/parity/",
     "test:perf": "vitest run tests/performance/",
     "test:all": "vitest run",
