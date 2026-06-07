@@ -1,14 +1,15 @@
 # agent-core
 
-Standalone memory and action service for an agent-aware development platform.
+Standalone memory and action-knowledge service for an agent-aware development platform.
 
-**This is not the full platform.** This repo provides the memory/action substrate that a future platform will call. The future platform will own sessions, worktrees, executor routing, model routing, policy enforcement, quotas, approvals, audit, runner scheduling, commits, deployments, and UI. This repo owns only the memory, context, actions, tool rules, traces, and mock platform contract.
+**This is not the full platform.** This repo provides the memory/action substrate that a future platform will call. The future platform will own sessions, worktrees, executor routing, model routing, policy enforcement, quotas, approvals, audit, runner scheduling, commits, deployments, and UI. This repo owns only the memory, context, action knowledge, tool rules, traces, and mock platform contract.
 
 ## Core thesis
 
 - Memory proposes.
 - Retrieval supplies context.
-- Tool rules constrain local agent behavior.
+- Action knowledge recommends next steps.
+- Tool rules constrain local action order.
 - Policy authorization belongs to the future platform.
 - The control plane records and authorizes everything.
 
@@ -51,7 +52,7 @@ curl -s -X POST http://localhost:3210/rules/allowed-next-actions \
   -H 'Content-Type: application/json' \
   -d '{"task_type":"code_edit","current_action":"classify_task"}'
 
-# 7. Execute actions (mocked)
+# 7. Execute actions (mocked contract test only)
 curl -s -X POST http://localhost:3210/actions/execute \
   -H 'Content-Type: application/json' \
   -d '{"action_name":"read_file","params":{"path":"src/index.ts"}}'
@@ -77,10 +78,10 @@ curl -s http://localhost:3210/sessions/$SESSION/timeline
 | mem0 | Memory | Memory extraction, retrieval, metadata filters |
 | claude-mem | Knowledge | Session persistence, prompts, observations |
 | OpenViking | Context | Context filesystem, hierarchical retrieval |
-| Letta | Memory | Action registry, tool sequencing, prompt assembly |
+| Letta | Action knowledge | Action registry, action schemas, tool sequencing, prompt assembly |
 | cognee | Knowledge | Skill traces, progressive skill loading |
 | Gemini CLI | Routing | Classifier/router strategy pattern |
-| Parlant | Policy | Guideline/policy matching |
+| Parlant | Policy hints | Guideline/policy matching |
 | Chroma | Search | Retrieval backend reference |
 | PageIndex | Search | Document/tree retrieval reference |
 
@@ -94,15 +95,15 @@ curl -s http://localhost:3210/sessions/$SESSION/timeline
 | claude-mem | SessionProvider | Direct partial utility extraction | Timeline utility extracted (proof-of-concept, does not call claude-mem runtime); session CRUD mocked |
 | OpenViking | ContextProvider | Reference only | Mocked — static context tree |
 | Letta | RuleSolverProvider | Direct integration | Active — deterministic TS port of ToolRulesSolver |
-| Letta | ActionProvider | Direct integration planned | Mocked — action registry/schemas planned |
+| Letta | ActionKnowledgeProvider | Direct integration planned | Mocked — action catalog/schemas/recommendations planned; no production execution authority |
 | cognee | TraceProvider | Reference only | Mocked — SQLite trace store |
 | Gemini CLI | ClassifierProvider | Direct integration | Mocked — keyword classifier |
-| Parlant | PolicyMatcherProvider | Reference only | Mocked — static policy rules |
+| Parlant | PolicyMatcherProvider | Reference only | Mocked — static policy hints, not final authorization |
 | Chroma | (backing store) | Reference only | Not integrated |
 | PageIndex | (backing store) | Reference only | Not integrated |
 | DeepSeek | LLMClient | Direct integration | Active — classify/task and memory/extract (opt-in via env vars) |
 
-Provider interfaces: `src/providers/` — 9 typed interfaces (MemoryProvider, SessionProvider, ContextProvider, ActionProvider, RuleSolverProvider, TraceProvider, ClassifierProvider, PolicyMatcherProvider, EmbeddingProvider).
+Provider interfaces: `src/providers/` — typed interfaces including MemoryProvider, SessionProvider, ContextProvider, ActionKnowledgeProvider, RuleSolverProvider, TraceProvider, ClassifierProvider, PolicyMatcherProvider, and EmbeddingProvider.
 
 LLM client: `src/llm/` — provider-neutral `LLMClient` interface with DeepSeek adapter and schema-constrained JSON helper. See [docs/deepseek.md](docs/deepseek.md).
 
