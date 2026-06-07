@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { SessionCreateInput, SessionEventInput } from "../schemas/session.js";
+import { SessionCreateInput, SessionEventInput, SessionListInput, SessionCloseInput } from "../schemas/session.js";
 import { ToolCallTraceInput, SkillRunTraceInput } from "../schemas/traces.js";
 import { getProvider } from "../providers/registry.js";
 
@@ -26,6 +26,33 @@ export async function sessionRoutes(app: FastifyInstance): Promise<void> {
     const event = await getProvider("session").addEvent(session_id, input.event_type, input.data);
     reply.code(201);
     return { id: event.id, session_id, event_type: event.event_type };
+  });
+
+  app.get("/sessions", async (req) => {
+    const query = req.query as Record<string, string>;
+    const input = SessionListInput.parse(query);
+    const sessions = await getProvider("session").list({
+      status: input.status,
+      repo_id: input.repo_id,
+      limit: input.limit,
+    });
+    return { sessions };
+  });
+
+  app.post("/sessions/:session_id/close", async (req) => {
+    const { session_id } = req.params as { session_id: string };
+    const input = SessionCloseInput.parse(req.body ?? {});
+    const session = await getProvider("session").close(session_id, input.summary);
+    if (!session) return { error: "session not found" };
+    return session;
+  });
+
+  app.delete("/sessions/:session_id", async (req, reply) => {
+    const { session_id } = req.params as { session_id: string };
+    const deleted = await getProvider("session").delete(session_id);
+    if (!deleted) return { error: "session not found" };
+    reply.code(204);
+    return;
   });
 
   app.get("/sessions/:session_id/timeline", async (req) => {
