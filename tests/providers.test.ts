@@ -199,6 +199,40 @@ describe("MockMemoryProvider", () => {
     ]);
   });
 
+  it("should filter memory search with mem0-style metadata operators", async () => {
+    await provider.write({
+      scope: "repo",
+      scope_id: "filter-repo",
+      content: "Deploy workflow requires approval",
+      metadata: { priority: 9, type: "release", tags: ["deploy", "approval"], owner: "Platform" },
+    });
+    await provider.write({
+      scope: "repo",
+      scope_id: "filter-repo",
+      content: "Deploy docs are read only",
+      metadata: { priority: 2, type: "docs", tags: ["deploy"], owner: "Docs" },
+    });
+
+    const highPriority = await provider.search({
+      query: "Deploy",
+      scope_id: "filter-repo",
+      filters: { priority: { gte: 5 }, tags: { contains: "approval" } },
+    });
+    expect(highPriority).toHaveLength(1);
+    expect(highPriority[0].metadata.type).toBe("release");
+
+    const logical = await provider.search({
+      query: "Deploy",
+      scope_id: "filter-repo",
+      filters: {
+        OR: [{ type: "release" }, { owner: { icontains: "docs" } }],
+        NOT: [{ priority: { lt: 3 } }],
+      },
+    });
+    expect(logical).toHaveLength(1);
+    expect(logical[0].metadata.owner).toBe("Platform");
+  });
+
   it("should delete a memory", async () => {
     const record = await provider.write({ scope: "user", scope_id: "u1", content: "Delete me" });
     const deleted = await provider.delete(record.id);

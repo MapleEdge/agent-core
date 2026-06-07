@@ -54,6 +54,7 @@ export interface MemorySearchParams {
   query: string;
   scope?: string;
   scope_id?: string;
+  filters?: Record<string, unknown>;
   top_k?: number;
   threshold?: number;
 }

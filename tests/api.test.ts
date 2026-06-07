@@ -96,6 +96,33 @@ describe("Memory", () => {
     expect(res.json().concepts).toEqual(["testing", "quality"]);
   });
 
+  it("searches memories with metadata filters", async () => {
+    await app.inject({
+      method: "POST",
+      url: "/memory/write",
+      payload: {
+        scope: "repo",
+        scope_id: "demo",
+        content: "Release notes require deploy approval",
+        metadata: { priority: 8, category: "release" },
+      },
+    });
+
+    const res = await app.inject({
+      method: "POST",
+      url: "/memory/search",
+      payload: {
+        query: "approval",
+        scope: "repo",
+        filters: { priority: { gt: 5 }, category: { in: ["release"] } },
+      },
+    });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.results).toHaveLength(1);
+    expect(body.results[0].metadata.category).toBe("release");
+  });
+
   it("extracts candidates", async () => {
     const res = await app.inject({
       method: "POST",

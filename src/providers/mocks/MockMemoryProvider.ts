@@ -83,11 +83,15 @@ export class MockMemoryProvider implements MemoryProvider {
   async search(params: MemorySearchParams): Promise<MemorySearchResult[]> {
     const limit = params.top_k ?? 10;
     const ftsQuery = buildFtsQuery(params.query);
-    const rows = ftsQuery ? this.searchFts(params, ftsQuery, limit) : this.searchLike(params, limit);
+    const fetchLimit =
+      params.filters && Object.keys(params.filters).length > 0 ? Math.max(limit * 10, 100) : limit;
+    const rows = ftsQuery ? this.searchFts(params, ftsQuery, fetchLimit) : this.searchLike(params, fetchLimit);
     const threshold = params.threshold ?? 0;
     return rows
       .map((row) => this.toSearchResult(row))
-      .filter((result) => result.score >= threshold);
+      .filter((result) => matchesMetadataFilters(result.metadata, params.filters ?? {}))
+      .filter((result) => result.score >= threshold)
+      .slice(0, limit);
   }
 
   async get(id: string): Promise<MemoryRecord | null> {
@@ -227,4 +231,94 @@ function buildFtsQuery(query: string): string {
 function scoreFromRank(rank: number | undefined): number {
   if (rank === undefined) return 1;
   return 1 / (1 + Math.abs(rank));
+}
+
+function matchesMetadataFilters(metadata: Record<string, unknown>, filters: Record<string, unknown>): boolean {
+  return Object.entries(filters).every(([key, condition]) => {
+    if (key === "AND") return everyFilter(condition, metadata);
+    if (key === "OR") return someFilter(condition, metadata);
+    if (key === "NOT") return notFilter(condition, metadata);
+    return matchesMetadataValue(metadata[key], condition);
+  });
+}
+
+function everyFilter(condition: unknown, metadata: Record<string, unknown>): boolean {
+  return Array.isArray(condition) && condition.every((item) => isRecord(item) && matchesMetadataFilters(metadata, item));
+}
+
+function someFilter(condition: unknown, metadata: Record<string, unknown>): boolean {
+  return Array.isArray(condition) && condition.some((item) => isRecord(item) && matchesMetadataFilters(metadata, item));
+}
+
+function notFilter(condition: unknown, metadata: Record<string, unknown>): boolean {
+  return Array.isArray(condition) && condition.every((item) => isRecord(item) && !matchesMetadataFilters(metadata, item));
+}
+
+function matchesMetadataValue(value: unknown, condition: unknown): boolean {
+  if (condition === "*") return value !== undefined;
+  if (!isOperatorObject(condition)) return deepEqual(value, condition);
+  return Object.entries(condition).every(([operator, expected]) => evaluateOperator(value, operator, expected));
+}
+
+function isOperatorObject(condition: unknown): condition is Record<string, unknown> {
+  if (!isRecord(condition)) return false;
+  return Object.keys(condition).some((key) =>
+    ["eq", "ne", "in", "nin", "gt", "gte", "lt", "lte", "contains", "icontains"].includes(key),
+  );
+}
+
+function evaluateOperator(value: unknown, operator: string, expected: unknown): boolean {
+  switch (operator) {
+    case "eq":
+      return deepEqual(value, expected);
+    case "ne":
+      return !deepEqual(value, expected);
+    case "in":
+      return Array.isArray(expected) && expected.some((item) => deepEqual(value, item));
+    case "nin":
+      return Array.isArray(expected) && expected.every((item) => !deepEqual(value, item));
+    case "gt":
+      return compareNumbers(value, expected, (left, right) => left > right);
+    case "gte":
+      return compareNumbers(value, expected, (left, right) => left >= right);
+    case "lt":
+      return compareNumbers(value, expected, (left, right) => left < right);
+    case "lte":
+      return compareNumbers(value, expected, (left, right) => left <= right);
+    case "contains":
+      return containsValue(value, expected, false);
+    case "icontains":
+      return containsValue(value, expected, true);
+    default:
+      return false;
+  }
+}
+
+function compareNumbers(
+  value: unknown,
+  expected: unknown,
+  comparator: (left: number, right: number) => boolean,
+): boolean {
+  return typeof value === "number" && typeof expected === "number" && comparator(value, expected);
+}
+
+function containsValue(value: unknown, expected: unknown, caseInsensitive: boolean): boolean {
+  if (typeof expected !== "string") return false;
+  if (typeof value === "string") {
+    return caseInsensitive
+      ? value.toLowerCase().includes(expected.toLowerCase())
+      : value.includes(expected);
+  }
+  if (Array.isArray(value)) {
+    return value.some((item) => containsValue(item, expected, caseInsensitive));
+  }
+  return false;
+}
+
+function deepEqual(left: unknown, right: unknown): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
 }

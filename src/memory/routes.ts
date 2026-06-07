@@ -24,6 +24,7 @@ export async function memoryRoutes(app: FastifyInstance): Promise<void> {
       query: input.query,
       scope: input.scope,
       scope_id: input.scope_id,
+      filters: input.filters,
       top_k: input.limit,
     });
     return {

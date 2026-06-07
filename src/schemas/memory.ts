@@ -28,6 +28,7 @@ export const MemorySearchInput = z.object({
   query: z.string().min(1),
   scope: MemoryScope.optional(),
   scope_id: z.string().optional(),
+  filters: z.record(z.unknown()).default({}),
   limit: z.number().int().min(1).max(100).default(10),
 });
 

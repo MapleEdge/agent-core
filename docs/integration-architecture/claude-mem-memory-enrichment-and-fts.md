@@ -4,6 +4,12 @@ This integration upgrades agent-core's memory substrate with portable claude-mem
 
 ## Vendor source inspected
 
+### mem0 metadata filter DSL
+
+mem0's `Memory.search()` accepts `filters`, `threshold`, reranking, and explainability parameters (`vendor/providers/memory/mem0/mem0/memory/main.py:1127-1136`). The source documents exact metadata operators for equality, inequality, list membership, numeric comparisons, text containment, wildcard presence, and logical `AND`/`OR`/`NOT` groups (`main.py:1148-1163`). It copies and validates filters before search (`main.py:1182-1200`) and has a separate branch for advanced-operator processing (`main.py:1204-1209`).
+
+**Adapted:** agent-core now accepts `filters` on `/memory/search` and evaluates mem0-style metadata operators after local FTS candidate retrieval. This keeps the API compatible with future mem0 sidecar semantics without introducing mem0's vector-store dependency chain.
+
 ### Rich memory item schema
 
 claude-mem models durable memory with explicit kinds: `observation`, `summary`, `prompt`, and `manual` (`vendor/providers/knowledge/claude-mem/src/core/schemas/memory-item.ts:5-6`). Its `MemoryItemSchema` stores text/narrative plus extracted `facts`, `concepts`, `filesRead`, `filesModified`, metadata, and creation/update epochs (`memory-item.ts:8-26`). Its create schema makes the enrichment fields optional so callers can progressively add them (`memory-item.ts:28-44`).
@@ -29,6 +35,7 @@ claude-mem's `SessionSearch.searchObservations()` uses FTS5 when available, join
 | Keep `content LIKE ?` only | Misses extracted facts/concepts/files and has no relevance ranking | FTS indexes content plus enrichment fields with `bm25` ranking |
 | Copy full claude-mem `SessionStore` | Bun-specific SQLite and much larger observation/session schema | Portable subset works with `better-sqlite3` and current API |
 | Adopt mem0 sidecar immediately | Requires Python runtime, embeddings, vector store, and graph dependencies | SQLite FTS is deterministic, fast, and CI-friendly |
+| Ignore mem0 metadata filters | Would make a later sidecar adapter a breaking API change | Current provider supports the same deterministic filter DSL locally |
 | Add Chroma now | Requires external sidecar and embedding model | FTS improves local search without adding services |
 | Store only metadata JSON | Harder to query deterministically and rank | First-class columns are easy to index and return in API responses |
 
@@ -40,6 +47,7 @@ claude-mem's `SessionSearch.searchObservations()` uses FTS5 when available, join
 - Triggers keep FTS rows in sync for insert, update, and delete.
 - Existing databases are migrated with `ALTER TABLE ... ADD COLUMN` checks.
 - Search falls back to `LIKE` for queries that tokenize to an empty FTS expression.
+- Metadata filters support `eq`, `ne`, `in`, `nin`, `gt`, `gte`, `lt`, `lte`, `contains`, `icontains`, wildcard `"*"`, and logical `AND`/`OR`/`NOT`.
 
 ## Tests
 
@@ -49,6 +57,7 @@ Contract/parity tests cover:
 2. Updating enriched fields through the provider and API patch endpoint.
 3. Searching facts, concepts, and file references through FTS.
 4. Preserving scoped search behavior with `scope` and `scope_id`.
+5. Filtering search results with mem0-style metadata operators and logical groups.
 
 These tests validate the deterministic parts of claude-mem's architecture: typed memory enrichment, metadata-preserving CRUD, and local SQLite search across enriched fields.
 
