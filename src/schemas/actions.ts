@@ -37,8 +37,59 @@ export const AuditListInput = z.object({
   limit: z.coerce.number().int().positive().default(100),
 });
 
+// ── New endpoint schemas (ActionKnowledgeProvider) ────────────────
+
+export const RecommendNextInput = z.object({
+  task_type: z.string().min(1),
+  current_action: z.string().optional(),
+  completed_actions: z.array(z.string()).default([]),
+  context: z.record(z.unknown()).default({}),
+});
+
+export const PlanInput = z.object({
+  task_type: z.string().min(1),
+  prompt: z.string().min(1),
+  repo_id: z.string().optional(),
+  context: z.record(z.unknown()).optional(),
+});
+
+export const ValidatePlanInput = z.object({
+  task_type: z.string().min(1),
+  steps: z.array(
+    z.object({
+      action_name: z.string().min(1),
+      params: z.record(z.unknown()).default({}),
+      requires_platform_validation: z.literal(true).default(true),
+    }),
+  ),
+  state: z.object({
+    current_action: z.string().nullable().default(null),
+    completed_actions: z.array(z.string()).default([]),
+    known_risks: z.array(z.string()).default([]),
+    missing_context: z.array(z.string()).default([]),
+  }).optional(),
+});
+
+export const OutcomeInput = z.object({
+  session_id: z.string().min(1),
+  action_name: z.string().min(1),
+  params: z.record(z.unknown()).default({}),
+  status: z.enum(["succeeded", "failed", "skipped"]),
+  output: z.record(z.unknown()).default({}),
+  duration_ms: z.number().int().nonnegative(),
+  executor: z.string().min(1),
+  rationale: z.string().optional(),
+  error: z.string().optional(),
+  files_touched: z.array(z.string()).optional(),
+  test_result: z.string().optional(),
+});
+
 export type ActionRegisterInputType = z.infer<typeof ActionRegisterInput>;
 export type ActionValidateInputType = z.infer<typeof ActionValidateInput>;
 export type ActionExecuteInputType = z.infer<typeof ActionExecuteInput>;
 export type ActionPipelineInputType = z.infer<typeof ActionPipelineInput>;
 export type AuditListInputType = z.infer<typeof AuditListInput>;
+export type RecommendNextInputType = z.infer<typeof RecommendNextInput>;
+export type PlanInputType = z.infer<typeof PlanInput>;
+export type ValidatePlanInputType = z.infer<typeof ValidatePlanInput>;
+export type OutcomeInputType = z.infer<typeof OutcomeInput>;

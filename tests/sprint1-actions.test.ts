@@ -159,10 +159,12 @@ describe("Action Schema Exposure", () => {
     const body = res.json();
     const readFile = body.actions.find((a: { name: string }) => a.name === "read_file");
     expect(readFile).toBeDefined();
-    expect(readFile.schema).toBeDefined();
-    expect(readFile.schema.type).toBe("object");
-    expect(readFile.schema.properties).toBeDefined();
-    expect(readFile.schema.properties.path).toBeDefined();
+    // ActionKnowledgeProvider returns params_json_schema (MCP-compatible)
+    expect(readFile.params_json_schema).toBeDefined();
+    expect(readFile.params_json_schema.type).toBe("object");
+    expect(readFile.params_json_schema.properties).toBeDefined();
+    expect(readFile.params_json_schema.properties.path).toBeDefined();
+    expect(readFile.requires_platform_validation).toBe(true);
   });
 
   it("GET /actions/:id returns JSON schema", async () => {

@@ -5,10 +5,15 @@ import {
   ActionExecuteInput,
   ActionPipelineInput,
   AuditListInput,
+  RecommendNextInput,
+  PlanInput,
+  ValidatePlanInput,
+  OutcomeInput,
 } from "../schemas/actions.js";
 import { getProvider, hasProvider } from "../providers/registry.js";
 import { executeActionPipeline } from "./pipeline.js";
 import { getAuditRecord, listAuditRecords } from "./audit.js";
+import type { ActionKnowledgeProvider } from "../providers/ActionKnowledgeProvider.js";
 import type { RuleSolverProvider } from "../providers/RuleSolverProvider.js";
 import type { SessionProvider } from "../providers/SessionProvider.js";
 
@@ -27,14 +32,22 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
   });
 
   app.get("/actions", async () => {
-    const rows = await getProvider("action").list();
+    const provider = getProvider("action");
+    // Use ActionKnowledgeProvider.listActions() if available
+    if ("listActions" in provider) {
+      const definitions = await (provider as ActionKnowledgeProvider).listActions();
+      return { actions: definitions };
+    }
+    const rows = await provider.list();
     return {
       actions: rows.map((r) => ({
         name: r.name,
         description: r.description,
-        schema: r.jsonSchema ?? r.parameters,
-        risk_level: r.risk_level,
-        requires_approval: r.requires_approval,
+        params_json_schema: r.jsonSchema ?? r.parameters,
+        output_json_schema: {},
+        risk: r.risk_level,
+        side_effects: [],
+        requires_platform_validation: true,
       })),
     };
   });
@@ -68,6 +81,11 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
     return { valid: true, action_name: input.action_name, params: input.params };
   });
 
+  /**
+   * Mock-only execution endpoint.
+   * Real side effects belong in the platform (jubilant-goggles).
+   * Retained for testing/demonstration; never executes real actions.
+   */
   app.post("/actions/execute", async (req) => {
     const input = ActionExecuteInput.parse(req.body);
     const result = await getProvider("action").execute(input.action_name, input.params);
@@ -83,6 +101,7 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
       };
     }
     return {
+      mock_contract_only: true,
       executed: result.success,
       action_name: input.action_name,
       execution_mode: result.execution_mode,
@@ -117,6 +136,123 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
       sessionProvider,
     );
     return result;
+  });
+
+  // ── ActionKnowledgeProvider endpoints ─────────────────────────────
+
+  app.post("/actions/recommend-next", async (req) => {
+    const provider = getProvider("action");
+    if (!("recommendNextActions" in provider)) {
+      return { error: "ActionKnowledgeProvider not available", recommendations: [] };
+    }
+    const input = RecommendNextInput.parse(req.body);
+    const recommendations = await (provider as ActionKnowledgeProvider).recommendNextActions({
+      task_type: input.task_type,
+      current_action: input.current_action,
+      completed_actions: input.completed_actions,
+      context: input.context,
+    });
+    return { recommendations };
+  });
+
+  app.post("/actions/plan", async (req) => {
+    const provider = getProvider("action");
+    if (!("buildPlan" in provider)) {
+      return { error: "ActionKnowledgeProvider not available" };
+    }
+    const input = PlanInput.parse(req.body);
+    const plan = await (provider as ActionKnowledgeProvider).buildPlan({
+      task_type: input.task_type,
+      prompt: input.prompt,
+      repo_id: input.repo_id,
+      context: input.context,
+    });
+    return {
+      plan,
+      schema_valid: true,
+      requires_platform_validation: true,
+    };
+  });
+
+  app.post("/actions/validate-plan", async (req) => {
+    const provider = getProvider("action");
+    if (!("validatePlan" in provider)) {
+      return { error: "ActionKnowledgeProvider not available" };
+    }
+    const input = ValidatePlanInput.parse(req.body);
+    const plan = {
+      task_type: input.task_type,
+      steps: input.steps.map((s) => ({
+        action_name: s.action_name,
+        params: s.params,
+        requires_platform_validation: true as const,
+      })),
+      state: input.state ?? {
+        current_action: null,
+        completed_actions: [],
+        known_risks: [],
+        missing_context: [],
+      },
+    };
+    const result = await (provider as ActionKnowledgeProvider).validatePlan(plan);
+    return result;
+  });
+
+  app.post("/actions/outcome", async (req, reply) => {
+    const provider = getProvider("action");
+    if (!("recordActionOutcome" in provider)) {
+      return { error: "ActionKnowledgeProvider not available" };
+    }
+    const input = OutcomeInput.parse(req.body);
+    const stored = await (provider as ActionKnowledgeProvider).recordActionOutcome(input);
+
+    // Also record as trace + session event if providers are available
+    if (hasProvider("trace")) {
+      await getProvider("trace").recordToolCall(
+        input.session_id,
+        input.action_name,
+        input.params,
+        input.output,
+        input.duration_ms,
+      );
+    }
+    if (hasProvider("session")) {
+      const sessionProvider = getProvider("session") as SessionProvider;
+      try {
+        await sessionProvider.addEvent(input.session_id, "ACTION_OUTCOME", {
+          action_name: input.action_name,
+          status: input.status,
+          executor: input.executor,
+          duration_ms: input.duration_ms,
+          outcome_id: stored.id,
+        });
+      } catch {
+        // Session may not exist — non-fatal
+      }
+    }
+
+    reply.code(201);
+    return { recorded: true, outcome_id: stored.id };
+  });
+
+  app.get("/actions/outcomes/:session_id", async (req) => {
+    const provider = getProvider("action");
+    if (!("getOutcomes" in provider)) {
+      return { error: "ActionKnowledgeProvider not available", outcomes: [] };
+    }
+    const { session_id } = req.params as { session_id: string };
+    const outcomes = await (provider as ActionKnowledgeProvider).getOutcomes(session_id);
+    return { session_id, outcomes };
+  });
+
+  app.get("/actions/stats/:action_name", async (req) => {
+    const provider = getProvider("action");
+    if (!("getActionStats" in provider)) {
+      return { error: "ActionKnowledgeProvider not available" };
+    }
+    const { action_name } = req.params as { action_name: string };
+    const stats = await (provider as ActionKnowledgeProvider).getActionStats(action_name);
+    return { action_name, ...stats };
   });
 
   // ── Audit endpoints ──────────────────────────────────────────────

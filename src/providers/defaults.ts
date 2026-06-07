@@ -10,7 +10,7 @@ import {
 } from "./adapters/OpenAICompatibleEmbeddingProvider.js";
 import { SQLiteHybridMemoryProvider } from "./adapters/SQLiteHybridMemoryProvider.js";
 import {
-  MockActionProvider,
+  MockActionKnowledgeProvider,
   MockClassifierProvider,
   MockContextProvider,
   MockMemoryProvider,
@@ -38,7 +38,6 @@ export function registerDefaultProviders(): void {
 
   registerProvider("session", new MockSessionProvider());
   registerProvider("context", new MockContextProvider());
-  registerProvider("action", new MockActionProvider());
   registerProvider("trace", new MockTraceProvider());
   registerProvider(
     "classifier",
@@ -51,6 +50,11 @@ export function registerDefaultProviders(): void {
   const lettaProvider = new LettaRuleSolverProvider();
   seedLettaDefaultRules(lettaProvider);
   registerProvider("ruleSolver", lettaProvider);
+
+  // ActionKnowledgeProvider with rule solver for recommendations/plans
+  const actionProvider = new MockActionKnowledgeProvider();
+  actionProvider.setRuleSolver(lettaProvider);
+  registerProvider("action", actionProvider);
 }
 
 /**
