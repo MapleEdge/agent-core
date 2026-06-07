@@ -13,6 +13,7 @@ export type {
   ActionPlanValidationResult,
   ActionOutcomeRecord,
   StoredOutcome,
+  PolicyHint,
 } from "./ActionKnowledgeProvider.js";
 export type { RuleSolverProvider, ToolRule, AllowedActionsResult, SequenceValidationResult } from "./RuleSolverProvider.js";
 export type { TraceProvider, TraceRecord } from "./TraceProvider.js";

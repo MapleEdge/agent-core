@@ -32,6 +32,7 @@ import type {
   ActionPlanValidationResult,
   ActionOutcomeRecord,
   StoredOutcome,
+  PolicyHint,
 } from "../ActionKnowledgeProvider.js";
 import type { RuleSolverProvider } from "../RuleSolverProvider.js";
 import type { ProviderStatus } from "../registry.js";
@@ -213,7 +214,8 @@ export class MockActionKnowledgeProvider implements ActionKnowledgeProvider {
       return [];
     }
 
-    // Score recommendations using outcome history
+    const approvalSet = new Set(result.requires_approval);
+
     const recommendations: ActionRecommendation[] = [];
     for (const actionName of result.allowed) {
       const stats = getActionStatsFromStore(actionName);
@@ -222,14 +224,17 @@ export class MockActionKnowledgeProvider implements ActionKnowledgeProvider {
 
       const action = await this.get(actionName);
       const rationale = this.buildRationale(actionName, context, stats);
+      const policyHints = this.buildPolicyHints(actionName, context, result.uncalled_required);
 
       recommendations.push({
         action_name: actionName,
         params: this.suggestParams(actionName, context),
         schema_valid: action !== null,
         requires_platform_validation: true,
+        requires_approval: approvalSet.has(actionName),
         confidence,
         rationale,
+        ...(policyHints.length > 0 ? { policy_hints: policyHints } : {}),
       });
     }
 
@@ -412,5 +417,34 @@ export class MockActionKnowledgeProvider implements ActionKnowledgeProvider {
     if (!context.repo_id) missing.push("repo_id");
     if (!context.prompt || context.prompt.length < 10) missing.push("detailed_prompt");
     return missing;
+  }
+
+  /** Parlant-style soft policy hints based on rule solver state. */
+  private buildPolicyHints(
+    actionName: string,
+    context: ActionRecommendationContext,
+    uncalledRequired: string[],
+  ): PolicyHint[] {
+    const hints: PolicyHint[] = [];
+
+    // Warn if required-before-exit actions haven't been called yet
+    if (uncalledRequired.length > 0 && actionName === "commit") {
+      hints.push({
+        condition: "required_actions_pending",
+        recommendation: `Run ${uncalledRequired.join(", ")} before commit`,
+        severity: "warning",
+      });
+    }
+
+    // Hint about test-before-commit
+    if (actionName === "commit" && !context.completed_actions.includes("run_tests")) {
+      hints.push({
+        condition: "tests_not_run",
+        recommendation: "run_tests before commit",
+        severity: "warning",
+      });
+    }
+
+    return hints;
   }
 }

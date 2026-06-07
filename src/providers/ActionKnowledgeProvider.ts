@@ -50,8 +50,17 @@ export interface ActionRecommendation {
   params: Record<string, unknown>;
   schema_valid: boolean;
   requires_platform_validation: true;
+  requires_approval: boolean;
   confidence: number;
   rationale: string;
+  policy_hints?: PolicyHint[];
+}
+
+/** Parlant-style soft policy hint — advisory, not enforcement. */
+export interface PolicyHint {
+  condition: string;
+  recommendation: string;
+  severity: "info" | "warning" | "error";
 }
 
 // ── Plan ────────────────────────────────────────────────────────────
@@ -126,7 +135,11 @@ export interface ActionKnowledgeProvider extends ActionProvider {
   /** Get a single action definition. */
   getAction(name: string): Promise<ActionDefinition | null>;
 
-  /** Recommend next actions given current context. Uses rule solver + outcome history. */
+  /**
+   * Recommend next actions given current context.
+   * Delegates to RuleSolverProvider.getAllowedNext() for sequencing,
+   * then enriches with outcome stats and policy hints.
+   */
   recommendNextActions(context: ActionRecommendationContext): Promise<ActionRecommendation[]>;
 
   /** Build an advisory plan for a task. Plans are state, not execution. */
