@@ -259,7 +259,25 @@ export async function executeActionPipeline(
   }
 
   // ── Stage 5: Invoke ─────────────────────────────────────────────
-  const result = await actionProvider.execute(ctx.action_name, ctx.params);
+  let result: Awaited<ReturnType<typeof actionProvider.execute>>;
+  try {
+    result = await actionProvider.execute(ctx.action_name, ctx.params);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    updateAuditRecord(audit.id, {
+      status: "failed",
+      error: { code: "ACTION_INVOCATION_ERROR", message },
+    });
+    await emitFailedEvent(sessionProvider, ctx, audit, "invoke");
+    return {
+      success: false,
+      stage: "invoke",
+      duration_ms: elapsed(start),
+      rationale: ctx.rationale,
+      audit_id: audit.id,
+      error: { code: "ACTION_INVOCATION_ERROR", message },
+    };
+  }
   const duration_ms = elapsed(start);
 
   // Auto-trace if a trace provider and session are available.

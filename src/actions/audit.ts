@@ -109,8 +109,13 @@ export function updateAuditRecord(
 ): ActionAuditRecord | null {
   const db = getDb();
   const now = new Date().toISOString();
-  const sets: string[] = ["status = ?", "completed_at = ?"];
-  const values: unknown[] = [update.status, now];
+  const isTerminal = update.status === "executed" || update.status === "failed";
+  const sets: string[] = ["status = ?"];
+  const values: unknown[] = [update.status];
+  if (isTerminal) {
+    sets.push("completed_at = ?");
+    values.push(now);
+  }
 
   if (update.output !== undefined) {
     sets.push("output = ?");
