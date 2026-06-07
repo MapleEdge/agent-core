@@ -4,114 +4,114 @@
 
 ```text
 MemoryProvider (interface)
- ├─ MockMemoryProvider       — SQLite FTS, keyword search, mock mode
- └─ Mem0MemoryProvider       — mem0 REST API adapter, production mode
+ ├─ SQLiteHybridMemoryProvider — default native SQLite memory backend
+ └─ Mem0MemoryProvider         — optional mem0 adapter via embedded worker or REST
 ```
 
 ## Current State
 
-**Mem0MemoryProvider** is the highest-capability memory backend.
+`SQLiteHybridMemoryProvider` is the default memory backend. It is native to agent-core and provides:
 
-It provides:
-- LLM-driven fact extraction on write
-- Hybrid BM25 + vector semantic search
-- Entity extraction and entity boost scoring
-- Hash-based memory deduplication
-- Optional reranking
+- SQLite-backed memory CRUD
+- FTS5/BM25 keyword search
+- Vector-style similarity search using the configured embedding provider
+- Hybrid retrieval scoring
+- Metadata filtering
+- Deterministic local testability
 
-**MockMemoryProvider** is retained for:
-- Unit and integration testing (no external deps)
-- Benchmarking baseline
-- Fallback when mem0 is unavailable
-- Future native implementation development
+`Mem0MemoryProvider` is retained as a high-capability reference and optional adapter. It delegates to mem0 through a transport layer:
+
+- Embedded Python worker by default
+- REST sidecar when `MEM0_TRANSPORT=rest` or `MEM0_BASE_URL` is set
+
+mem0 remains useful for comparison because upstream mem0 includes LLM-driven extraction, semantic retrieval, entity-aware recall, deduplication, consolidation, and procedural-memory patterns.
 
 ## Provider Selection
 
 ```env
-MEMORY_PROVIDER=mock     # default — SQLite-backed mock
-MEMORY_PROVIDER=mem0     # requires MEM0_BASE_URL
+MEMORY_PROVIDER=sqlite   # default — native SQLite hybrid backend
+MEMORY_PROVIDER=mem0     # optional — embedded worker by default, REST fallback available
 ```
 
-## Future: Native Components
+For mem0 transport details, see `docs/memory.md`.
 
-The roadmap for replacing mem0 subsystems with native implementations:
+## Replacement Direction
+
+The previous roadmap treated mem0 as the primary production backend to be replaced later. That is no longer accurate. The native SQLite hybrid provider is now the default substrate. The roadmap is now to improve the native provider until it covers the useful mem0-inspired capabilities directly.
 
 | Component | Current Owner | Target Owner | Status |
-|-----------|--------------|-------------|--------|
-| Memory CRUD | agent-core (SQLite) | agent-core | Done |
-| FTS search (BM25) | agent-core (FTS5) | agent-core | Done |
-| Vector search | mem0 (Qdrant/pgvector) | agent-core (SQLite brute-force exists) | Prototype |
-| Hybrid reranking | mem0 | agent-core | Prototype |
-| Fact extraction | mem0 (LLM) | agent-core (LLM) | Planned |
-| Deduplication | mem0 (MD5 hash) | agent-core | Planned |
-| Entity extraction | mem0 (NER) | agent-core | Planned |
-| Consolidation | mem0 (LLM merge) | agent-core | Planned |
-| Procedural memory | mem0 | agent-core | Planned |
+|-----------|--------------|--------------|--------|
+| Memory CRUD | agent-core | agent-core | Done |
+| FTS search (BM25) | agent-core | agent-core | Done |
+| Vector-style similarity search | agent-core | agent-core | Prototype |
+| Hybrid retrieval scoring | agent-core | agent-core | Active |
+| Metadata filtering | agent-core | agent-core | Active |
+| Fact extraction | keyword/LLM path | agent-core | Partial |
+| Deduplication | agent-core/mem0 reference | agent-core | Planned |
+| Entity extraction | mem0 reference | agent-core | Planned |
+| Consolidation | mem0 reference | agent-core | Planned |
+| Procedural memory | mem0 reference | agent-core | Planned |
 
-## Replacement Rule
+## Benchmark Gate
 
-A native component CANNOT replace a mem0 component unless it demonstrates:
-
-### Benchmark Gate
+A native memory subsystem should not replace a mem0-inspired capability unless it passes retrieval and latency gates against current baselines.
 
 ```text
-Recall@1  ≥  mem0 baseline
-Recall@3  ≥  mem0 baseline
-Recall@5  ≥  mem0 baseline
-MRR       ≥  mem0 baseline
-nDCG@5    ≥  mem0 baseline
+Recall@1  >= baseline
+Recall@3  >= baseline
+Recall@5  >= baseline
+MRR       >= baseline
+nDCG@5    >= baseline
 ```
 
 AND:
 
 ```text
-Search latency p95  ≤  mem0 baseline × 1.2
-Write latency p95   ≤  mem0 baseline × 1.2
+Search latency p95 <= baseline x 1.2
+Write latency p95  <= baseline x 1.2
 ```
 
-### Process
+For early retrieval-substrate work, do not gate on long-memory benchmarks such as LoCoMo, LongMemEval, or BEAM. Those are later-stage benchmarks for extraction, consolidation, temporal reasoning, multi-hop recall, and scale.
 
-1. Implement native component
-2. Run `pnpm memory:eval` with both providers
-3. Compare JSON reports
-4. Native component must meet or exceed all benchmark gate criteria
-5. Only then can it become the default
+## Process
 
-### Running Benchmarks
+1. Implement or improve the native component.
+2. Run `pnpm memory:eval` against the default provider.
+3. Optionally run `MEMORY_PROVIDER=mem0 pnpm memory:eval` for comparison.
+4. Compare JSON reports.
+5. Promote only the components that meet the benchmark gate and operational requirements.
+
+## Running Benchmarks
 
 ```bash
-# Mock provider baseline
-pnpm memory:eval > mock-baseline.json
+# Default native provider
+pnpm memory:eval > native-baseline.json
 
-# Mem0 provider baseline (requires running mem0 server)
-MEMORY_PROVIDER=mem0 MEM0_BASE_URL=http://localhost:8000 pnpm memory:eval > mem0-baseline.json
+# Optional mem0 comparison, embedded worker by default
+MEMORY_PROVIDER=mem0 pnpm memory:eval > mem0-baseline.json
 
-# Compare
-diff mock-baseline.json mem0-baseline.json
+# Optional mem0 REST comparison
+MEMORY_PROVIDER=mem0 MEM0_TRANSPORT=rest MEM0_BASE_URL=http://localhost:8000 pnpm memory:eval > mem0-rest-baseline.json
 ```
 
 ## Feature Flags for Hybrid Strategy
 
-Individual memory subsystems can be configured independently:
+Individual memory subsystems can be configured independently where implemented:
 
 ```env
-MEMORY_EXTRACTION_PROVIDER=mem0     # LLM fact extraction
-MEMORY_RETRIEVAL_PROVIDER=mem0      # Hybrid search
-MEMORY_DEDUP_PROVIDER=mem0          # Hash deduplication
+MEMORY_EXTRACTION_PROVIDER=mem0     # optional LLM fact extraction reference path
+MEMORY_RETRIEVAL_PROVIDER=native    # native retrieval path
+MEMORY_DEDUP_PROVIDER=native        # native dedup path once implemented
 ```
 
-This enables gradual migration:
-1. Start with `MEMORY_PROVIDER=mem0` (all features via mem0)
-2. Build native retrieval, benchmark it, swap `MEMORY_RETRIEVAL_PROVIDER=native`
-3. Build native dedup, benchmark it, swap `MEMORY_DEDUP_PROVIDER=native`
-4. Eventually `MEMORY_PROVIDER=native` when all subsystems are replaced
+These flags are migration levers, not proof that mem0 owns the primary runtime.
 
 ## Timeline
 
 | Phase | Milestone | Criteria |
 |-------|-----------|----------|
-| **Now** | Mem0 as primary backend | Working adapter, benchmarks established |
-| **Sprint 4** | Native retrieval parity | Recall metrics match mem0 |
-| **Sprint 5** | Native extraction | LLM-based fact extraction in agent-core |
-| **Sprint 6** | Native dedup | Hash + semantic dedup |
-| **Future** | Full native stack | All subsystems pass benchmark gate |
+| **Now** | Native SQLite hybrid as default | CRUD, FTS, vector-style search, hybrid scoring, metadata filters |
+| **Sprint 2** | Retrieval substrate hardening | Recall@K, MRR, nDCG, latency, fallback, filter correctness |
+| **Sprint 3** | Extraction and dedup hardening | Durable fact extraction, duplicate suppression, update history |
+| **Sprint 4** | Consolidation and procedural memory | Conflict handling, procedural memories, session-derived lessons |
+| **Future** | Long-memory evaluation | LoCoMo/LongMemEval/BEAM-style benchmarks when the required capabilities exist |
