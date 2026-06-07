@@ -16,7 +16,7 @@ import type { ClassifierProvider } from "./ClassifierProvider.js";
 import type { PolicyMatcherProvider } from "./PolicyMatcherProvider.js";
 
 /** Architectural integration status — declared by the provider, not inferred. */
-export type ProviderStatus = "mock" | "direct" | "sidecar" | "reference";
+export type ProviderStatus = "mock" | "direct" | "adapter" | "sidecar" | "reference";
 
 export interface ProviderCapability {
   /** Registry slot name (e.g. "memory", "classifier"). */

@@ -1,68 +1,51 @@
 import { FastifyInstance } from "fastify";
-import { getDb } from "../db.js";
 import {
   ActionRegisterInput,
   ActionValidateInput,
   ActionExecuteInput,
 } from "../schemas/actions.js";
-import { executeMockAction } from "./executor.js";
+import { getProvider } from "../providers/registry.js";
 
 export async function actionRoutes(app: FastifyInstance): Promise<void> {
   app.post("/actions/register", async (req, reply) => {
     const input = ActionRegisterInput.parse(req.body);
-    const db = getDb();
-    db.prepare(
-      `INSERT OR REPLACE INTO actions (name, description, schema, risk_level, requires_approval)
-       VALUES (?, ?, ?, ?, ?)`,
-    ).run(
-      input.name,
-      input.description,
-      JSON.stringify(input.schema),
-      input.risk_level,
-      input.requires_approval ? 1 : 0,
-    );
+    await getProvider("action").register({
+      name: input.name,
+      description: input.description,
+      parameters: input.schema,
+      risk_level: input.risk_level,
+      requires_approval: input.requires_approval,
+    });
     reply.code(201);
     return { name: input.name, status: "registered" };
   });
 
   app.get("/actions", async () => {
-    const db = getDb();
-    const rows = db.prepare(`SELECT * FROM actions ORDER BY name`).all() as Record<
-      string,
-      unknown
-    >[];
+    const rows = await getProvider("action").list();
     return {
       actions: rows.map((r) => ({
         ...r,
-        schema: JSON.parse(r.schema as string),
-        requires_approval: Boolean(r.requires_approval),
+        schema: r.parameters,
       })),
     };
   });
 
   app.get("/actions/:action_name", async (req) => {
     const { action_name } = req.params as { action_name: string };
-    const db = getDb();
-    const row = db.prepare(`SELECT * FROM actions WHERE name = ?`).get(action_name) as
-      | Record<string, unknown>
-      | undefined;
+    const row = await getProvider("action").get(action_name);
     if (!row) {
       return { error: "action not found" };
     }
     return {
       ...row,
-      schema: JSON.parse(row.schema as string),
-      requires_approval: Boolean(row.requires_approval),
+      schema: row.parameters,
     };
   });
 
   app.post("/actions/validate", async (req) => {
     const input = ActionValidateInput.parse(req.body);
-    const db = getDb();
-    const row = db.prepare(`SELECT * FROM actions WHERE name = ?`).get(input.action_name) as
-      | Record<string, unknown>
-      | undefined;
-    if (!row) {
+    const validation = await getProvider("action").validate(input.action_name, input.params);
+    if (!validation.valid) {
       return { valid: false, reason: `Unknown action: ${input.action_name}` };
     }
     return { valid: true, action_name: input.action_name, params: input.params };
@@ -70,14 +53,11 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
 
   app.post("/actions/execute", async (req) => {
     const input = ActionExecuteInput.parse(req.body);
-    const db = getDb();
-    const row = db.prepare(`SELECT * FROM actions WHERE name = ?`).get(input.action_name) as
-      | Record<string, unknown>
-      | undefined;
-    if (!row) {
+    const result = await getProvider("action").execute(input.action_name, input.params);
+    if (result.error?.startsWith("Unknown action:")) {
       return { error: `Unknown action: ${input.action_name}`, executed: false };
     }
-    if (row.requires_approval) {
+    if (result.error === "Action requires platform approval") {
       return {
         executed: false,
         reason: "Action requires platform approval",
@@ -85,8 +65,11 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
         approval_required: true,
       };
     }
-    const result = executeMockAction(input.action_name, input.params);
-    const execution_mode = input.action_name === "read_file" ? "local_safe" : "mock";
-    return { executed: true, action_name: input.action_name, execution_mode, result };
+    return {
+      executed: result.success,
+      action_name: input.action_name,
+      execution_mode: result.execution_mode,
+      result: result.output,
+    };
   });
 }
