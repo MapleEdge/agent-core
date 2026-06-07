@@ -14,6 +14,7 @@ import type { RuleSolverProvider } from "./RuleSolverProvider.js";
 import type { TraceProvider } from "./TraceProvider.js";
 import type { ClassifierProvider } from "./ClassifierProvider.js";
 import type { PolicyMatcherProvider } from "./PolicyMatcherProvider.js";
+import type { EmbeddingProvider } from "./EmbeddingProvider.js";
 
 /** Architectural integration status — declared by the provider, not inferred. */
 export type ProviderStatus = "mock" | "direct" | "adapter" | "sidecar" | "reference";
@@ -42,6 +43,7 @@ interface ProviderRegistry {
   trace: TraceProvider | null;
   classifier: ClassifierProvider | null;
   policyMatcher: PolicyMatcherProvider | null;
+  embedding: EmbeddingProvider | null;
 }
 
 function emptyRegistry(): ProviderRegistry {
@@ -54,6 +56,7 @@ function emptyRegistry(): ProviderRegistry {
     trace: null,
     classifier: null,
     policyMatcher: null,
+    embedding: null,
   };
 }
 

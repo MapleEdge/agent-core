@@ -3,6 +3,12 @@ import { GeminiClassifierProvider } from "./adapters/GeminiClassifierProvider.js
 import { Mem0MemoryProvider } from "./adapters/Mem0MemoryProvider.js";
 import { Mem0RestTransport } from "../memory/transports/Mem0RestTransport.js";
 import { Mem0EmbeddedTransport } from "../memory/transports/Mem0EmbeddedTransport.js";
+import { MockEmbeddingProvider } from "./adapters/MockEmbeddingProvider.js";
+import {
+  OpenAICompatibleEmbeddingProvider,
+  getEmbeddingConfig,
+} from "./adapters/OpenAICompatibleEmbeddingProvider.js";
+import { SQLiteHybridMemoryProvider } from "./adapters/SQLiteHybridMemoryProvider.js";
 import {
   MockActionProvider,
   MockClassifierProvider,
@@ -16,10 +22,18 @@ import { registerProvider } from "./registry.js";
 import { seedLettaDefaultRules } from "../rules/lettaDefaults.js";
 import { isGeminiConfigured } from "../llm/GeminiClient.js";
 import type { MemoryProvider } from "./MemoryProvider.js";
+import type { EmbeddingProvider } from "./EmbeddingProvider.js";
 
 export function registerDefaultProviders(): void {
-  // Memory provider: mem0 adapter when configured, else mock
-  const memoryProvider = resolveMemoryProvider();
+  // Embedding provider: real API if configured, else mock
+  const embeddingConfig = getEmbeddingConfig();
+  const embeddingProvider: EmbeddingProvider = embeddingConfig
+    ? new OpenAICompatibleEmbeddingProvider(embeddingConfig)
+    : new MockEmbeddingProvider();
+  registerProvider("embedding", embeddingProvider);
+
+  // Memory provider: mem0 when configured, else hybrid SQLite
+  const memoryProvider = resolveMemoryProvider(embeddingProvider);
   registerProvider("memory", memoryProvider);
 
   registerProvider("session", new MockSessionProvider());
@@ -54,7 +68,7 @@ export function registerDefaultProviders(): void {
  *   MEMORY_RETRIEVAL_PROVIDER=mem0   — use mem0 for retrieval only
  *   MEMORY_DEDUP_PROVIDER=mem0       — use mem0 for deduplication only
  */
-function resolveMemoryProvider(): MemoryProvider {
+function resolveMemoryProvider(embeddingProvider: EmbeddingProvider): MemoryProvider {
   const providerName = process.env.MEMORY_PROVIDER ?? "mock";
 
   if (providerName === "mem0") {
@@ -88,5 +102,5 @@ function resolveMemoryProvider(): MemoryProvider {
     return new Mem0MemoryProvider(embedded);
   }
 
-  return new MockMemoryProvider();
+  return new SQLiteHybridMemoryProvider(embeddingProvider);
 }

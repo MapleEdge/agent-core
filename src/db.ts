@@ -105,6 +105,24 @@ function initSchema(db: Database.Database): void {
       reason TEXT NOT NULL DEFAULT '',
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
+
+    CREATE TABLE IF NOT EXISTS action_audits (
+      id TEXT PRIMARY KEY,
+      session_id TEXT,
+      user_id TEXT,
+      action_name TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'requested',
+      rationale TEXT,
+      input TEXT NOT NULL DEFAULT '{}',
+      output TEXT,
+      error TEXT,
+      started_at TEXT NOT NULL DEFAULT (datetime('now')),
+      completed_at TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_action_audits_session ON action_audits(session_id);
+    CREATE INDEX IF NOT EXISTS idx_action_audits_action ON action_audits(action_name);
+    CREATE INDEX IF NOT EXISTS idx_action_audits_status ON action_audits(status);
   `);
   ensureMemoryColumns(db);
   initMemoryFts(db);

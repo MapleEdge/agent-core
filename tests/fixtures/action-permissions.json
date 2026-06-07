@@ -1,0 +1,78 @@
+[
+  {
+    "name": "allowed_read_file",
+    "action": "read_file",
+    "params": { "path": "README.md" },
+    "expected": {
+      "allowed": true,
+      "invoked": true,
+      "failStage": null
+    }
+  },
+  {
+    "name": "allowed_grep",
+    "action": "grep",
+    "params": { "pattern": "test" },
+    "expected": {
+      "allowed": true,
+      "invoked": true,
+      "failStage": null
+    }
+  },
+  {
+    "name": "approval_required_commit",
+    "action": "commit",
+    "params": { "message": "deploy" },
+    "expected": {
+      "allowed": false,
+      "invoked": false,
+      "failStage": "permission",
+      "errorCode": "ACTION_PERMISSION_ERROR"
+    }
+  },
+  {
+    "name": "scope_denied_action",
+    "action": "summarize_diff",
+    "taskType": "code_edit",
+    "completedActions": [],
+    "params": {},
+    "expected": {
+      "allowed": false,
+      "invoked": false,
+      "failStage": "scope",
+      "errorCode": "ACTION_SCOPE_ERROR"
+    }
+  },
+  {
+    "name": "secret_path_attempt",
+    "action": "read_file",
+    "params": { "path": "/etc/shadow" },
+    "expected": {
+      "allowed": true,
+      "invoked": true,
+      "note": "read_file is local_safe - reads from fixture dir only, never real filesystem"
+    }
+  },
+  {
+    "name": "destructive_action_gated",
+    "action": "commit",
+    "params": { "message": "force push to prod" },
+    "expected": {
+      "allowed": false,
+      "invoked": false,
+      "failStage": "permission",
+      "errorCode": "ACTION_PERMISSION_ERROR"
+    }
+  },
+  {
+    "name": "nonexistent_action_denied",
+    "action": "deploy_to_production",
+    "params": {},
+    "expected": {
+      "allowed": false,
+      "invoked": false,
+      "failStage": "lookup",
+      "errorCode": "ACTION_NOT_FOUND"
+    }
+  }
+]

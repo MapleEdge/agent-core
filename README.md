@@ -88,7 +88,9 @@ curl -s http://localhost:3210/sessions/$SESSION/timeline
 
 | Provider | Interface | Strategy | Status |
 |----------|-----------|----------|--------|
-| mem0 | MemoryProvider | Adapter (embedded worker / REST) | Active — `Mem0MemoryProvider` delegates via transport layer: embedded Python worker (default, JSON-RPC over stdio) or REST sidecar; mock fallback when unavailable |
+| (built-in) | EmbeddingProvider | Direct (mock) / Adapter (OpenAI-compatible) | Active — MockEmbeddingProvider default; OpenAI-compatible adapter with DeepSeek default |
+| (built-in) | MemoryProvider | Direct integration | Active — SQLiteHybridMemoryProvider with BM25 + vector hybrid search (default) |
+| mem0 | MemoryProvider | Adapter (embedded worker / REST) | Active — `Mem0MemoryProvider` delegates via transport layer: embedded Python worker (default, JSON-RPC over stdio) or REST sidecar; set `MEMORY_PROVIDER=mem0` |
 | claude-mem | SessionProvider | Direct partial utility extraction | Timeline utility extracted (proof-of-concept, does not call claude-mem runtime); session CRUD mocked |
 | OpenViking | ContextProvider | Reference only | Mocked — static context tree |
 | Letta | RuleSolverProvider | Direct integration | Active — deterministic TS port of ToolRulesSolver |
@@ -100,9 +102,11 @@ curl -s http://localhost:3210/sessions/$SESSION/timeline
 | PageIndex | (backing store) | Reference only | Not integrated |
 | DeepSeek | LLMClient | Direct integration | Active — classify/task and memory/extract (opt-in via env vars) |
 
-Provider interfaces: `src/providers/` — 8 typed interfaces (MemoryProvider, SessionProvider, ContextProvider, ActionProvider, RuleSolverProvider, TraceProvider, ClassifierProvider, PolicyMatcherProvider).
+Provider interfaces: `src/providers/` — 9 typed interfaces (MemoryProvider, SessionProvider, ContextProvider, ActionProvider, RuleSolverProvider, TraceProvider, ClassifierProvider, PolicyMatcherProvider, EmbeddingProvider).
 
 LLM client: `src/llm/` — provider-neutral `LLMClient` interface with DeepSeek adapter and schema-constrained JSON helper. See [docs/deepseek.md](docs/deepseek.md).
+
+Retrieval benchmarks: `pnpm test:retrieval` — measures Recall@K, MRR, nDCG and latency at 100/1K/10K scale. See [docs/memory.md](docs/memory.md).
 
 Evaluation: `pnpm eval:llm` — fixture-based LLM eval runner (requires `ENABLE_LLM_EVALS=true` and `DEEPSEEK_API_KEY`). See [docs/evaluation.md](docs/evaluation.md).
 

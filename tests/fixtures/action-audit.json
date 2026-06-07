@@ -1,0 +1,58 @@
+[
+  {
+    "name": "successful_execution_flow",
+    "action": "grep",
+    "params": { "pattern": "audit-test" },
+    "rationale": "Since the user wants to find audit references, thus I am searching the codebase to locate them.",
+    "expected": {
+      "auditStatuses": ["requested", "validated", "executed"],
+      "finalStatus": "executed",
+      "hasOutput": true,
+      "hasRationale": true
+    }
+  },
+  {
+    "name": "validation_failure_flow",
+    "action": "read_file",
+    "params": {},
+    "rationale": "Since the user wants to read a file, thus I am attempting to read it.",
+    "expected": {
+      "auditStatuses": ["requested", "failed"],
+      "finalStatus": "failed",
+      "hasError": true,
+      "hasRationale": true
+    }
+  },
+  {
+    "name": "permission_denied_flow",
+    "action": "commit",
+    "params": { "message": "test commit" },
+    "expected": {
+      "auditStatuses": ["requested", "failed"],
+      "finalStatus": "failed",
+      "hasError": true,
+      "errorCode": "ACTION_PERMISSION_ERROR"
+    }
+  },
+  {
+    "name": "lookup_failure_flow",
+    "action": "nonexistent_abc",
+    "params": {},
+    "expected": {
+      "auditStatuses": ["requested", "failed"],
+      "finalStatus": "failed",
+      "hasError": true,
+      "errorCode": "ACTION_NOT_FOUND"
+    }
+  },
+  {
+    "name": "audit_captures_session_id",
+    "action": "grep",
+    "params": { "pattern": "session-test" },
+    "withSession": true,
+    "expected": {
+      "hasSessionId": true,
+      "finalStatus": "executed"
+    }
+  }
+]

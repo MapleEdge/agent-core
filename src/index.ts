@@ -9,6 +9,7 @@ import { classifyRoutes } from "./api/classify.js";
 import { policyRoutes, seedDefaultPolicies } from "./api/policy.js";
 import { mockPlatformRoutes } from "./mock_platform/routes.js";
 import { seedDefaultActions } from "./actions/defaults.js";
+import { seedActionSchemas } from "./actions/actionSchemas.js";
 import { closeDb } from "./db.js";
 import { registerDefaultProviders } from "./providers/defaults.js";
 import { providerRoutes } from "./providers/routes.js";
@@ -41,6 +42,7 @@ async function main(): Promise<void> {
   await app.register(providerRoutes);
 
   seedDefaultActions();
+  seedActionSchemas();
   seedDefaultRules();
   seedDefaultPolicies();
 

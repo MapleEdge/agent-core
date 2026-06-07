@@ -1,0 +1,174 @@
+{
+  "description": "Retrieval benchmark fixtures for hybrid memory search evaluation",
+  "categories": {
+    "semantic_synonym": {
+      "description": "Queries and memories that are semantically similar but use different words",
+      "corpus": [
+        { "id": "syn-1", "content": "run eslint before opening a pull request", "scope": "repo", "scope_id": "agent-core" },
+        { "id": "syn-2", "content": "Google authentication flow using OAuth2 tokens", "scope": "repo", "scope_id": "agent-core" },
+        { "id": "syn-3", "content": "schema evolution process for database migrations", "scope": "repo", "scope_id": "agent-core" },
+        { "id": "syn-4", "content": "use pnpm instead of npm for package management", "scope": "repo", "scope_id": "agent-core" },
+        { "id": "syn-5", "content": "restart the development server after changing environment variables", "scope": "repo", "scope_id": "agent-core" },
+        { "id": "syn-6", "content": "the CI pipeline runs on GitHub Actions with Node 20", "scope": "repo", "scope_id": "agent-core" },
+        { "id": "syn-7", "content": "SQLite WAL mode is enabled for concurrent reads", "scope": "repo", "scope_id": "agent-core" },
+        { "id": "syn-8", "content": "rate limiting is configured at 100 requests per minute", "scope": "repo", "scope_id": "agent-core" }
+      ],
+      "queries": [
+        {
+          "query": "always lint before committing",
+          "expectedTopResults": ["syn-1"],
+          "category": "semantic_synonym"
+        },
+        {
+          "query": "OAuth authentication tokens",
+          "expectedTopResults": ["syn-2"],
+          "category": "semantic_synonym"
+        },
+        {
+          "query": "database migration",
+          "expectedTopResults": ["syn-3"],
+          "category": "semantic_synonym"
+        },
+        {
+          "query": "which package manager should I use",
+          "expectedTopResults": ["syn-4"],
+          "category": "semantic_synonym"
+        },
+        {
+          "query": "env vars require server restart",
+          "expectedTopResults": ["syn-5"],
+          "category": "semantic_synonym"
+        }
+      ]
+    },
+    "abbreviation": {
+      "description": "Queries using abbreviations that match full-form memories",
+      "corpus": [
+        { "id": "abbr-1", "content": "continuous integration runs typecheck lint and test", "scope": "repo", "scope_id": "agent-core" },
+        { "id": "abbr-2", "content": "full-text search uses BM25 ranking algorithm", "scope": "repo", "scope_id": "agent-core" },
+        { "id": "abbr-3", "content": "application programming interface endpoints are documented in OpenAPI", "scope": "repo", "scope_id": "agent-core" }
+      ],
+      "queries": [
+        {
+          "query": "CI pipeline",
+          "expectedTopResults": ["abbr-1"],
+          "category": "abbreviation"
+        },
+        {
+          "query": "FTS ranking",
+          "expectedTopResults": ["abbr-2"],
+          "category": "abbreviation"
+        },
+        {
+          "query": "API docs",
+          "expectedTopResults": ["abbr-3"],
+          "category": "abbreviation"
+        }
+      ]
+    },
+    "paraphrase": {
+      "description": "Queries that are paraphrases of stored memories",
+      "corpus": [
+        { "id": "para-1", "content": "never commit secrets or API keys to the repository", "scope": "global", "scope_id": "" },
+        { "id": "para-2", "content": "prefer small focused pull requests over large changes", "scope": "global", "scope_id": "" },
+        { "id": "para-3", "content": "write tests before fixing bugs to prevent regressions", "scope": "global", "scope_id": "" },
+        { "id": "para-4", "content": "use descriptive variable names instead of single letters", "scope": "global", "scope_id": "" }
+      ],
+      "queries": [
+        {
+          "query": "keep credentials out of git",
+          "expectedTopResults": ["para-1"],
+          "category": "paraphrase"
+        },
+        {
+          "query": "make PRs small",
+          "expectedTopResults": ["para-2"],
+          "category": "paraphrase"
+        },
+        {
+          "query": "test-driven bug fixing",
+          "expectedTopResults": ["para-3"],
+          "category": "paraphrase"
+        },
+        {
+          "query": "naming conventions for variables",
+          "expectedTopResults": ["para-4"],
+          "category": "paraphrase"
+        }
+      ]
+    },
+    "exact_keyword": {
+      "description": "Queries that should match via exact keyword overlap (BM25 strength)",
+      "corpus": [
+        { "id": "exact-1", "content": "vitest is the test framework configured in package.json", "scope": "repo", "scope_id": "agent-core" },
+        { "id": "exact-2", "content": "fastify server listens on port 3210", "scope": "repo", "scope_id": "agent-core" },
+        { "id": "exact-3", "content": "better-sqlite3 is the SQLite driver dependency", "scope": "repo", "scope_id": "agent-core" }
+      ],
+      "queries": [
+        {
+          "query": "vitest",
+          "expectedTopResults": ["exact-1"],
+          "category": "exact_keyword"
+        },
+        {
+          "query": "fastify port",
+          "expectedTopResults": ["exact-2"],
+          "category": "exact_keyword"
+        },
+        {
+          "query": "better-sqlite3",
+          "expectedTopResults": ["exact-3"],
+          "category": "exact_keyword"
+        }
+      ]
+    },
+    "metadata_filtered": {
+      "description": "Queries that require metadata filtering to return correct results",
+      "corpus": [
+        { "id": "meta-1", "content": "always run tests before pushing", "scope": "repo", "scope_id": "frontend-app", "metadata": { "team": "frontend" } },
+        { "id": "meta-2", "content": "always run tests before pushing", "scope": "repo", "scope_id": "backend-api", "metadata": { "team": "backend" } },
+        { "id": "meta-3", "content": "use React for UI components", "scope": "repo", "scope_id": "frontend-app", "metadata": { "team": "frontend" } },
+        { "id": "meta-4", "content": "use Fastify for API routes", "scope": "repo", "scope_id": "backend-api", "metadata": { "team": "backend" } }
+      ],
+      "queries": [
+        {
+          "query": "run tests before push",
+          "scope_id": "frontend-app",
+          "expectedTopResults": ["meta-1"],
+          "category": "metadata_filtered"
+        },
+        {
+          "query": "UI framework",
+          "filters": { "team": "frontend" },
+          "expectedTopResults": ["meta-3"],
+          "category": "metadata_filtered"
+        }
+      ]
+    },
+    "mixed_retrieval": {
+      "description": "Queries that benefit from both keyword and semantic signals",
+      "corpus": [
+        { "id": "mix-1", "content": "the eslint configuration extends typescript-eslint recommended rules", "scope": "repo", "scope_id": "agent-core" },
+        { "id": "mix-2", "content": "prettier formats code on save in VS Code with format-on-save enabled", "scope": "repo", "scope_id": "agent-core" },
+        { "id": "mix-3", "content": "husky pre-commit hook runs lint-staged to check changed files", "scope": "repo", "scope_id": "agent-core" }
+      ],
+      "queries": [
+        {
+          "query": "eslint typescript rules",
+          "expectedTopResults": ["mix-1"],
+          "category": "mixed_retrieval"
+        },
+        {
+          "query": "code formatting setup",
+          "expectedTopResults": ["mix-2"],
+          "category": "mixed_retrieval"
+        },
+        {
+          "query": "pre-commit linting",
+          "expectedTopResults": ["mix-3"],
+          "category": "mixed_retrieval"
+        }
+      ]
+    }
+  }
+}

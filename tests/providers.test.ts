@@ -20,6 +20,7 @@ import { getGeminiConfig } from "../src/llm/GeminiClient.js";
 import type { LLMChatOptions, LLMClient, LLMMessage, LLMResponse } from "../src/llm/LLMClient.js";
 import { seedDefaultRules } from "../src/rules/routes.js";
 import { seedDefaultActions } from "../src/actions/defaults.js";
+import { seedActionSchemas } from "../src/actions/actionSchemas.js";
 import { seedDefaultPolicies } from "../src/api/policy.js";
 import { closeDb } from "../src/db.js";
 import {
@@ -32,6 +33,7 @@ import type { TimelineEntry } from "../src/providers/adapters/ClaudeMemTimelineA
 beforeAll(() => {
   process.env.AGENT_CORE_DB = ":memory:";
   seedDefaultActions();
+  seedActionSchemas();
   seedDefaultRules();
   seedDefaultPolicies();
 });
