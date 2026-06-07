@@ -39,4 +39,5 @@ export interface ContextProvider {
   getTree(repo_id: string): Promise<ContextNode | null>;
   search(query: string, repo_id?: string): Promise<ContextSearchResult[]>;
   link(source_repo: string, source_path: string, target_repo: string, target_path: string, relation?: string): Promise<ContextLink>;
+  promote(repo_id: string, path: string, content: string): Promise<ContextNode | null>;
 }

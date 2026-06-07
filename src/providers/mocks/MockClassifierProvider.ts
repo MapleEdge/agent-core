@@ -26,12 +26,19 @@ export class MockClassifierProvider implements ClassifierProvider {
     let task_type = "code_edit";
     let risk = 25;
     let intent: "ask" | "do" = "do";
+    const hasTest = lower.includes("test") || lower.includes("spec") || lower.includes("failing");
+    const hasFix = lower.includes("fix") || lower.includes("bug") || lower.includes("error");
 
-    for (const [keyword, info] of Object.entries(TASK_PATTERNS)) {
-      if (lower.includes(keyword)) {
-        task_type = info.task_type;
-        risk = info.risk;
-        break;
+    if (hasTest && hasFix) {
+      task_type = "test_fix";
+      risk = 30;
+    } else {
+      for (const [keyword, info] of Object.entries(TASK_PATTERNS)) {
+        if (lower.includes(keyword)) {
+          task_type = info.task_type;
+          risk = info.risk;
+          break;
+        }
       }
     }
 

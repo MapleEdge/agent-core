@@ -1,6 +1,4 @@
 import { FastifyInstance } from "fastify";
-import { v4 as uuid } from "uuid";
-import { getDb } from "../db.js";
 import {
   MemoryWriteInput,
   MemorySearchInput,
@@ -10,41 +8,27 @@ import {
   MemoryExtractionResult,
 } from "../schemas/memory.js";
 import { isDeepSeekConfigured, DeepSeekClient, llmJson } from "../llm/index.js";
+import { getProvider } from "../providers/registry.js";
 
 export async function memoryRoutes(app: FastifyInstance): Promise<void> {
   app.post("/memory/write", async (req, reply) => {
     const input = MemoryWriteInput.parse(req.body);
-    const id = uuid();
-    const db = getDb();
-    db.prepare(
-      `INSERT INTO memories (id, scope, scope_id, content, metadata)
-       VALUES (?, ?, ?, ?, ?)`,
-    ).run(id, input.scope, input.scope_id, input.content, JSON.stringify(input.metadata));
+    const memory = await getProvider("memory").write(input);
     reply.code(201);
-    return { id, scope: input.scope, scope_id: input.scope_id };
+    return { id: memory.id, scope: memory.scope, scope_id: memory.scope_id };
   });
 
   app.post("/memory/search", async (req) => {
     const input = MemorySearchInput.parse(req.body);
-    const db = getDb();
-    let sql = `SELECT * FROM memories WHERE content LIKE ?`;
-    const params: unknown[] = [`%${input.query}%`];
-    if (input.scope) {
-      sql += ` AND scope = ?`;
-      params.push(input.scope);
-    }
-    if (input.scope_id) {
-      sql += ` AND scope_id = ?`;
-      params.push(input.scope_id);
-    }
-    sql += ` ORDER BY created_at DESC LIMIT ?`;
-    params.push(input.limit);
-    const rows = db.prepare(sql).all(...params) as Record<string, unknown>[];
+    const results = await getProvider("memory").search({
+      query: input.query,
+      scope: input.scope,
+      scope_id: input.scope_id,
+      filters: input.filters,
+      top_k: input.limit,
+    });
     return {
-      results: rows.map((r) => ({
-        ...r,
-        metadata: JSON.parse(r.metadata as string),
-      })),
+      results,
     };
   });
 
@@ -67,56 +51,53 @@ export async function memoryRoutes(app: FastifyInstance): Promise<void> {
 
   app.post("/memory/promote", async (req) => {
     const input = MemoryPromoteInput.parse(req.body);
-    const db = getDb();
-    const row = db.prepare(`SELECT * FROM memories WHERE id = ?`).get(input.memory_id) as
-      | Record<string, unknown>
-      | undefined;
-    if (!row) {
+    const source = await getProvider("memory").get(input.memory_id);
+    if (!source) {
       return { error: "memory not found" };
     }
-    const newId = uuid();
-    db.prepare(
-      `INSERT INTO memories (id, scope, scope_id, content, metadata)
-       VALUES (?, ?, ?, ?, ?)`,
-    ).run(newId, input.target_scope, input.target_scope_id, row.content, row.metadata);
-    return { id: newId, promoted_from: input.memory_id, scope: input.target_scope };
+    const promoted = await getProvider("memory").write({
+      scope: input.target_scope,
+      scope_id: input.target_scope_id,
+      content: source.content,
+      metadata: source.metadata,
+      kind: source.kind,
+      facts: source.facts,
+      concepts: source.concepts,
+      files_read: source.files_read,
+      files_modified: source.files_modified,
+    });
+    return { id: promoted.id, promoted_from: input.memory_id, scope: promoted.scope };
   });
 
   app.get("/memory/:memory_id", async (req) => {
     const { memory_id } = req.params as { memory_id: string };
-    const db = getDb();
-    const row = db.prepare(`SELECT * FROM memories WHERE id = ?`).get(memory_id) as
-      | Record<string, unknown>
-      | undefined;
-    if (!row) {
+    const memory = await getProvider("memory").get(memory_id);
+    if (!memory) {
       return { error: "not found" };
     }
-    return { ...row, metadata: JSON.parse(row.metadata as string) };
+    return memory;
   });
 
   app.patch("/memory/:memory_id", async (req) => {
     const { memory_id } = req.params as { memory_id: string };
     const input = MemoryPatchInput.parse(req.body);
-    const db = getDb();
-    if (input.content !== undefined) {
-      db.prepare(`UPDATE memories SET content = ?, updated_at = datetime('now') WHERE id = ?`).run(
-        input.content,
-        memory_id,
-      );
-    }
-    if (input.metadata !== undefined) {
-      db.prepare(
-        `UPDATE memories SET metadata = ?, updated_at = datetime('now') WHERE id = ?`,
-      ).run(JSON.stringify(input.metadata), memory_id);
-    }
-    const row = db.prepare(`SELECT * FROM memories WHERE id = ?`).get(memory_id);
-    return row ?? { error: "not found" };
+    const current = await getProvider("memory").get(memory_id);
+    if (!current) return { error: "not found" };
+    const updated = await getProvider("memory").update(memory_id, {
+      content: input.content ?? current.content,
+      metadata: input.metadata ?? current.metadata,
+      kind: input.kind ?? current.kind,
+      facts: input.facts ?? current.facts,
+      concepts: input.concepts ?? current.concepts,
+      files_read: input.files_read ?? current.files_read,
+      files_modified: input.files_modified ?? current.files_modified,
+    });
+    return updated ?? { error: "not found" };
   });
 
   app.delete("/memory/:memory_id", async (req, reply) => {
     const { memory_id } = req.params as { memory_id: string };
-    const db = getDb();
-    db.prepare(`DELETE FROM memories WHERE id = ?`).run(memory_id);
+    await getProvider("memory").delete(memory_id);
     reply.code(204);
     return;
   });

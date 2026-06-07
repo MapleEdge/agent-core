@@ -10,9 +10,8 @@ import { policyRoutes, seedDefaultPolicies } from "./api/policy.js";
 import { mockPlatformRoutes } from "./mock_platform/routes.js";
 import { seedDefaultActions } from "./actions/defaults.js";
 import { closeDb } from "./db.js";
-import { registerProvider } from "./providers/registry.js";
-import { LettaRuleSolverProvider } from "./providers/adapters/LettaRuleSolverProvider.js";
-import { seedLettaDefaultRules } from "./rules/lettaDefaults.js";
+import { registerDefaultProviders } from "./providers/defaults.js";
+import { providerRoutes } from "./providers/routes.js";
 
 const PORT = Number(process.env.PORT ?? 3210);
 const HOST = process.env.HOST ?? "0.0.0.0";
@@ -33,15 +32,13 @@ async function main(): Promise<void> {
   await app.register(classifyRoutes);
   await app.register(policyRoutes);
   await app.register(mockPlatformRoutes);
+  await app.register(providerRoutes);
 
   seedDefaultActions();
   seedDefaultRules();
   seedDefaultPolicies();
 
-  // Register Letta RuleSolverProvider as the real direct provider
-  const lettaProvider = new LettaRuleSolverProvider();
-  seedLettaDefaultRules(lettaProvider);
-  registerProvider("ruleSolver", lettaProvider);
+  registerDefaultProviders();
 
   app.addHook("onClose", () => {
     closeDb();

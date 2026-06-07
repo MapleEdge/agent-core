@@ -22,6 +22,11 @@ function initSchema(db: Database.Database): void {
       scope_id TEXT NOT NULL DEFAULT '',
       content TEXT NOT NULL,
       metadata TEXT NOT NULL DEFAULT '{}',
+      kind TEXT NOT NULL DEFAULT 'manual',
+      facts TEXT NOT NULL DEFAULT '[]',
+      concepts TEXT NOT NULL DEFAULT '[]',
+      files_read TEXT NOT NULL DEFAULT '[]',
+      files_modified TEXT NOT NULL DEFAULT '[]',
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
@@ -100,6 +105,58 @@ function initSchema(db: Database.Database): void {
       reason TEXT NOT NULL DEFAULT '',
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
+  `);
+  ensureMemoryColumns(db);
+  initMemoryFts(db);
+}
+
+function ensureMemoryColumns(db: Database.Database): void {
+  const rows = db.prepare("PRAGMA table_info(memories)").all() as Array<{ name: string }>;
+  const existing = new Set(rows.map((row) => row.name));
+  const columns: Array<[string, string]> = [
+    ["kind", "TEXT NOT NULL DEFAULT 'manual'"],
+    ["facts", "TEXT NOT NULL DEFAULT '[]'"],
+    ["concepts", "TEXT NOT NULL DEFAULT '[]'"],
+    ["files_read", "TEXT NOT NULL DEFAULT '[]'"],
+    ["files_modified", "TEXT NOT NULL DEFAULT '[]'"],
+  ];
+  for (const [name, definition] of columns) {
+    if (!existing.has(name)) {
+      db.prepare(`ALTER TABLE memories ADD COLUMN ${name} ${definition}`).run();
+    }
+  }
+}
+
+function initMemoryFts(db: Database.Database): void {
+  db.exec(`
+    CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(
+      content,
+      facts,
+      concepts,
+      files,
+      content='memories',
+      content_rowid='rowid'
+    );
+
+    CREATE TRIGGER IF NOT EXISTS memories_ai AFTER INSERT ON memories BEGIN
+      INSERT INTO memories_fts(rowid, content, facts, concepts, files)
+      VALUES (new.rowid, new.content, new.facts, new.concepts, new.files_read || ' ' || new.files_modified);
+    END;
+
+    CREATE TRIGGER IF NOT EXISTS memories_ad AFTER DELETE ON memories BEGIN
+      INSERT INTO memories_fts(memories_fts, rowid, content, facts, concepts, files)
+      VALUES('delete', old.rowid, old.content, old.facts, old.concepts, old.files_read || ' ' || old.files_modified);
+    END;
+
+    CREATE TRIGGER IF NOT EXISTS memories_au AFTER UPDATE ON memories BEGIN
+      INSERT INTO memories_fts(memories_fts, rowid, content, facts, concepts, files)
+      VALUES('delete', old.rowid, old.content, old.facts, old.concepts, old.files_read || ' ' || old.files_modified);
+      INSERT INTO memories_fts(rowid, content, facts, concepts, files)
+      VALUES (new.rowid, new.content, new.facts, new.concepts, new.files_read || ' ' || new.files_modified);
+    END;
+
+    INSERT OR REPLACE INTO memories_fts(rowid, content, facts, concepts, files)
+    SELECT rowid, content, facts, concepts, files_read || ' ' || files_modified FROM memories;
   `);
 }
 
