@@ -1,7 +1,11 @@
 #!/usr/bin/env tsx
 /**
- * Benchmark runner — runs all memory benchmark suites and produces
- * machine-readable JSON + human-readable summary.
+ * Benchmark runner — runs all Tier 1 pipeline validation suites.
+ *
+ * IMPORTANT: These are pipeline validation tests using synthetic fixtures
+ * and a mock LLM. Accuracy numbers reflect FTS retrieval + token-overlap
+ * evaluation, NOT real LLM reasoning or external benchmark parity.
+ * See docs/benchmarks/benchmark-methodology.md.
  *
  * Usage:
  *   pnpm bench               # run all benchmarks
@@ -91,9 +95,17 @@ async function main(): Promise<void> {
     },
   };
 
-  // Write JSON output
+  // Write JSON output to both root and docs/benchmarks/raw/
   const outPath = join(process.cwd(), "benchmark-results.json");
+  const rawDir = join(process.cwd(), "docs", "benchmarks", "raw");
   writeFileSync(outPath, JSON.stringify(allResults, null, 2));
+  try {
+    const { mkdirSync } = await import("fs");
+    mkdirSync(rawDir, { recursive: true });
+    writeFileSync(join(rawDir, "pipeline-validation-results.json"), JSON.stringify(allResults, null, 2));
+  } catch {
+    // raw dir write is best-effort
+  }
 
   if (jsonOnly) {
     console.log(JSON.stringify(allResults, null, 2));

@@ -1,10 +1,12 @@
 /**
- * LoCoMo benchmark — Long Conversation Memory.
+ * LoCoMo pipeline validation — synthetic fixtures shaped like LoCoMo.
  *
- * Tests: single-hop retrieval, multi-hop reasoning, temporal reasoning,
- * open-domain QA, and adversarial abstention.
+ * CLASSIFICATION: Tier 1 (pipeline validation), NOT Tier 3 (external parity).
+ * Uses 27 hand-written questions + MockMemoryProvider (FTS5) + mock LLM.
+ * Does NOT load the real LoCoMo dataset or use a real LLM.
  *
- * Target: accuracy >= 91.6%, latency p50 <= 880ms, token budget <= 7.0K
+ * What this tests: FTS retrieval → answer generation pipeline → correctness eval.
+ * What this does NOT test: semantic retrieval quality, real LLM reasoning, scale.
  */
 
 import { describe, it, expect } from "vitest";

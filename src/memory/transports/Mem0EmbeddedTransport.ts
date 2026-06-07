@@ -106,6 +106,12 @@ export class Mem0EmbeddedTransport implements Mem0Transport {
     const healthy = await this.ping();
     if (!healthy) {
       const logs = this.stderrBuffer.join("\n");
+      // Kill the unhealthy process to avoid orphan
+      if (this.process && !this.process.killed) {
+        this.process.kill("SIGKILL");
+      }
+      this.process = null;
+      this.readline = null;
       throw new Error(`mem0 worker failed to start. Logs:\n${logs}`);
     }
   }
@@ -171,6 +177,11 @@ export class Mem0EmbeddedTransport implements Mem0Transport {
 
     this.process = null;
     this.readline = null;
+    // Reject all pending requests immediately instead of waiting for timeout
+    for (const [, pending] of this.pending) {
+      clearTimeout(pending.timer);
+      pending.reject(new Error("Transport shutting down"));
+    }
     this.pending.clear();
   }
 

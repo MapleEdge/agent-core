@@ -1,10 +1,12 @@
 /**
- * LongMemEval benchmark — Long-term Memory Evaluation.
+ * LongMemEval pipeline validation — synthetic fixtures shaped like LongMemEval.
  *
- * Tests: information extraction, multi-session reasoning, temporal reasoning,
- * knowledge update detection, and abstention.
+ * CLASSIFICATION: Tier 1 (pipeline validation), NOT Tier 3 (external parity).
+ * Uses 20 hand-written questions + MockMemoryProvider (FTS5) + mock LLM.
+ * Does NOT load the real LongMemEval dataset or use a real LLM.
  *
- * Target: accuracy >= 94.8%, latency p50 <= 1090ms, token budget <= 6.8K
+ * What this tests: FTS retrieval → answer generation pipeline → correctness eval.
+ * What this does NOT test: semantic retrieval quality, real LLM reasoning, scale.
  */
 
 import { describe, it, expect } from "vitest";

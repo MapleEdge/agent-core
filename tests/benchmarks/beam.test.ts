@@ -1,11 +1,16 @@
 /**
- * BEAM benchmark — Benchmark for Evaluation of Associative Memory.
+ * BEAM pipeline validation — synthetic fixtures shaped like BEAM.
  *
- * Two tiers: BEAM-1M (1 million token context) and BEAM-10M (10 million token context).
- * Tests: exact retrieval, semantic retrieval, associative reasoning, needle-in-haystack,
- * and cross-document reasoning.
+ * CLASSIFICATION: Tier 1 (pipeline validation), NOT Tier 3 (external parity).
  *
- * Targets: BEAM-1M accuracy >= 64.1%, BEAM-10M accuracy >= 48.6%
+ * IMPORTANT: Despite the names "BEAM-1M" and "BEAM-10M", these tests do NOT
+ * load 1 million or 10 million memories. They use 10 and 8 hand-written questions
+ * respectively, each with ~5 context entries. The names refer to the TARGET
+ * benchmark tier, not the actual dataset size.
+ *
+ * Uses MockMemoryProvider (FTS5) + mock LLM. Does NOT use real embeddings.
+ * What this tests: FTS retrieval pipeline + answer eval for BEAM-shaped questions.
+ * What this does NOT test: scale retrieval, needle-in-haystack at 1M+ memories.
  */
 
 import { describe, it, expect } from "vitest";

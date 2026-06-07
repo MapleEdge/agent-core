@@ -1,8 +1,12 @@
 /**
- * Benchmark evaluation harness for LoCoMo, LongMemEval, and BEAM.
+ * Benchmark evaluation harness for pipeline validation tests.
  *
- * Runs the full pipeline: ingest context → query → generate answer → evaluate.
- * Uses MockMemoryProvider + deterministic LLM mock for CI-testable benchmarks.
+ * IMPORTANT: This harness uses a deterministic mock LLM that returns gold answers
+ * when evidence is found. This means accuracy scores primarily test RETRIEVAL
+ * (can FTS find relevant context?) and EVALUATION (does token overlap detect
+ * the match?), NOT real LLM reasoning quality.
+ *
+ * Classification: Tier 1 pipeline validation. See docs/benchmarks/benchmark-methodology.md.
  */
 
 import type { LLMClient, LLMMessage, LLMChatOptions, LLMResponse } from "../../src/llm/LLMClient.js";
