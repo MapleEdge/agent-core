@@ -4,10 +4,13 @@ import {
   ActionValidateInput,
   ActionExecuteInput,
   ActionPipelineInput,
+  AuditListInput,
 } from "../schemas/actions.js";
 import { getProvider, hasProvider } from "../providers/registry.js";
 import { executeActionPipeline } from "./pipeline.js";
+import { getAuditRecord, listAuditRecords } from "./audit.js";
 import type { RuleSolverProvider } from "../providers/RuleSolverProvider.js";
+import type { SessionProvider } from "../providers/SessionProvider.js";
 
 export async function actionRoutes(app: FastifyInstance): Promise<void> {
   app.post("/actions/register", async (req, reply) => {
@@ -27,8 +30,11 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
     const rows = await getProvider("action").list();
     return {
       actions: rows.map((r) => ({
-        ...r,
-        schema: r.parameters,
+        name: r.name,
+        description: r.description,
+        schema: r.jsonSchema ?? r.parameters,
+        risk_level: r.risk_level,
+        requires_approval: r.requires_approval,
       })),
     };
   });
@@ -40,8 +46,11 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
       return { error: "action not found" };
     }
     return {
-      ...row,
-      schema: row.parameters,
+      name: row.name,
+      description: row.description,
+      schema: row.jsonSchema ?? row.parameters,
+      risk_level: row.risk_level,
+      requires_approval: row.requires_approval,
     };
   });
 
@@ -49,7 +58,12 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
     const input = ActionValidateInput.parse(req.body);
     const validation = await getProvider("action").validate(input.action_name, input.params);
     if (!validation.valid) {
-      return { valid: false, reason: `Unknown action: ${input.action_name}` };
+      return {
+        valid: false,
+        action_name: input.action_name,
+        errors: validation.errors,
+        issues: validation.issues,
+      };
     }
     return { valid: true, action_name: input.action_name, params: input.params };
   });
@@ -73,6 +87,7 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
       action_name: input.action_name,
       execution_mode: result.execution_mode,
       result: result.output,
+      rationale: input.rationale ?? null,
     };
   });
 
@@ -82,19 +97,56 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
       ? (getProvider("ruleSolver") as RuleSolverProvider)
       : undefined;
     const traceProvider = hasProvider("trace") ? getProvider("trace") : undefined;
+    const sessionProvider = hasProvider("session")
+      ? (getProvider("session") as SessionProvider)
+      : undefined;
     const result = await executeActionPipeline(
       {
         action_name: input.action_name,
         params: input.params,
         session_id: input.session_id,
+        user_id: input.user_id,
         task_type: input.task_type,
         completed_actions: input.completed_actions,
+        rationale: input.rationale,
       },
       getProvider("action"),
       getProvider("policyMatcher"),
       ruleSolver,
       traceProvider,
+      sessionProvider,
     );
     return result;
+  });
+
+  // ── Audit endpoints ──────────────────────────────────────────────
+
+  app.get("/audits", async (req) => {
+    const query = req.query as Record<string, string>;
+    const input = AuditListInput.parse(query);
+    const records = listAuditRecords({
+      session_id: input.session_id,
+      action_name: input.action_name,
+      status: input.status,
+      limit: input.limit,
+    });
+    return { audits: records };
+  });
+
+  app.get("/audits/:audit_id", async (req) => {
+    const { audit_id } = req.params as { audit_id: string };
+    const record = getAuditRecord(audit_id);
+    if (!record) {
+      return { error: "audit record not found" };
+    }
+    return record;
+  });
+
+  app.get("/sessions/:session_id/audits", async (req) => {
+    const { session_id } = req.params as { session_id: string };
+    const query = req.query as Record<string, string>;
+    const limit = query.limit ? parseInt(query.limit, 10) : 100;
+    const records = listAuditRecords({ session_id, limit });
+    return { session_id, audits: records };
   });
 }
