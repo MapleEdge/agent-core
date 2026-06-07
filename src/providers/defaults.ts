@@ -77,7 +77,11 @@ function resolveMemoryProvider(): MemoryProvider {
       pythonPath: process.env.MEM0_PYTHON_PATH,
       env: Object.fromEntries(
         Object.entries(process.env).filter(
-          ([k]) => k.startsWith("MEM0_") || k.startsWith("OPENAI_"),
+          ([k]) =>
+            k.startsWith("MEM0_") ||
+            k.startsWith("OPENAI_") ||
+            k === "DEEPSEEK_API_KEY" ||
+            k === "VOYAGE_API_KEY",
         ) as [string, string][],
       ),
     });

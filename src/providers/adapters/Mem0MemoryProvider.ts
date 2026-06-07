@@ -126,6 +126,11 @@ export class Mem0MemoryProvider implements MemoryProvider {
     return this.transport.mode;
   }
 
+  /** Expose transport for direct mem0 passthrough operations (ingest, recall). */
+  getTransport(): Mem0Transport {
+    return this.transport;
+  }
+
   // ── MemoryProvider contract ───────────────────────────────────────
 
   async write(params: MemoryWriteParams): Promise<MemoryRecord> {

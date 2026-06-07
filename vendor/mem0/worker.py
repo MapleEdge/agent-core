@@ -36,11 +36,40 @@ log = logging.getLogger("mem0-worker")
 # Disable mem0 telemetry in worker mode
 os.environ["MEM0_TELEMETRY"] = "false"
 
+# ── Use vendored mem0 source (committed patches) instead of site-packages ──
+# worker.py lives at <repo>/vendor/mem0/worker.py
+# vendored mem0 lives at <repo>/vendor/providers/memory/mem0/
+# Prepending this to sys.path ensures `import mem0` resolves to the vendored
+# copy with Voyage compatibility patches, not the pip-installed package.
+_WORKER_DIR = os.path.dirname(os.path.abspath(__file__))
+_VENDOR_MEM0_DIR = os.path.normpath(
+    os.path.join(_WORKER_DIR, "..", "providers", "memory", "mem0")
+)
+if os.path.isdir(_VENDOR_MEM0_DIR):
+    # Remove any existing mem0 paths to avoid shadowing
+    sys.path = [p for p in sys.path if "mem0" not in os.path.basename(p)]
+    sys.path.insert(0, _VENDOR_MEM0_DIR)
+    log.info("Using vendored mem0 from %s", _VENDOR_MEM0_DIR)
+else:
+    log.warning(
+        "Vendored mem0 not found at %s — falling back to site-packages",
+        _VENDOR_MEM0_DIR,
+    )
+
 
 def create_memory_instance():
     """Initialize mem0 Memory with config from environment."""
     try:
         from mem0 import Memory
+        import mem0.embeddings.openai as _emb_mod
+
+        # Log proof of which mem0 source is active
+        _emb_file = getattr(_emb_mod, "__file__", "unknown")
+        _is_vendored = "vendor" in _emb_file
+        log.info(
+            "mem0 embeddings source: %s (vendored=%s)",
+            _emb_file, _is_vendored,
+        )
 
         config: Dict[str, Any] = {}
 
@@ -63,6 +92,11 @@ def create_memory_instance():
                 "collection_name": os.environ.get("MEM0_COLLECTION", "agent_core_memories"),
             }
 
+        # Sync vector store dimensions with embedder dimensions
+        embedder_dims = os.environ.get("MEM0_EMBEDDER_DIMS")
+        if embedder_dims:
+            vector_config["embedding_model_dims"] = int(embedder_dims)
+
         config["vector_store"] = {
             "provider": vector_provider,
             "config": vector_config,
@@ -79,7 +113,11 @@ def create_memory_instance():
             llm_config["api_key"] = api_key
         api_base = os.environ.get("MEM0_LLM_BASE_URL")
         if api_base:
-            llm_config["openai_base_url"] = api_base
+            # Provider-specific base URL key
+            if llm_provider == "deepseek":
+                llm_config["deepseek_base_url"] = api_base
+            else:
+                llm_config["openai_base_url"] = api_base
 
         config["llm"] = {"provider": llm_provider, "config": llm_config}
 
@@ -91,6 +129,12 @@ def create_memory_instance():
         embedder_key = os.environ.get("MEM0_EMBEDDER_API_KEY") or api_key
         if embedder_key:
             embedder_config["api_key"] = embedder_key
+        embedder_base_url = os.environ.get("MEM0_EMBEDDER_BASE_URL")
+        if embedder_base_url:
+            embedder_config["openai_base_url"] = embedder_base_url
+        embedder_dims = os.environ.get("MEM0_EMBEDDER_DIMS")
+        if embedder_dims:
+            embedder_config["embedding_dims"] = int(embedder_dims)
 
         config["embedder"] = {"provider": embedder_provider, "config": embedder_config}
 
@@ -154,6 +198,11 @@ def dispatch(memory, method: str, params: Dict[str, Any]) -> Any:
 
     elif method == "delete":
         memory.delete(memory_id=params["memory_id"])
+        return {"success": True}
+
+    elif method == "delete_all":
+        kwargs = {k: v for k, v in params.items() if v is not None}
+        memory.delete_all(**kwargs)
         return {"success": True}
 
     elif method == "history":

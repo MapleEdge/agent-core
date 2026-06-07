@@ -6,9 +6,12 @@ import {
   MemoryPromoteInput,
   MemoryPatchInput,
   MemoryExtractionResult,
+  MemoryIngestInput,
+  MemoryRecallInput,
 } from "../schemas/memory.js";
 import { isDeepSeekConfigured, DeepSeekClient, llmJson } from "../llm/index.js";
 import { getProvider } from "../providers/registry.js";
+import { Mem0MemoryProvider } from "../providers/adapters/Mem0MemoryProvider.js";
 
 export async function memoryRoutes(app: FastifyInstance): Promise<void> {
   app.post("/memory/write", async (req, reply) => {
@@ -100,6 +103,90 @@ export async function memoryRoutes(app: FastifyInstance): Promise<void> {
     await getProvider("memory").delete(memory_id);
     reply.code(204);
     return;
+  });
+
+  // ── Mem0 passthrough routes ─────────────────────────────────────────
+  //
+  // These routes exercise the full production path:
+  //   HTTP request → Mem0MemoryProvider → Mem0EmbeddedTransport
+  //   → worker.py JSON-RPC → mem0.Memory
+  //
+  // They expose mem0's conversation-level operations (add with messages
+  // array, search with user_id scoping, bulk delete) through agent-core's
+  // API, allowing benchmark runners to exercise the embedded transport
+  // end-to-end without bypassing any layer.
+
+  app.post("/memory/ingest", async (req) => {
+    const input = MemoryIngestInput.parse(req.body);
+    const provider = getProvider("memory");
+
+    if (!(provider instanceof Mem0MemoryProvider)) {
+      return { error: "ingest requires MEMORY_PROVIDER=mem0" };
+    }
+
+    const transport = provider.getTransport();
+    const startTime = performance.now();
+
+    const params: Record<string, unknown> = {
+      messages: input.messages,
+      user_id: input.user_id,
+      infer: true,
+    };
+    if (input.metadata) params.metadata = input.metadata;
+    if (input.timestamp) params.timestamp = input.timestamp;
+    if (input.custom_instructions) params.custom_instructions = input.custom_instructions;
+
+    const result = await transport.call<Record<string, unknown>>({
+      method: "add",
+      params,
+    });
+
+    const latencyMs = performance.now() - startTime;
+    return { ...result, _latency_ms: latencyMs, _transport: provider.transportMode };
+  });
+
+  app.post("/memory/recall", async (req) => {
+    const input = MemoryRecallInput.parse(req.body);
+    const provider = getProvider("memory");
+
+    if (!(provider instanceof Mem0MemoryProvider)) {
+      return { error: "recall requires MEMORY_PROVIDER=mem0" };
+    }
+
+    const transport = provider.getTransport();
+    const startTime = performance.now();
+
+    const params: Record<string, unknown> = {
+      query: input.query,
+      filters: { user_id: input.user_id },
+      top_k: input.limit,
+    };
+    if (input.rerank) params.rerank = true;
+
+    const result = await transport.call<Record<string, unknown>>({
+      method: "search",
+      params,
+    });
+
+    const latencyMs = performance.now() - startTime;
+    return { ...result, _latency_ms: latencyMs, _transport: provider.transportMode };
+  });
+
+  app.delete("/memory/users/:user_id", async (req) => {
+    const { user_id } = req.params as { user_id: string };
+    const provider = getProvider("memory");
+
+    if (!(provider instanceof Mem0MemoryProvider)) {
+      return { error: "delete-user requires MEMORY_PROVIDER=mem0" };
+    }
+
+    const transport = provider.getTransport();
+    await transport.call<Record<string, unknown>>({
+      method: "delete_all",
+      params: { user_id },
+    });
+
+    return { message: "Memories deleted", user_id };
   });
 }
 
