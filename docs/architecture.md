@@ -2,14 +2,16 @@
 
 ## Overview
 
-agent-core is a single HTTP service (Fastify + SQLite) that exposes memory, context, actions, rules, traces, and mock platform endpoints. All state is stored in a local SQLite database.
+agent-core is a single HTTP service (Fastify + SQLite) that exposes memory, context, action knowledge, action recommendations, tool rules, traces, and mock platform endpoints. All state is stored in a local SQLite database.
 
-```
+```text
 ┌─────────────────────────────────────────────────┐
 │                 Future Platform                  │
+│       jubilant-goggles / control plane           │
 │  (sessions, worktrees, executors, policy, UI)    │
 │                                                  │
 │  Calls agent-core HTTP APIs                      │
+│  Executes real actions itself                    │
 └──────────────┬──────────────────────────────────┘
                │
                ▼
@@ -18,7 +20,7 @@ agent-core is a single HTTP service (Fastify + SQLite) that exposes memory, cont
 │                                                  │
 │  ┌──────────┐  ┌──────────┐  ┌───────────────┐  │
 │  │  Memory   │  │ Context  │  │   Actions     │  │
-│  │  Store    │  │  Tree    │  │   Registry    │  │
+│  │  Store    │  │  Tree    │  │   Knowledge   │  │
 │  └──────────┘  └──────────┘  └───────────────┘  │
 │                                                  │
 │  ┌──────────┐  ┌──────────┐  ┌───────────────┐  │
@@ -28,8 +30,8 @@ agent-core is a single HTTP service (Fastify + SQLite) that exposes memory, cont
 │                                                  │
 │  ┌──────────────────────────────────────────┐    │
 │  │       Mock Platform Endpoints             │    │
-│  │  (repos, worktrees, executors, policy,    │    │
-│  │   approvals, commits)                     │    │
+│  │  (test doubles for repos, worktrees,      │    │
+│  │   executors, policy, approvals, commits)  │    │
 │  └──────────────────────────────────────────┘    │
 │                                                  │
 │  ┌──────────────────────────────────────────┐    │
@@ -38,35 +40,69 @@ agent-core is a single HTTP service (Fastify + SQLite) that exposes memory, cont
 └─────────────────────────────────────────────────┘
 ```
 
+## Boundary
+
+jubilant-goggles is the main platform and control plane. It owns:
+
+1. User chat and UI
+2. Repo checkout and source access
+3. Sessions, branches, and worktrees
+4. Executor selection and execution
+5. Validation
+6. Permissions and policy enforcement
+7. Approval gates
+8. Commits, pushes, PRs, deploys, and other real-world side effects
+
+agent-core owns the memory and action substrate. It owns:
+
+1. Memory storage, search, extraction, and promotion
+2. Structured repo context memory
+3. Session and tool traces
+4. Action registry metadata
+5. Action schemas
+6. Action risk metadata
+7. Action ordering recommendations
+8. Allowed-next-action solving
+9. Suggested action plans
+10. Prompt/context assembly inputs for agents
+
+agent-core knows what actions exist and can recommend which actions should be taken next. It does not validate whether the platform is allowed to execute them and does not perform real execution.
+
 ## Layers
 
 ### Memory layer
 
-Responsible for writing, searching, extracting, and promoting durable memories. Memories are scoped (user, repo, branch, task, session, executor, global_policy). Memory extraction uses keyword-based heuristics to identify candidate durable facts from session text. The future platform will replace this with LLM-powered extraction using mem0's patterns.
+Responsible for writing, searching, extracting, and promoting durable memories. Memories are scoped (user, repo, branch, task, session, executor, global_policy). Memory extraction uses keyword-based heuristics to identify candidate durable facts from session text. The future platform can call this layer before, during, and after execution.
 
 Reference: mem0ai/mem0
 
 ### Context layer
 
-Responsible for structured repo context. Each onboarded repo gets a default context tree with nodes for overview, commands, architecture, dependencies, tests, entrypoints, known-failures, skills, sessions, and policy-notes. Context can be searched, linked across repos, and promoted (updated with new content).
+Responsible for structured repo context memory. Each onboarded repo gets a default context tree with nodes for overview, commands, architecture, dependencies, tests, entrypoints, known-failures, skills, sessions, and policy-notes. Context can be searched, linked across repos, and promoted with new knowledge.
 
 Reference: volcengine/OpenViking
 
-### Action registry
+### Action knowledge registry
 
-Responsible for registering, validating, and executing actions. Default actions include classify_task, read_file, grep, write_file, run_tests, summarize_diff, request_approval, commit, search_memory, and retrieve_context. All execution is mocked or local-safe only. Actions have risk metadata and approval flags.
+Responsible for registering and describing available actions. Default action metadata includes classify_task, read_file, grep, write_file, run_tests, summarize_diff, request_approval, commit, search_memory, and retrieve_context.
+
+agent-core stores action names, descriptions, schemas, preconditions, expected outputs, risk metadata, sequencing hints, and trace semantics.
+
+agent-core does not execute these actions in production. jubilant-goggles or its executors execute them after applying validation and permission checks.
 
 Reference: letta-ai/letta
 
 ### Tool rule solver
 
-Responsible for defining legal action sequences, answering "what can I do next?", and validating proposed sequences. Rules are per-task-type (e.g., code_edit has a defined sequence). Before-exit requirements and approval-required flags are enforced.
+Responsible for defining legal or recommended action sequences, answering "what should happen next?", and validating proposed sequences against task-type rules. Rules are per-task-type (for example, code_edit has a defined recommended sequence). Before-exit requirements and approval-required flags are represented as action metadata and recommendations.
+
+The solver output is advisory to jubilant-goggles. jubilant-goggles is responsible for deciding whether the proposed action is permitted and then executing or rejecting it.
 
 Reference: letta-ai/letta (tool rules)
 
 ### Trace store
 
-Responsible for recording tool-call and skill-run traces. Traces are linked to sessions and include input, output, and duration. Session timelines aggregate events and traces chronologically.
+Responsible for recording tool-call and skill-run traces. Traces are linked to sessions and include input, output, duration, result status, and optional rationale. Session timelines aggregate events and traces chronologically.
 
 Reference: thedotmack/claude-mem
 
@@ -76,24 +112,30 @@ Responsible for classifying task intent, type, complexity, risk, and ambiguity. 
 
 Reference: google-gemini/gemini-cli
 
-### Policy (mock)
+### Policy hints (mock)
 
-Responsible for matching actions against policy rules and simulating platform authorization. Dangerous actions (deploy, commit, payment, access_secrets) are gated. Returns allow/deny with approval requirements.
+Responsible for matching actions against soft policy and guideline rules. This layer may say that an action appears dangerous or should require approval, but it is not the final authorization layer.
+
+Final validation, permissions, and enforcement belong to jubilant-goggles.
 
 Reference: emcie-co/parlant
 
 ### Mock platform boundary
 
-Simulates the future platform's endpoints so that the rest of agent-core can be tested end-to-end. Mocks repos/open, worktrees/create, executors/select, policy/check, approvals/request, and commits/mock. Returns realistic fake responses.
+Simulates jubilant-goggles endpoints so that the rest of agent-core can be tested end-to-end. Mocks repos/open, worktrees/create, executors/select, policy/check, approvals/request, and commits/mock. Returns realistic fake responses.
 
-## Why memory does not authorize real actions
+These endpoints are test doubles only. They do not mean agent-core owns those platform responsibilities.
 
-Memory and context are advisory. They propose, suggest, and record. They never execute real-world operations independently. The future platform must:
+## Why agent-core does not authorize or execute real actions
 
-1. Receive the memory/action recommendations
-2. Apply its own policy, quotas, and approval gates
+Memory, context, and action recommendations are advisory. They propose, suggest, order, and record. They never execute real-world operations independently.
+
+jubilant-goggles must:
+
+1. Receive memory/context/action recommendations from agent-core
+2. Apply its own validation, permissions, policy, quotas, and approval gates
 3. Decide whether to execute
 4. Delegate execution to a real executor
-5. Send the result back to agent-core for tracing
+5. Send the result back to agent-core for tracing and memory extraction
 
-This separation ensures that even if agent-core is compromised or misconfigured, it cannot spend money, deploy code, access secrets, or push commits.
+This separation ensures that even if agent-core is compromised or misconfigured, it cannot spend money, deploy code, access secrets, modify files, run commands, push commits, or create PRs.
