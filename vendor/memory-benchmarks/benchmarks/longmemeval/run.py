@@ -53,6 +53,7 @@ from tqdm import tqdm
 
 from benchmarks.common.llm_client import LLMClient
 from benchmarks.common.mem0_client import Mem0Client, format_search_results
+from benchmarks.common.agent_core_client import AgentCoreClient
 from benchmarks.common.metrics import compute_overall_metrics
 from benchmarks.common.schema import (
     CutoffResult,
@@ -1033,8 +1034,8 @@ def parse_args() -> argparse.Namespace:
         help="Requests per minute for LLM",
     )
     parser.add_argument(
-        "--backend", default="oss", choices=["oss", "cloud"],
-        help="Mem0 backend: 'oss' for self-hosted server (default), 'cloud' for api.mem0.ai",
+        "--backend", default="oss", choices=["oss", "cloud", "agent-core"],
+        help="Mem0 backend: 'oss' for self-hosted server (default), 'cloud' for api.mem0.ai, 'agent-core' for embedded transport",
     )
     parser.add_argument(
         "--mem0-host", default=None,
@@ -1231,12 +1232,18 @@ async def async_main() -> None:
         return
 
     backend = os.getenv("MEM0_BACKEND", args.backend)
-    mem0 = Mem0Client(
-        mode=backend,
-        host=args.mem0_host,
-        api_key=args.mem0_api_key if backend == "cloud" else None,
-        rpm=args.rpm,
-    )
+    if backend == "agent-core":
+        mem0 = AgentCoreClient(
+            host=args.mem0_host or os.getenv("AGENT_CORE_HOST", "http://localhost:3000"),
+            rpm=args.rpm,
+        )
+    else:
+        mem0 = Mem0Client(
+            mode=backend,
+            host=args.mem0_host,
+            api_key=args.mem0_api_key if backend == "cloud" else None,
+            rpm=args.rpm,
+        )
     shutdown = GracefulShutdown()
     checkpoint = Checkpoint(output_dir)
 

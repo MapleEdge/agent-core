@@ -6,6 +6,7 @@ export type { RuleSolverProvider, ToolRule, AllowedActionsResult, SequenceValida
 export type { TraceProvider, TraceRecord } from "./TraceProvider.js";
 export type { ClassifierProvider, ClassificationResult } from "./ClassifierProvider.js";
 export type { PolicyMatcherProvider, PolicyRule, PolicyMatchResult } from "./PolicyMatcherProvider.js";
+export type { EmbeddingProvider } from "./EmbeddingProvider.js";
 
 export {
   registerProvider,

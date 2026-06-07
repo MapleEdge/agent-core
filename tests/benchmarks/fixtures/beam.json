@@ -1,0 +1,299 @@
+{
+  "name": "BEAM",
+  "version": "1.0.0",
+  "description": "Benchmark for Evaluation of Associative Memory — tests retrieval quality at scale (1M and 10M token contexts).",
+  "target_metrics_1m": {
+    "accuracy": 64.1,
+    "tokens_budget": 6700,
+    "latency_p50_ms": 1000
+  },
+  "target_metrics_10m": {
+    "accuracy": 48.6,
+    "tokens_budget": 6900,
+    "latency_p50_ms": 1050
+  },
+  "questions_1m": [
+    {
+      "id": "beam1m-001",
+      "category": "exact-retrieval",
+      "question": "What is the configuration for the rate limiter on the /memory/search endpoint?",
+      "gold_answer": "100 requests per minute per IP address",
+      "difficulty": "easy",
+      "context_entries": [
+        "Rate limiting is configured per-route using @fastify/rate-limit.",
+        "The /memory/search endpoint allows 100 requests per minute per IP.",
+        "The /memory/write endpoint allows 50 requests per minute per IP.",
+        "Rate limit headers include X-RateLimit-Limit and X-RateLimit-Remaining.",
+        "Exceeded limits return HTTP 429 with a Retry-After header."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "beam1m-002",
+      "category": "exact-retrieval",
+      "question": "What is the maximum allowed value for the 'limit' parameter in memory search?",
+      "gold_answer": "100",
+      "difficulty": "easy",
+      "context_entries": [
+        "The MemorySearchInput schema validates the limit parameter.",
+        "Limit must be an integer between 1 and 100.",
+        "Default limit is 10 if not specified.",
+        "Exceeding 100 triggers a Zod validation error."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "beam1m-003",
+      "category": "semantic-retrieval",
+      "question": "How does the system handle authentication for different transport modes?",
+      "gold_answer": "Embedded transport needs no auth (same process), REST transport uses optional MEM0_API_KEY header",
+      "difficulty": "medium",
+      "context_entries": [
+        "The embedded transport communicates via stdin/stdout with no network.",
+        "No authentication is needed for embedded mode since it's the same process.",
+        "REST transport sends MEM0_API_KEY as an Authorization header.",
+        "The API key is optional — mem0 server can run without auth for local development."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "beam1m-004",
+      "category": "semantic-retrieval",
+      "question": "What happens when vector search returns no results but keyword search does?",
+      "gold_answer": "The hybrid search returns the BM25 keyword results with their normalized scores, since vector results are merged as an empty set",
+      "difficulty": "medium",
+      "context_entries": [
+        "Hybrid search merges two candidate sets: vector results and BM25 results.",
+        "If vector search returns empty, only BM25 candidates contribute to final ranking.",
+        "BM25 scores are normalized before merging.",
+        "The final score formula skips the vector component when no vector matches exist.",
+        "This ensures search always returns results when keywords match."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "beam1m-005",
+      "category": "associative",
+      "question": "Given that the system uses Zod for validation and Fastify for HTTP, what validation errors look like in the API response?",
+      "gold_answer": "Zod validation errors are caught by Fastify's error handler and returned as JSON with statusCode 400, a Zod error array with path and message per field",
+      "difficulty": "hard",
+      "context_entries": [
+        "Zod schemas validate all incoming request bodies.",
+        "Zod parse() throws ZodError on invalid input.",
+        "Fastify's default error handler serializes errors as JSON.",
+        "Error responses include statusCode and error message.",
+        "ZodError contains an array of issues with path and message.",
+        "The API returns HTTP 400 for validation failures."
+      ],
+      "capabilities": ["retrieval", "multi-hop"]
+    },
+    {
+      "id": "beam1m-006",
+      "category": "associative",
+      "question": "How would you add a new memory scope to the system?",
+      "gold_answer": "Add the scope to the MemoryScope Zod enum in schemas/memory.ts, update the scopeToMem0Filters mapper, and add corresponding FTS and metadata filter support",
+      "difficulty": "hard",
+      "context_entries": [
+        "MemoryScope is defined as a Zod enum in src/schemas/memory.ts.",
+        "Adding a scope requires updating the enum with the new value.",
+        "The mem0 mapper translates scopes to entity filters (user_id, agent_id, run_id).",
+        "FTS queries can filter by scope column in the WHERE clause.",
+        "Metadata filters apply additional constraints per-scope."
+      ],
+      "capabilities": ["retrieval", "multi-hop"]
+    },
+    {
+      "id": "beam1m-007",
+      "category": "exact-retrieval",
+      "question": "What fields does a MemoryRecord contain?",
+      "gold_answer": "id, scope, scope_id, content, metadata, kind, facts, concepts, files_read, files_modified, created_at, updated_at",
+      "difficulty": "easy",
+      "context_entries": [
+        "MemoryRecord has: id (string), scope, scope_id, content, metadata (Record).",
+        "It also has: kind (MemoryKind), facts (string[]), concepts (string[]).",
+        "Plus: files_read (string[]), files_modified (string[]).",
+        "Timestamps: created_at and updated_at as ISO 8601 strings."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "beam1m-008",
+      "category": "semantic-retrieval",
+      "question": "What is the difference between memory extraction and session decomposition?",
+      "gold_answer": "Memory extraction identifies candidate facts from raw text using pattern matching or LLM, while session decomposition breaks multi-turn conversations into discrete atomic facts with provenance tracking",
+      "difficulty": "medium",
+      "context_entries": [
+        "Memory extraction takes raw text and identifies fact candidates.",
+        "The extraction route uses regex for patterns and optionally LLM for deeper analysis.",
+        "Extraction returns candidates with content and confidence scores.",
+        "Session decomposition processes a sequence of session events.",
+        "Decomposition uses LLM to extract atomic facts from conversations.",
+        "Each decomposed fact tracks source_events for provenance.",
+        "Decomposition produces typed facts: observation, summary, or manual."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "beam1m-009",
+      "category": "associative",
+      "question": "If the embedded mem0 worker crashes mid-request, what recovery mechanism exists?",
+      "gold_answer": "The transport detects process exit, rejects pending promises with an error, and lazily restarts the worker on the next call",
+      "difficulty": "hard",
+      "context_entries": [
+        "The embedded transport spawns Python as a child_process.",
+        "IPC uses JSON-RPC over stdin/stdout with request ID tracking.",
+        "If the process exits unexpectedly, all pending promises are rejected.",
+        "The transport tracks process state and auto-restarts on next call().",
+        "Start() is called lazily inside call() if the process isn't running.",
+        "Restart inherits the same configuration and environment variables."
+      ],
+      "capabilities": ["retrieval", "multi-hop"]
+    },
+    {
+      "id": "beam1m-010",
+      "category": "exact-retrieval",
+      "question": "What metadata operators does the search filter support?",
+      "gold_answer": "eq, ne, in, nin, gt, lt, gte, lte, contains, icontains, AND, OR, NOT",
+      "difficulty": "easy",
+      "context_entries": [
+        "Metadata filter operators include: eq, ne, in, nin for equality.",
+        "Comparison operators: gt, lt, gte, lte for numeric/date fields.",
+        "String operators: contains (case-sensitive), icontains (case-insensitive).",
+        "Logical operators: AND, OR, NOT for combining filter conditions.",
+        "Filters are applied after BM25/vector retrieval but before scoring."
+      ],
+      "capabilities": ["retrieval"]
+    }
+  ],
+  "questions_10m": [
+    {
+      "id": "beam10m-001",
+      "category": "needle-in-haystack",
+      "question": "In the Parlant reference system, what structure is used for detecting guideline contradictions?",
+      "gold_answer": "CoherenceCheckDocument with fields: kind, first (GuidelineContentDocument), second (GuidelineContentDocument), issue, and severity",
+      "difficulty": "hard",
+      "context_entries": [
+        "Parlant uses CoherenceCheckDocument for guideline contradiction detection.",
+        "The structure has fields: kind, first, second, issue, severity.",
+        "first and second are GuidelineContentDocument objects with condition and action.",
+        "severity is an integer indicating conflict importance.",
+        "issue describes the nature of the contradiction.",
+        "Coherence checks are part of the behavioral_change_evaluation pipeline."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "beam10m-002",
+      "category": "needle-in-haystack",
+      "question": "What is the formula used by OpenViking for computing memory hotness scores?",
+      "gold_answer": "score = sigmoid(log1p(active_count)) * time_decay(updated_at), where time_decay uses exponential decay with configurable half-life",
+      "difficulty": "hard",
+      "context_entries": [
+        "OpenViking hotness_score() computes a 0.0-1.0 score.",
+        "Formula: sigmoid(log1p(active_count)) * time_decay(updated_at).",
+        "active_count tracks how many times the memory was accessed.",
+        "time_decay uses exponential decay based on time since last update.",
+        "The half-life parameter (hotness_alpha) controls decay speed.",
+        "Hotness is blended with semantic scores in HierarchicalRetriever."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "beam10m-003",
+      "category": "cross-document",
+      "question": "Compare how mem0 and cognee handle temporal search differently.",
+      "gold_answer": "mem0 uses metadata timestamp filters (gt/lt operators) for time-range queries, while cognee uses an LLM-based TemporalRetriever that extracts time intervals from natural language and queries a temporal graph",
+      "difficulty": "hard",
+      "context_entries": [
+        "mem0 search accepts metadata filters including timestamp comparisons.",
+        "mem0 uses gt/lt/gte/lte operators on created_at/updated_at fields.",
+        "cognee has a dedicated TemporalRetriever class.",
+        "cognee extract_time_from_query() uses LLM to parse time from queries.",
+        "cognee queries graph engine collect_time_ids(time_from, time_to).",
+        "mem0 approach: structured filters; cognee approach: NL understanding."
+      ],
+      "capabilities": ["retrieval", "multi-hop"]
+    },
+    {
+      "id": "beam10m-004",
+      "category": "cross-document",
+      "question": "Which reference systems provide answer generation over retrieved memories, and how do their approaches differ?",
+      "gold_answer": "Only cognee provides answer generation via GraphCompletionRetriever (vector search → graph context → LLM completion) and GraphCompletionCotRetriever (multi-round with validation and follow-up). Other systems (mem0, Letta, OpenViking) return raw results without answer synthesis.",
+      "difficulty": "hard",
+      "context_entries": [
+        "mem0 search() returns ranked memory objects, not generated answers.",
+        "claude-mem injects memories into context but doesn't generate answers.",
+        "OpenViking returns structured context, not final answers.",
+        "Letta conversation_search() returns raw search results.",
+        "cognee GraphCompletionRetriever: vector search → graph context → LLM completion.",
+        "cognee GraphCompletionCotRetriever: multi-round with validation and follow-up questions.",
+        "cognee supports GRAPH_COMPLETION, RAG_COMPLETION, GRAPH_COMPLETION_COT search types."
+      ],
+      "capabilities": ["retrieval", "multi-hop"]
+    },
+    {
+      "id": "beam10m-005",
+      "category": "needle-in-haystack",
+      "question": "What are cognee's 16 search types?",
+      "gold_answer": "SUMMARIES, CHUNKS, RAG_COMPLETION, TRIPLET_COMPLETION, GRAPH_COMPLETION, GRAPH_COMPLETION_DECOMPOSITION, GRAPH_SUMMARY_COMPLETION, CYPHER, NATURAL_LANGUAGE, GRAPH_COMPLETION_COT, GRAPH_COMPLETION_CONTEXT_EXTENSION, FEELING_LUCKY, TEMPORAL, CODING_RULES, CHUNKS_LEXICAL, AGENTIC_COMPLETION",
+      "difficulty": "hard",
+      "context_entries": [
+        "cognee SearchType enum defines: SUMMARIES, CHUNKS, RAG_COMPLETION.",
+        "TRIPLET_COMPLETION, GRAPH_COMPLETION, GRAPH_COMPLETION_DECOMPOSITION.",
+        "GRAPH_SUMMARY_COMPLETION, CYPHER, NATURAL_LANGUAGE.",
+        "GRAPH_COMPLETION_COT, GRAPH_COMPLETION_CONTEXT_EXTENSION, FEELING_LUCKY.",
+        "TEMPORAL, CODING_RULES, CHUNKS_LEXICAL, AGENTIC_COMPLETION."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "beam10m-006",
+      "category": "cross-document",
+      "question": "How does the capability audit's recommended architecture differ from the initial implementation approach?",
+      "gold_answer": "The initial approach was to build all 8 capabilities natively in agent-core. The audit found that 4 should delegate to mem0, 5 should adapt reference patterns, and only 2 (abstention + contradiction) need native implementation — 0 require building from scratch without any reference.",
+      "difficulty": "hard",
+      "context_entries": [
+        "Initial: Planned to implement all 8 capabilities as native agent-core modules.",
+        "Audit: Found mem0 already handles extraction, dedup, hybrid retrieval, history.",
+        "Audit: Found cognee handles temporal search and answer generation patterns.",
+        "Audit: Found OpenViking handles hierarchical multi-hop retrieval.",
+        "Audit: Found Parlant handles contradiction detection patterns.",
+        "Result: 4 delegate to mem0, 5 adapt references, 2 native (abstention + contradiction).",
+        "Key principle: maximum capability with minimum unnecessary rebuild."
+      ],
+      "capabilities": ["retrieval", "multi-hop"]
+    },
+    {
+      "id": "beam10m-007",
+      "category": "needle-in-haystack",
+      "question": "What is the maximum number of convergence rounds in OpenViking's HierarchicalRetriever?",
+      "gold_answer": "3 rounds (MAX_CONVERGENCE_ROUNDS=3)",
+      "difficulty": "medium",
+      "context_entries": [
+        "HierarchicalRetriever uses recursive directory-based search.",
+        "MAX_CONVERGENCE_ROUNDS is set to 3.",
+        "Each round expands search through child directories.",
+        "Convergence is detected when new rounds add diminishing results.",
+        "score_propagation_alpha controls how parent scores influence children."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "beam10m-008",
+      "category": "cross-document",
+      "question": "What capabilities are missing from agent-core that prevent it from running LoCoMo and LongMemEval benchmarks today?",
+      "gold_answer": "Answer generation over retrieved memories (needed by all questions), multi-hop reasoning (LoCoMo multi-hop category), temporal search with NL time extraction (temporal categories), and abstention (adversarial/abstention categories)",
+      "difficulty": "hard",
+      "context_entries": [
+        "LoCoMo requires: single-hop retrieval, multi-hop reasoning, temporal reasoning, abstention.",
+        "LongMemEval requires: information extraction, multi-session reasoning, temporal reasoning, knowledge updates, abstention.",
+        "Missing: Answer generation (no LLM reader stage over search results).",
+        "Missing: Multi-hop reasoning (no iterative retrieval with follow-up queries).",
+        "Missing: Temporal search (no NL time extraction from queries).",
+        "Missing: Abstention (no confidence-based refusal mechanism).",
+        "Present: Single-hop retrieval, keyword search, metadata filters."
+      ],
+      "capabilities": ["retrieval", "multi-hop"]
+    }
+  ]
+}

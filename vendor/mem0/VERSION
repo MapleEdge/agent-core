@@ -1,0 +1,7 @@
+upstream_repo: https://github.com/mem0ai/mem0
+upstream_commit: vendored-snapshot
+upstream_tag: v0.1.x
+local_modifications: none
+license: Apache-2.0
+vendored_path: vendor/providers/memory/mem0
+last_updated: 2026-06-06

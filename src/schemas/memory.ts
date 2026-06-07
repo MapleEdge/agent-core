@@ -63,6 +63,36 @@ export const MemoryExtractionResult = z.object({
   ),
 });
 
+// ── Mem0 passthrough schemas (benchmark / conversation-level operations) ──
+
+export const MemoryIngestInput = z.object({
+  messages: z.array(
+    z.object({
+      role: z.string(),
+      content: z.string(),
+    }),
+  ).min(1),
+  user_id: z.string().min(1),
+  metadata: z.record(z.unknown()).optional(),
+  timestamp: z.number().int().optional(),
+  custom_instructions: z.string().optional(),
+});
+
+export const MemoryRecallInput = z.object({
+  query: z.string().min(1),
+  user_id: z.string().min(1),
+  limit: z.number().int().min(1).max(1000).default(100),
+  rerank: z.boolean().default(false),
+});
+
+export const MemoryDeleteUserInput = z.object({
+  user_id: z.string().min(1),
+});
+
+export type MemoryIngestInputType = z.infer<typeof MemoryIngestInput>;
+export type MemoryRecallInputType = z.infer<typeof MemoryRecallInput>;
+export type MemoryDeleteUserInputType = z.infer<typeof MemoryDeleteUserInput>;
+
 export type MemoryExtractionResultType = z.infer<typeof MemoryExtractionResult>;
 export type MemoryKindType = z.infer<typeof MemoryKind>;
 export type MemoryWriteInputType = z.infer<typeof MemoryWriteInput>;

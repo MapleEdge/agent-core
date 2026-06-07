@@ -1,0 +1,57 @@
+[
+  {
+    "name": "validation_failure_fail_closed",
+    "action": "read_file",
+    "params": {},
+    "injectFailure": "validation",
+    "expected": {
+      "invoked": false,
+      "auditStatus": "failed",
+      "timelineHasFailedEvent": true
+    }
+  },
+  {
+    "name": "permission_failure_fail_closed",
+    "action": "commit",
+    "params": { "message": "test" },
+    "injectFailure": "permission",
+    "expected": {
+      "invoked": false,
+      "auditStatus": "failed",
+      "timelineHasFailedEvent": true
+    }
+  },
+  {
+    "name": "lookup_failure_fail_closed",
+    "action": "totally_unknown_action",
+    "params": {},
+    "injectFailure": "lookup",
+    "expected": {
+      "invoked": false,
+      "auditStatus": "failed",
+      "timelineHasFailedEvent": true
+    }
+  },
+  {
+    "name": "scope_failure_fail_closed",
+    "action": "summarize_diff",
+    "params": {},
+    "taskType": "code_edit",
+    "completedActions": [],
+    "injectFailure": "scope",
+    "expected": {
+      "invoked": false,
+      "auditStatus": "failed",
+      "timelineHasFailedEvent": true
+    }
+  },
+  {
+    "name": "unknown_action_never_invokes",
+    "action": "delete_everything",
+    "params": {},
+    "expected": {
+      "invoked": false,
+      "errorCode": "ACTION_NOT_FOUND"
+    }
+  }
+]

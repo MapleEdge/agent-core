@@ -1,0 +1,384 @@
+{
+  "name": "LoCoMo",
+  "version": "1.0.0",
+  "description": "Long Conversation Memory benchmark — tests single-hop retrieval, multi-hop reasoning, temporal reasoning, open-domain QA, and adversarial questions over extended conversations.",
+  "target_metrics": {
+    "accuracy": 91.6,
+    "tokens_budget": 7000,
+    "latency_p50_ms": 880
+  },
+  "questions": [
+    {
+      "id": "locomo-sh-001",
+      "category": "single-hop",
+      "question": "What linting tool does the project use?",
+      "gold_answer": "ESLint",
+      "context_entries": [
+        "The project uses ESLint for code linting with a custom configuration.",
+        "Tests are run using vitest with coverage reporting.",
+        "TypeScript strict mode is enabled in tsconfig.json.",
+        "The CI pipeline runs lint, typecheck, and test in sequence."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "locomo-sh-002",
+      "category": "single-hop",
+      "question": "What database does the application use?",
+      "gold_answer": "SQLite",
+      "context_entries": [
+        "The application uses SQLite with WAL mode for concurrent reads.",
+        "Database migrations are managed using better-sqlite3.",
+        "Memory records are stored in the memories table with FTS5 indexing.",
+        "The action audit trail is stored in the action_audit_records table."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "locomo-sh-003",
+      "category": "single-hop",
+      "question": "What is the default embedding model?",
+      "gold_answer": "text-embedding-3-small",
+      "context_entries": [
+        "The default embedding model is text-embedding-3-small from OpenAI.",
+        "Embeddings are generated asynchronously and stored in the memory_embeddings table.",
+        "The embedding dimension is 1536 for the default model.",
+        "Fallback to BM25 search occurs when embeddings are unavailable."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "locomo-sh-004",
+      "category": "single-hop",
+      "question": "What package manager is used?",
+      "gold_answer": "pnpm",
+      "context_entries": [
+        "The project uses pnpm as its package manager with frozen lockfiles in CI.",
+        "Node.js 18+ is required for the build.",
+        "TypeScript is compiled using tsc before running tests.",
+        "The project follows semantic versioning."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "locomo-sh-005",
+      "category": "single-hop",
+      "question": "What is the scoring formula weight for BM25 in hybrid search?",
+      "gold_answer": "0.3",
+      "context_entries": [
+        "Hybrid search uses 0.7 weight for cosine similarity and 0.3 for BM25.",
+        "BM25 scores are normalized using sigmoid before combining.",
+        "Metadata filters are applied before scoring.",
+        "Results above the threshold are returned sorted by combined score."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "locomo-sh-006",
+      "category": "single-hop",
+      "question": "What web framework does the API use?",
+      "gold_answer": "Fastify",
+      "context_entries": [
+        "The API is built on Fastify with Swagger documentation.",
+        "CORS is enabled for development environments.",
+        "Rate limiting is applied per-route using @fastify/rate-limit.",
+        "The health endpoint returns provider status information."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "locomo-mh-001",
+      "category": "multi-hop",
+      "question": "What happens when the embedding service is down but a user searches for memories?",
+      "gold_answer": "The system falls back to BM25-only search using SQLite FTS5",
+      "context_entries": [
+        "Memory search first attempts hybrid retrieval combining vector and BM25.",
+        "If the embedding provider fails, the system logs a warning.",
+        "BM25 search uses SQLite FTS5 for keyword matching.",
+        "The fallback ensures search never fails solely because embeddings are unavailable.",
+        "FTS5 tokenizes content and matches using prefix queries."
+      ],
+      "capabilities": ["retrieval", "multi-hop"]
+    },
+    {
+      "id": "locomo-mh-002",
+      "category": "multi-hop",
+      "question": "How does the system ensure that destructive actions get proper authorization?",
+      "gold_answer": "Destructive actions require approval through the action pipeline which checks permissions before invoke and creates audit records",
+      "context_entries": [
+        "The action pipeline validates all payloads using Zod schemas before execution.",
+        "Actions are classified by risk level: safe, moderate, and destructive.",
+        "Destructive actions require explicit approval before invocation.",
+        "The approval gate checks the action registry for the approval_required flag.",
+        "Every action attempt generates an audit record with status transitions.",
+        "The timeline captures ACTION_REQUESTED, ACTION_VALIDATED, and ACTION_EXECUTED events."
+      ],
+      "capabilities": ["retrieval", "multi-hop"]
+    },
+    {
+      "id": "locomo-mh-003",
+      "category": "multi-hop",
+      "question": "Trace the journey of a memory from session-scoped to globally available.",
+      "gold_answer": "A memory is written with session scope, then promoted via the /memory/promote endpoint which copies it to the target scope (e.g., global_policy) while preserving the original",
+      "context_entries": [
+        "Memories are initially written with a scope (session, repo, user, etc.).",
+        "The promote endpoint copies a memory to a broader scope.",
+        "Promotion preserves the original memory and creates a new record.",
+        "The target scope can be any valid MemoryScope including global_policy.",
+        "Promoted memories retain their content, metadata, facts, and concepts.",
+        "Memory scopes form a hierarchy: session < task < branch < repo < user < global_policy."
+      ],
+      "capabilities": ["retrieval", "multi-hop"]
+    },
+    {
+      "id": "locomo-temp-001",
+      "category": "temporal",
+      "question": "What was the authentication method before the team switched to OAuth?",
+      "gold_answer": "JWT tokens with session cookies",
+      "context_entries": [
+        "2024-01-15: The project uses JWT tokens for API authentication.",
+        "2024-01-15: Session cookies are used for browser-based auth.",
+        "2024-03-20: The team decided to migrate from JWT to OAuth 2.0.",
+        "2024-04-01: OAuth 2.0 integration is complete with Google provider.",
+        "2024-04-15: JWT authentication has been deprecated in favor of OAuth."
+      ],
+      "capabilities": ["retrieval", "temporal"]
+    },
+    {
+      "id": "locomo-temp-002",
+      "category": "temporal",
+      "question": "What changes were made to the database schema in Q1 2024?",
+      "gold_answer": "Added FTS5 indexing for the memories table and created the action_audit_records table",
+      "context_entries": [
+        "2024-01-10: Created the memories table with basic CRUD support.",
+        "2024-02-05: Added FTS5 virtual table for full-text search on memories.",
+        "2024-02-20: Created the action_audit_records table for tracking action execution.",
+        "2024-03-15: Added the memory_embeddings table for vector storage.",
+        "2024-04-10: Added indexes for scope-based queries on the memories table."
+      ],
+      "capabilities": ["retrieval", "temporal"]
+    },
+    {
+      "id": "locomo-temp-003",
+      "category": "temporal",
+      "question": "When was the last time the test framework was changed?",
+      "gold_answer": "The project migrated from Jest to Vitest in March 2024",
+      "context_entries": [
+        "2023-06-01: The project uses Jest for testing with ts-jest preset.",
+        "2023-12-15: Jest configuration updated for ESM support.",
+        "2024-03-01: Migrated from Jest to Vitest for faster test execution.",
+        "2024-03-05: All test files updated to use Vitest imports.",
+        "2024-05-10: Added vitest coverage reporting to CI pipeline."
+      ],
+      "capabilities": ["retrieval", "temporal"]
+    },
+    {
+      "id": "locomo-open-001",
+      "category": "open-domain",
+      "question": "How should errors from external APIs be handled in this project?",
+      "gold_answer": "External API errors should be caught, logged with structured error details, and result in graceful degradation rather than hard failures",
+      "context_entries": [
+        "External API calls should use try/catch with structured error logging.",
+        "The project follows a fail-soft pattern: degrade gracefully on external failures.",
+        "Error responses should include error_type and human-readable messages.",
+        "The LLM client catches network errors and returns structured LLMJsonError objects.",
+        "Memory search falls back to BM25 when the embedding API fails."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "locomo-open-002",
+      "category": "open-domain",
+      "question": "What are the coding conventions for this TypeScript project?",
+      "gold_answer": "The project uses strict TypeScript, ESLint for linting, 2-space indentation, named exports, and Zod for runtime validation",
+      "context_entries": [
+        "TypeScript strict mode is enabled with no implicit any.",
+        "ESLint is configured with recommended rules plus import ordering.",
+        "The project uses 2-space indentation throughout.",
+        "Named exports are preferred over default exports.",
+        "Zod is used for all runtime schema validation at API boundaries.",
+        "Interfaces are preferred over type aliases for object shapes."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "locomo-adv-001",
+      "category": "adversarial",
+      "question": "What color is the project's logo?",
+      "gold_answer": "",
+      "context_entries": [
+        "The project uses ESLint for linting.",
+        "The API documentation is generated with Swagger.",
+        "The CI pipeline checks formatting, types, and tests.",
+        "Memory records store scope, content, and metadata."
+      ],
+      "capabilities": ["abstention"]
+    },
+    {
+      "id": "locomo-adv-002",
+      "category": "adversarial",
+      "question": "How many employees work on this project?",
+      "gold_answer": "",
+      "context_entries": [
+        "The project uses pnpm for dependency management.",
+        "SQLite is used as the primary database.",
+        "The action system supports approval workflows.",
+        "Memory extraction uses DeepSeek for LLM inference."
+      ],
+      "capabilities": ["abstention"]
+    },
+    {
+      "id": "locomo-adv-003",
+      "category": "adversarial",
+      "question": "What is the annual revenue of the company behind this project?",
+      "gold_answer": "",
+      "context_entries": [
+        "The project is a middleware service for agentic workflows.",
+        "It provides memory, action execution, and context retrieval.",
+        "The default deployment target is single-node SQLite."
+      ],
+      "capabilities": ["abstention"]
+    },
+    {
+      "id": "locomo-sh-007",
+      "category": "single-hop",
+      "question": "What LLM provider is used by default for inference?",
+      "gold_answer": "DeepSeek",
+      "context_entries": [
+        "The default LLM provider is DeepSeek, configured via DEEPSEEK_API_KEY.",
+        "An optional Gemini provider is available for classification tasks.",
+        "LLM responses are validated using Zod schemas via the LLMJson utility.",
+        "Temperature defaults to 0.1 for deterministic outputs."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "locomo-sh-008",
+      "category": "single-hop",
+      "question": "What is the maximum number of retries for LLM JSON validation?",
+      "gold_answer": "2 attempts (1 initial + 1 retry)",
+      "context_entries": [
+        "The LLMJson utility attempts JSON parsing and schema validation.",
+        "If the first attempt fails, it retries once with error feedback.",
+        "After 2 total attempts, it returns a structured error.",
+        "The retry includes the previous response and validation errors."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "locomo-mh-004",
+      "category": "multi-hop",
+      "question": "If a developer adds a new action type, what systems need to be updated?",
+      "gold_answer": "The action registry (Zod schema), the action pipeline (validation + execution), the audit system (status tracking), and the timeline integration (event emission)",
+      "context_entries": [
+        "New actions must have a Zod schema registered in the action registry.",
+        "The action pipeline validates payloads against registered schemas.",
+        "Validated actions are executed through the ActionProvider interface.",
+        "Every action creates audit records with status transitions.",
+        "Timeline events are emitted at each pipeline stage.",
+        "The rationale field must be populated for all action requests.",
+        "Permission checks verify the action is allowed for the current scope."
+      ],
+      "capabilities": ["retrieval", "multi-hop"]
+    },
+    {
+      "id": "locomo-sh-009",
+      "category": "single-hop",
+      "question": "What memory scopes are supported?",
+      "gold_answer": "user, repo, branch, task, session, executor, and global_policy",
+      "context_entries": [
+        "Memory scopes include: user, repo, branch, task, session, executor, global_policy.",
+        "Each memory record has a scope and scope_id for partitioning.",
+        "Scopes form a hierarchy for promotion: session < task < branch < repo < user < global_policy.",
+        "The scope_id identifies the specific entity within the scope."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "locomo-temp-004",
+      "category": "temporal",
+      "question": "What testing framework did the project use before March 2024?",
+      "gold_answer": "Jest with ts-jest preset",
+      "context_entries": [
+        "2023-06-01: The project uses Jest for testing with ts-jest preset.",
+        "2023-12-15: Jest configuration updated for ESM support.",
+        "2024-03-01: Migrated from Jest to Vitest for faster test execution.",
+        "2024-03-05: All test files updated to use Vitest imports."
+      ],
+      "capabilities": ["retrieval", "temporal"]
+    },
+    {
+      "id": "locomo-mh-005",
+      "category": "multi-hop",
+      "question": "How does the system handle a memory write when both the embedding service and the LLM extraction service are unavailable?",
+      "gold_answer": "The memory is still persisted to SQLite as raw text without embeddings or extracted facts, since memory persistence is the source of truth and external service failures are non-blocking",
+      "context_entries": [
+        "Memory writes persist the record to SQLite as the source of truth.",
+        "Embedding generation happens asynchronously after memory persistence.",
+        "Embedding failures are logged but do not block the write.",
+        "LLM-based extraction is optional and gated by ENABLE_LLM_EXTRACT flag.",
+        "Without extraction, the raw text is stored as-is.",
+        "FTS5 indexing ensures the memory remains searchable via keywords."
+      ],
+      "capabilities": ["retrieval", "multi-hop"]
+    },
+    {
+      "id": "locomo-open-003",
+      "category": "open-domain",
+      "question": "What is the recommended approach for adding a new memory provider?",
+      "gold_answer": "Implement the MemoryProvider interface (write, search, get, update, delete), register it in the provider registry, and add benchmark tests to compare against existing providers",
+      "context_entries": [
+        "The MemoryProvider interface defines write, search, get, update, and delete methods.",
+        "Providers are registered using registerProvider in the provider registry.",
+        "The MEMORY_PROVIDER env var controls which provider is active.",
+        "New providers should include benchmark comparisons against existing ones.",
+        "The Mem0MemoryProvider serves as the reference adapter implementation.",
+        "Provider selection falls back to MockMemoryProvider if configuration fails."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "locomo-sh-010",
+      "category": "single-hop",
+      "question": "What transport modes does the Mem0 provider support?",
+      "gold_answer": "embedded (Python worker over stdin/stdout) and REST (HTTP to external server)",
+      "context_entries": [
+        "MEM0_TRANSPORT=embedded spawns a Python worker communicating via JSON-RPC over stdin/stdout.",
+        "MEM0_TRANSPORT=rest calls an external mem0 REST API over HTTP.",
+        "The embedded transport is the default and preferred mode.",
+        "REST is used when a centralized mem0 server is already running."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "locomo-sh-011",
+      "category": "single-hop",
+      "question": "What is the default temperature for LLM calls?",
+      "gold_answer": "0.1",
+      "context_entries": [
+        "LLM temperature defaults to 0.1 for deterministic outputs in JSON mode.",
+        "The LLMJson utility uses temperature 0.1 by default.",
+        "Higher temperatures can be specified via the options parameter.",
+        "JSON mode is always enabled for structured output extraction."
+      ],
+      "capabilities": ["retrieval"]
+    },
+    {
+      "id": "locomo-mh-006",
+      "category": "multi-hop",
+      "question": "What is the complete lifecycle of an action from request to completion?",
+      "gold_answer": "An action goes through: schema validation (Zod safeParse), permission check, approval gate (if destructive), execution via ActionProvider, audit record creation with status transitions, and timeline event emission",
+      "context_entries": [
+        "Actions enter the pipeline with a request containing name, params, and rationale.",
+        "Zod safeParse validates the payload against the registered schema.",
+        "Permission checks verify the action is allowed in the current scope.",
+        "Destructive actions trigger the approval gate requiring explicit approval.",
+        "Approved actions are executed through the ActionProvider.invoke() method.",
+        "Audit records track: requested, validated, executed, or failed status.",
+        "Timeline events emit ACTION_REQUESTED, ACTION_VALIDATED, ACTION_EXECUTED.",
+        "The rationale field is preserved throughout the entire pipeline."
+      ],
+      "capabilities": ["retrieval", "multi-hop"]
+    }
+  ]
+}

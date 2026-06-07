@@ -13,9 +13,17 @@ class OpenAIEmbedding(EmbeddingBase):
         super().__init__(config)
 
         self.config.model = self.config.model or "text-embedding-3-small"
-        # Only pass `dimensions` to the API when the user set embedding_dims; non-matryoshka
-        # OpenAI-compatible backends (vLLM, Voyage, etc.) reject the parameter
-        self._pass_dimensions_to_api = self.config.embedding_dims is not None
+        # Only pass `dimensions` and `encoding_format` to the API when talking to
+        # the real OpenAI endpoint.  Non-matryoshka / non-OpenAI backends (vLLM,
+        # Voyage, etc.) reject these parameters.
+        self._is_openai_native = (
+            self.config.openai_base_url is None
+            and not os.getenv("OPENAI_API_BASE")
+            and not os.getenv("OPENAI_BASE_URL")
+        ) or (
+            (self.config.openai_base_url or "").rstrip("/").endswith("api.openai.com/v1")
+        )
+        self._pass_dimensions_to_api = self.config.embedding_dims is not None and self._is_openai_native
         self.config.embedding_dims = self.config.embedding_dims or 1536
 
         api_key = self.config.api_key or os.getenv("OPENAI_API_KEY")
@@ -48,8 +56,9 @@ class OpenAIEmbedding(EmbeddingBase):
         kwargs = {
             "input": [text],
             "model": self.config.model,
-            "encoding_format": "float",
         }
+        if self._is_openai_native:
+            kwargs["encoding_format"] = "float"
         if self._pass_dimensions_to_api:
             kwargs["dimensions"] = self.config.embedding_dims
         return self.client.embeddings.create(**kwargs).data[0].embedding
@@ -67,8 +76,9 @@ class OpenAIEmbedding(EmbeddingBase):
             kwargs = {
                 "input": chunk,
                 "model": self.config.model,
-                "encoding_format": "float",
             }
+            if self._is_openai_native:
+                kwargs["encoding_format"] = "float"
             if self._pass_dimensions_to_api:
                 kwargs["dimensions"] = self.config.embedding_dims
             response = self.client.embeddings.create(**kwargs)

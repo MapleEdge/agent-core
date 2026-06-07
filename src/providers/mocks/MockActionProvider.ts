@@ -1,5 +1,7 @@
 import { getDb } from "../../db.js";
 import { executeMockAction } from "../../actions/executor.js";
+import { getActionSchema } from "../../actions/actionSchemas.js";
+import { zodToJsonSchema } from "zod-to-json-schema";
 import type {
   ActionProvider,
   ActionSchema,
@@ -46,6 +48,25 @@ export class MockActionProvider implements ActionProvider {
   async validate(name: string, params: Record<string, unknown>): Promise<ActionValidationResult> {
     const action = await this.get(name);
     if (!action) return { valid: false, errors: [`Unknown action: ${name}`] };
+
+    const zodSchema = getActionSchema(name);
+    if (zodSchema) {
+      const result = zodSchema.safeParse(params);
+      if (!result.success) {
+        const issues = result.error.issues.map((issue) => ({
+          path: issue.path.join(".") || "(root)",
+          message: issue.message,
+        }));
+        return {
+          valid: false,
+          errors: issues.map((i) => `${i.path}: ${i.message}`),
+          issues,
+        };
+      }
+      return { valid: true, errors: [] };
+    }
+
+    // Fallback: legacy parameter-required check
     const missingRequired = Object.entries(action.parameters)
       .filter(([, value]) => this.isRequiredParameter(value))
       .map(([key]) => key)
@@ -89,12 +110,15 @@ export class MockActionProvider implements ActionProvider {
   }
 
   private mapAction(row: ActionRow): ActionSchema {
+    const zodSchema = getActionSchema(row.name);
     return {
       name: row.name,
       description: row.description,
       parameters: JSON.parse(row.schema) as Record<string, unknown>,
       risk_level: row.risk_level,
       requires_approval: Boolean(row.requires_approval),
+      zodSchema,
+      jsonSchema: zodSchema ? zodToJsonSchema(zodSchema) as Record<string, unknown> : undefined,
     };
   }
 
