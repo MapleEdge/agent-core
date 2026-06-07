@@ -420,14 +420,27 @@ function evaluateOperator(value: unknown, operator: string, expected: unknown): 
     case "gte": return typeof value === "number" && typeof expected === "number" && value >= expected;
     case "lt": return typeof value === "number" && typeof expected === "number" && value < expected;
     case "lte": return typeof value === "number" && typeof expected === "number" && value <= expected;
-    case "contains": return typeof value === "string" && typeof expected === "string" && value.includes(expected);
-    case "icontains": return typeof value === "string" && typeof expected === "string" && value.toLowerCase().includes(expected.toLowerCase());
+    case "contains": return containsValue(value, expected, false);
+    case "icontains": return containsValue(value, expected, true);
     default: return false;
   }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function containsValue(value: unknown, expected: unknown, caseInsensitive: boolean): boolean {
+  if (typeof expected !== "string") return false;
+  if (typeof value === "string") {
+    return caseInsensitive
+      ? value.toLowerCase().includes(expected.toLowerCase())
+      : value.includes(expected);
+  }
+  if (Array.isArray(value)) {
+    return value.some((item) => containsValue(item, expected, caseInsensitive));
+  }
+  return false;
 }
 
 function deepEqual(a: unknown, b: unknown): boolean {

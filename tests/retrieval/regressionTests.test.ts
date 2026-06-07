@@ -277,6 +277,75 @@ describe("Regression — Metadata Filtering", () => {
   });
 });
 
+describe("Regression — Array Metadata Filters (contains/icontains parity)", () => {
+  it("contains matches element in array metadata", async () => {
+    await memoryProvider.write({
+      scope: "repo",
+      scope_id: "arr-test",
+      content: "deploy pipeline needs approval tags array test",
+      metadata: { tags: ["deploy", "approval"] },
+    });
+    await memoryProvider.write({
+      scope: "repo",
+      scope_id: "arr-test",
+      content: "logging setup for debug tags array test",
+      metadata: { tags: ["logging", "debug"] },
+    });
+
+    const results = await memoryProvider.search({
+      query: "tags array test",
+      filters: { tags: { contains: "approval" } },
+      top_k: 10,
+    });
+
+    expect(results.length).toBeGreaterThanOrEqual(1);
+    for (const r of results) {
+      expect(r.metadata.tags).toContain("approval");
+    }
+  });
+
+  it("icontains matches element in array metadata case-insensitively", async () => {
+    await memoryProvider.write({
+      scope: "repo",
+      scope_id: "arr-test",
+      content: "CI pipeline runs nightly for array icontains test",
+      metadata: { environments: ["Staging", "Production"] },
+    });
+
+    const results = await memoryProvider.search({
+      query: "array icontains test",
+      filters: { environments: { icontains: "staging" } },
+      top_k: 10,
+    });
+
+    expect(results.length).toBeGreaterThanOrEqual(1);
+    for (const r of results) {
+      const envs = r.metadata.environments as string[];
+      expect(envs.some((e) => e.toLowerCase().includes("staging"))).toBe(true);
+    }
+  });
+
+  it("contains on string metadata still works", async () => {
+    await memoryProvider.write({
+      scope: "repo",
+      scope_id: "arr-test",
+      content: "string contains parity check for regression",
+      metadata: { description: "This is a deployment guide" },
+    });
+
+    const results = await memoryProvider.search({
+      query: "string contains parity",
+      filters: { description: { contains: "deployment" } },
+      top_k: 10,
+    });
+
+    expect(results.length).toBeGreaterThanOrEqual(1);
+    for (const r of results) {
+      expect(r.metadata.description).toContain("deployment");
+    }
+  });
+});
+
 describe("Regression — Embedding Store", () => {
   it("write stores embedding alongside memory", async () => {
     const mem = await memoryProvider.write({
