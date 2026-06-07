@@ -14,6 +14,7 @@
  * by the future platform, never by agent-core.
  */
 
+import type { ZodType } from "zod";
 import type { ProviderStatus } from "./registry.js";
 
 export interface ActionSchema {
@@ -22,11 +23,17 @@ export interface ActionSchema {
   parameters: Record<string, unknown>;
   risk_level: "low" | "medium" | "high" | "critical";
   requires_approval: boolean;
+  /** Zod schema for parameter validation (runtime only, not persisted). */
+  zodSchema?: ZodType;
+  /** JSON Schema representation of the Zod schema. */
+  jsonSchema?: Record<string, unknown>;
 }
 
 export interface ActionValidationResult {
   valid: boolean;
   errors: string[];
+  /** Structured Zod issues when validation fails via safeParse. */
+  issues?: Array<{ path: string; message: string }>;
 }
 
 /**

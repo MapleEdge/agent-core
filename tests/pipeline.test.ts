@@ -5,6 +5,7 @@ import { policyRoutes, seedDefaultPolicies } from "../src/api/policy.js";
 import { sessionRoutes, traceRoutes } from "../src/traces/routes.js";
 import { rulesRoutes, seedDefaultRules } from "../src/rules/routes.js";
 import { seedDefaultActions } from "../src/actions/defaults.js";
+import { seedActionSchemas } from "../src/actions/actionSchemas.js";
 import { closeDb } from "../src/db.js";
 import { registerDefaultProviders } from "../src/providers/defaults.js";
 import { resetProviderRegistry } from "../src/providers/registry.js";
@@ -20,6 +21,7 @@ beforeAll(async () => {
   await app.register(traceRoutes);
   await app.register(rulesRoutes);
   seedDefaultActions();
+  seedActionSchemas();
   seedDefaultRules();
   seedDefaultPolicies();
   registerDefaultProviders();
