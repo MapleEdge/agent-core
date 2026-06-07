@@ -1,6 +1,8 @@
 import { LettaRuleSolverProvider } from "./adapters/LettaRuleSolverProvider.js";
 import { GeminiClassifierProvider } from "./adapters/GeminiClassifierProvider.js";
-import { Mem0MemoryProvider, getMem0Config } from "./adapters/Mem0MemoryProvider.js";
+import { Mem0MemoryProvider } from "./adapters/Mem0MemoryProvider.js";
+import { Mem0RestTransport } from "../memory/transports/Mem0RestTransport.js";
+import { Mem0EmbeddedTransport } from "../memory/transports/Mem0EmbeddedTransport.js";
 import {
   MockActionProvider,
   MockClassifierProvider,
@@ -42,28 +44,44 @@ export function registerDefaultProviders(): void {
  *
  * Values:
  *   "mock" (default) — MockMemoryProvider (SQLite-backed)
- *   "mem0"           — Mem0MemoryProvider (requires MEM0_BASE_URL)
+ *   "mem0"           — Mem0MemoryProvider with transport:
+ *                        MEM0_TRANSPORT=rest      → HTTP sidecar (MEM0_BASE_URL required)
+ *                        MEM0_TRANSPORT=embedded  → Python worker (lazy-start on first call)
+ *                        MEM0_BASE_URL set        → REST (backward compat)
  *
  * Feature flags for incremental adoption:
  *   MEMORY_EXTRACTION_PROVIDER=mem0  — use mem0 for extraction only
  *   MEMORY_RETRIEVAL_PROVIDER=mem0   — use mem0 for retrieval only
  *   MEMORY_DEDUP_PROVIDER=mem0       — use mem0 for deduplication only
- *
- * When MEMORY_PROVIDER=mem0, all sub-features default to mem0.
- * Individual feature flags allow hybrid strategies.
  */
 function resolveMemoryProvider(): MemoryProvider {
   const providerName = process.env.MEMORY_PROVIDER ?? "mock";
 
   if (providerName === "mem0") {
-    const config = getMem0Config();
-    if (!config) {
-      console.warn(
-        "[agent-core] MEMORY_PROVIDER=mem0 but MEM0_BASE_URL not set. Falling back to mock.",
+    const transportMode = process.env.MEM0_TRANSPORT ?? (process.env.MEM0_BASE_URL ? "rest" : "embedded");
+
+    if (transportMode === "rest") {
+      const baseUrl = process.env.MEM0_BASE_URL;
+      if (!baseUrl) {
+        console.warn("[agent-core] MEM0_TRANSPORT=rest but MEM0_BASE_URL not set. Falling back to mock.");
+        return new MockMemoryProvider();
+      }
+      return new Mem0MemoryProvider(
+        new Mem0RestTransport({ baseUrl, apiKey: process.env.MEM0_API_KEY }),
       );
-      return new MockMemoryProvider();
     }
-    return new Mem0MemoryProvider(config);
+
+    // Embedded worker: lazy-starts on first call (start() is async,
+    // called automatically inside call() if not already running)
+    const embedded = new Mem0EmbeddedTransport({
+      pythonPath: process.env.MEM0_PYTHON_PATH,
+      env: Object.fromEntries(
+        Object.entries(process.env).filter(
+          ([k]) => k.startsWith("MEM0_") || k.startsWith("OPENAI_"),
+        ) as [string, string][],
+      ),
+    });
+    return new Mem0MemoryProvider(embedded);
   }
 
   return new MockMemoryProvider();

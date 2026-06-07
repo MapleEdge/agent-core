@@ -88,7 +88,7 @@ curl -s http://localhost:3210/sessions/$SESSION/timeline
 
 | Provider | Interface | Strategy | Status |
 |----------|-----------|----------|--------|
-| mem0 | MemoryProvider | Adapter (REST API) | Active — `Mem0MemoryProvider` calls mem0 sidecar; mock fallback when unavailable |
+| mem0 | MemoryProvider | Adapter (embedded worker / REST) | Active — `Mem0MemoryProvider` delegates via transport layer: embedded Python worker (default, JSON-RPC over stdio) or REST sidecar; mock fallback when unavailable |
 | claude-mem | SessionProvider | Direct partial utility extraction | Timeline utility extracted (proof-of-concept, does not call claude-mem runtime); session CRUD mocked |
 | OpenViking | ContextProvider | Reference only | Mocked — static context tree |
 | Letta | RuleSolverProvider | Direct integration | Active — deterministic TS port of ToolRulesSolver |
@@ -106,7 +106,7 @@ LLM client: `src/llm/` — provider-neutral `LLMClient` interface with DeepSeek 
 
 Evaluation: `pnpm eval:llm` — fixture-based LLM eval runner (requires `ENABLE_LLM_EVALS=true` and `DEEPSEEK_API_KEY`). See [docs/evaluation.md](docs/evaluation.md).
 
-Memory evaluation: `pnpm memory:eval` — benchmark memory providers (Recall@1/3/5, MRR, nDCG). Use `MEMORY_PROVIDER=mem0` + `MEM0_BASE_URL` to benchmark against mem0. See [docs/memory-roadmap.md](docs/memory-roadmap.md).
+Memory evaluation: `pnpm memory:eval` — benchmark memory providers (Recall@1/3/5, MRR, nDCG). Use `MEMORY_PROVIDER=mem0` to benchmark against mem0 (embedded worker by default, or set `MEM0_BASE_URL` for REST). See [docs/memory.md](docs/memory.md) for transport modes and [docs/memory-roadmap.md](docs/memory-roadmap.md) for the replacement strategy.
 
 See [docs/provider-integration-audit.md](docs/provider-integration-audit.md) for the full audit and [docs/decisions/0004-provider-adapter-strategy.md](docs/decisions/0004-provider-adapter-strategy.md) for the adapter strategy policy.
 

@@ -1,11 +1,12 @@
 /**
- * Tests for Mem0MemoryProvider, mapping layer, and provider selection.
+ * Tests for Mem0MemoryProvider, mapping layer, transports, and provider selection.
  *
- * These tests run without a real mem0 server. They verify:
+ * These tests run without a real mem0 server or Python worker. They verify:
  *   - Mapper correctness (scope <-> mem0 entity IDs)
+ *   - Transport abstraction (mock transport for unit testing)
  *   - Provider contract compliance (same interface as MockMemoryProvider)
  *   - Provider selection logic (MEMORY_PROVIDER env var)
- *   - Feature flag documentation accuracy
+ *   - Transport mode selection (embedded vs REST)
  *   - Fallback behavior when mem0 is unavailable
  */
 
@@ -20,6 +21,7 @@ import {
   type Mem0Memory,
 } from "../src/memory/mappers/mem0Mapper.js";
 import { Mem0MemoryProvider, getMem0Config } from "../src/providers/adapters/Mem0MemoryProvider.js";
+import type { Mem0Transport, Mem0Request } from "../src/memory/transports/Mem0Transport.js";
 import { MockMemoryProvider } from "../src/providers/mocks/MockMemoryProvider.js";
 import {
   registerProvider,
@@ -27,6 +29,66 @@ import {
   resetProviderRegistry,
 } from "../src/providers/registry.js";
 import { getDb, closeDb } from "../src/db.js";
+
+// ── Mock transport for unit testing ───────────────────────────────────
+
+class MockMem0Transport implements Mem0Transport {
+  readonly mode = "embedded" as const;
+  calls: Mem0Request[] = [];
+
+  async call<T = unknown>(request: Mem0Request): Promise<T> {
+    this.calls.push(request);
+
+    if (request.method === "add") {
+      return {
+        results: [{
+          id: "mock-mem0-id-1",
+          memory: "extracted fact from input",
+          event: "ADD",
+        }],
+      } as T;
+    }
+
+    if (request.method === "search") {
+      return {
+        results: [{
+          id: "mock-mem0-id-1",
+          memory: "test memory content",
+          user_id: "test-user",
+          score: 0.95,
+        }],
+      } as T;
+    }
+
+    if (request.method === "get") {
+      return {
+        id: request.params.memory_id,
+        memory: "stored content",
+        user_id: "test-user",
+        created_at: "2026-01-01T00:00:00Z",
+        updated_at: "2026-01-01T00:00:00Z",
+      } as T;
+    }
+
+    if (request.method === "update") {
+      return { message: "Memory updated" } as T;
+    }
+
+    if (request.method === "delete") {
+      return { success: true } as T;
+    }
+
+    return {} as T;
+  }
+
+  async ping(): Promise<boolean> {
+    return true;
+  }
+
+  async shutdown(): Promise<void> {
+    // no-op
+  }
+}
 
 // ── Mapper tests ──────────────────────────────────────────────────────
 
@@ -259,26 +321,121 @@ describe("getMem0Config", () => {
 
 // ── Provider contract compliance ──────────────────────────────────────
 
-describe("Mem0MemoryProvider — contract", () => {
+describe("Mem0MemoryProvider — contract (via mock transport)", () => {
+  let transport: MockMem0Transport;
+  let provider: Mem0MemoryProvider;
+
+  beforeEach(() => {
+    transport = new MockMem0Transport();
+    provider = new Mem0MemoryProvider(transport);
+  });
+
   it("has correct name and status", () => {
-    const provider = new Mem0MemoryProvider({
-      baseUrl: "http://localhost:8000",
-      defaultUserId: "test",
-    });
     expect(provider.name).toBe("mem0-memory");
     expect(provider.status).toBe("adapter");
   });
 
+  it("reports transport mode", () => {
+    expect(provider.transportMode).toBe("embedded");
+  });
+
   it("implements all MemoryProvider methods", () => {
-    const provider = new Mem0MemoryProvider({
-      baseUrl: "http://localhost:8000",
-      defaultUserId: "test",
-    });
     expect(typeof provider.write).toBe("function");
     expect(typeof provider.search).toBe("function");
     expect(typeof provider.get).toBe("function");
     expect(typeof provider.update).toBe("function");
     expect(typeof provider.delete).toBe("function");
+  });
+
+  it("write() calls transport with add method", async () => {
+    const record = await provider.write({
+      scope: "repo",
+      scope_id: "test-repo",
+      content: "Always run tests",
+    });
+
+    expect(transport.calls.length).toBe(1);
+    expect(transport.calls[0].method).toBe("add");
+    expect(record.id).toBe("mock-mem0-id-1");
+    expect(record.content).toBe("extracted fact from input");
+  });
+
+  it("search() calls transport with search method", async () => {
+    const results = await provider.search({
+      query: "test query",
+      scope: "repo",
+      scope_id: "test-repo",
+    });
+
+    expect(transport.calls.length).toBe(1);
+    expect(transport.calls[0].method).toBe("search");
+    expect(results.length).toBe(1);
+    expect(results[0].score).toBe(0.95);
+  });
+
+  it("get() calls transport with get method", async () => {
+    const record = await provider.get("test-id");
+
+    expect(transport.calls.length).toBe(1);
+    expect(transport.calls[0].method).toBe("get");
+    expect(transport.calls[0].params.memory_id).toBe("test-id");
+    expect(record).not.toBeNull();
+    expect(record!.content).toBe("stored content");
+  });
+
+  it("update() calls transport with update method then get", async () => {
+    const record = await provider.update("test-id", { content: "new content" });
+
+    expect(transport.calls.length).toBe(2);
+    expect(transport.calls[0].method).toBe("update");
+    expect(transport.calls[1].method).toBe("get");
+    expect(record).not.toBeNull();
+  });
+
+  it("delete() calls transport with delete method", async () => {
+    const result = await provider.delete("test-id");
+
+    expect(transport.calls.length).toBe(1);
+    expect(transport.calls[0].method).toBe("delete");
+    expect(result).toBe(true);
+  });
+
+  it("write() maps scope to mem0 entity filters", async () => {
+    await provider.write({
+      scope: "user",
+      scope_id: "alice",
+      content: "test",
+    });
+
+    const params = transport.calls[0].params;
+    expect(params.user_id).toBe("alice");
+  });
+
+  it("write() packs agent-core metadata", async () => {
+    await provider.write({
+      scope: "repo",
+      scope_id: "r1",
+      content: "test",
+      kind: "manual",
+      facts: ["fact1"],
+    });
+
+    const params = transport.calls[0].params;
+    const metadata = params.metadata as Record<string, unknown>;
+    expect(metadata._ac_kind).toBe("manual");
+    expect(metadata._ac_facts).toEqual(["fact1"]);
+  });
+
+  it("search() passes top_k and threshold", async () => {
+    await provider.search({
+      query: "test",
+      top_k: 10,
+      threshold: 0.5,
+    });
+
+    const params = transport.calls[0].params;
+    expect(params.top_k).toBe(10);
+    expect(params.threshold).toBe(0.5);
   });
 });
 
@@ -306,10 +463,7 @@ describe("Provider swap — registry", () => {
   });
 
   it("can swap to Mem0MemoryProvider", () => {
-    const mem0 = new Mem0MemoryProvider({
-      baseUrl: "http://localhost:8000",
-      defaultUserId: "test",
-    });
+    const mem0 = new Mem0MemoryProvider(new MockMem0Transport());
     registerProvider("memory", mem0);
     const provider = getProvider("memory");
     expect(provider.name).toBe("mem0-memory");
@@ -317,11 +471,7 @@ describe("Provider swap — registry", () => {
   });
 
   it("can swap back to MockMemoryProvider", () => {
-    const mem0 = new Mem0MemoryProvider({
-      baseUrl: "http://localhost:8000",
-      defaultUserId: "test",
-    });
-    registerProvider("memory", mem0);
+    registerProvider("memory", new Mem0MemoryProvider(new MockMem0Transport()));
     expect(getProvider("memory").name).toBe("mem0-memory");
 
     registerProvider("memory", new MockMemoryProvider());
@@ -407,20 +557,37 @@ describe("MockMemoryProvider — CRUD parity (regression)", () => {
   });
 });
 
+// ── Transport mode tests ──────────────────────────────────────────────
+
+describe("Transport mode selection", () => {
+  it("embedded transport has mode 'embedded'", () => {
+    const transport = new MockMem0Transport();
+    expect(transport.mode).toBe("embedded");
+  });
+
+  it("provider exposes transport mode", () => {
+    const transport = new MockMem0Transport();
+    const provider = new Mem0MemoryProvider(transport);
+    expect(provider.transportMode).toBe("embedded");
+  });
+});
+
 // ── Configuration tests ───────────────────────────────────────────────
 
 describe("Provider selection — MEMORY_PROVIDER", () => {
   it("MEMORY_PROVIDER env var is documented", () => {
-    // This test validates the feature flag documentation is accurate
     const validProviders = ["mock", "mem0"];
     const featureFlags = [
       "MEMORY_EXTRACTION_PROVIDER",
       "MEMORY_RETRIEVAL_PROVIDER",
       "MEMORY_DEDUP_PROVIDER",
     ];
+    const transportModes = ["embedded", "rest"];
 
     expect(validProviders).toContain("mock");
     expect(validProviders).toContain("mem0");
     expect(featureFlags.length).toBe(3);
+    expect(transportModes).toContain("embedded");
+    expect(transportModes).toContain("rest");
   });
 });
