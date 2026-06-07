@@ -10,11 +10,18 @@ export const MemoryScope = z.enum([
   "global_policy",
 ]);
 
+export const MemoryKind = z.enum(["observation", "summary", "prompt", "manual"]);
+
 export const MemoryWriteInput = z.object({
   scope: MemoryScope,
   scope_id: z.string().default(""),
   content: z.string().min(1),
   metadata: z.record(z.unknown()).default({}),
+  kind: MemoryKind.default("manual"),
+  facts: z.array(z.string()).default([]),
+  concepts: z.array(z.string()).default([]),
+  files_read: z.array(z.string()).default([]),
+  files_modified: z.array(z.string()).default([]),
 });
 
 export const MemorySearchInput = z.object({
@@ -38,6 +45,11 @@ export const MemoryPromoteInput = z.object({
 export const MemoryPatchInput = z.object({
   content: z.string().optional(),
   metadata: z.record(z.unknown()).optional(),
+  kind: MemoryKind.optional(),
+  facts: z.array(z.string()).optional(),
+  concepts: z.array(z.string()).optional(),
+  files_read: z.array(z.string()).optional(),
+  files_modified: z.array(z.string()).optional(),
 });
 
 export const MemoryExtractionResult = z.object({
@@ -51,6 +63,7 @@ export const MemoryExtractionResult = z.object({
 });
 
 export type MemoryExtractionResultType = z.infer<typeof MemoryExtractionResult>;
+export type MemoryKindType = z.infer<typeof MemoryKind>;
 export type MemoryWriteInputType = z.infer<typeof MemoryWriteInput>;
 export type MemorySearchInputType = z.infer<typeof MemorySearchInput>;
 export type MemoryExtractInputType = z.infer<typeof MemoryExtractInput>;

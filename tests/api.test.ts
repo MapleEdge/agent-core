@@ -10,6 +10,9 @@ import { policyRoutes, seedDefaultPolicies } from "../src/api/policy.js";
 import { mockPlatformRoutes } from "../src/mock_platform/routes.js";
 import { seedDefaultActions } from "../src/actions/defaults.js";
 import { closeDb } from "../src/db.js";
+import { registerDefaultProviders } from "../src/providers/defaults.js";
+import { resetProviderRegistry } from "../src/providers/registry.js";
+import { providerRoutes } from "../src/providers/routes.js";
 
 let app: FastifyInstance;
 
@@ -25,14 +28,17 @@ beforeAll(async () => {
   await app.register(classifyRoutes);
   await app.register(policyRoutes);
   await app.register(mockPlatformRoutes);
+  await app.register(providerRoutes);
   seedDefaultActions();
   seedDefaultRules();
   seedDefaultPolicies();
+  registerDefaultProviders();
   await app.ready();
 });
 
 afterAll(async () => {
   await app.close();
+  resetProviderRegistry();
   closeDb();
 });
 
@@ -43,7 +49,15 @@ describe("Memory", () => {
     const res = await app.inject({
       method: "POST",
       url: "/memory/write",
-      payload: { scope: "repo", scope_id: "demo", content: "Run tests before committing" },
+      payload: {
+        scope: "repo",
+        scope_id: "demo",
+        content: "Run tests before committing",
+        kind: "observation",
+        facts: ["Tests are required before commit"],
+        concepts: ["testing"],
+        files_read: ["README.md"],
+      },
     });
     expect(res.statusCode).toBe(201);
     const body = res.json();
@@ -56,25 +70,30 @@ describe("Memory", () => {
     const res = await app.inject({
       method: "POST",
       url: "/memory/search",
-      payload: { query: "tests", scope: "repo" },
+      payload: { query: "testing", scope: "repo" },
     });
     expect(res.statusCode).toBe(200);
-    expect(res.json().results.length).toBeGreaterThan(0);
+    const body = res.json();
+    expect(body.results.length).toBeGreaterThan(0);
+    expect(body.results[0].concepts).toContain("testing");
   });
 
   it("gets a memory by ID", async () => {
     const res = await app.inject({ method: "GET", url: `/memory/${memoryId}` });
     expect(res.statusCode).toBe(200);
     expect(res.json().content).toBe("Run tests before committing");
+    expect(res.json().kind).toBe("observation");
+    expect(res.json().facts).toContain("Tests are required before commit");
   });
 
   it("patches a memory", async () => {
     const res = await app.inject({
       method: "PATCH",
       url: `/memory/${memoryId}`,
-      payload: { content: "Always run tests" },
+      payload: { content: "Always run tests", concepts: ["testing", "quality"] },
     });
     expect(res.statusCode).toBe(200);
+    expect(res.json().concepts).toEqual(["testing", "quality"]);
   });
 
   it("extracts candidates", async () => {
@@ -354,6 +373,30 @@ describe("Policy", () => {
     expect(res.statusCode).toBe(200);
     expect(res.json().allowed).toBe(false);
     expect(res.json().requires_approval).toBe(true);
+  });
+});
+
+describe("Providers", () => {
+  it("exposes a capability matrix for all provider slots", async () => {
+    const res = await app.inject({ method: "GET", url: "/providers/capabilities" });
+    expect(res.statusCode).toBe(200);
+    const capabilities = res.json().capabilities;
+    expect(capabilities.map((cap: { name: string }) => cap.name)).toEqual(
+      expect.arrayContaining([
+        "memory",
+        "session",
+        "context",
+        "action",
+        "ruleSolver",
+        "trace",
+        "classifier",
+        "policyMatcher",
+      ]),
+    );
+    expect(capabilities.find((cap: { name: string }) => cap.name === "ruleSolver")).toMatchObject({
+      provider: "letta-rule-solver",
+      status: "direct",
+    });
   });
 });
 
