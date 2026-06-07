@@ -1,0 +1,137 @@
+{
+  "description": "Memory retrieval benchmark fixtures for provider parity testing",
+  "categories": {
+    "semantic_synonyms": {
+      "description": "Queries using different words for the same concept",
+      "fixtures": [
+        {
+          "corpus_content": "Always run eslint before opening a pull request",
+          "corpus_metadata": { "scope": "repo", "scope_id": "test-repo" },
+          "query": "always lint before committing",
+          "expected_match": true
+        },
+        {
+          "corpus_content": "Use pnpm instead of npm for package management",
+          "corpus_metadata": { "scope": "repo", "scope_id": "test-repo" },
+          "query": "which package manager should I use",
+          "expected_match": true
+        },
+        {
+          "corpus_content": "Database migrations must be reviewed by two people",
+          "corpus_metadata": { "scope": "repo", "scope_id": "test-repo" },
+          "query": "schema changes require approval",
+          "expected_match": true
+        }
+      ]
+    },
+    "paraphrases": {
+      "description": "Different phrasings of the same instruction",
+      "fixtures": [
+        {
+          "corpus_content": "Never push directly to the main branch",
+          "corpus_metadata": { "scope": "repo", "scope_id": "test-repo" },
+          "query": "can I commit to main",
+          "expected_match": true
+        },
+        {
+          "corpus_content": "All API endpoints must return JSON responses",
+          "corpus_metadata": { "scope": "repo", "scope_id": "test-repo" },
+          "query": "what format should API responses use",
+          "expected_match": true
+        },
+        {
+          "corpus_content": "Tests must pass before merging any pull request",
+          "corpus_metadata": { "scope": "repo", "scope_id": "test-repo" },
+          "query": "can I merge with failing tests",
+          "expected_match": true
+        }
+      ]
+    },
+    "coding_concepts": {
+      "description": "Technical concept matching",
+      "fixtures": [
+        {
+          "corpus_content": "Use React hooks for state management in functional components",
+          "corpus_metadata": { "scope": "repo", "scope_id": "frontend-app" },
+          "query": "useState and useEffect patterns",
+          "expected_match": true
+        },
+        {
+          "corpus_content": "Authentication uses JWT tokens stored in httpOnly cookies",
+          "corpus_metadata": { "scope": "repo", "scope_id": "auth-service" },
+          "query": "how does login session management work",
+          "expected_match": true
+        },
+        {
+          "corpus_content": "The CI pipeline runs TypeScript compilation, linting, and unit tests",
+          "corpus_metadata": { "scope": "repo", "scope_id": "test-repo" },
+          "query": "what checks run in continuous integration",
+          "expected_match": true
+        }
+      ]
+    },
+    "error_messages": {
+      "description": "Matching error descriptions to known solutions",
+      "fixtures": [
+        {
+          "corpus_content": "ECONNREFUSED on port 5432 means PostgreSQL is not running",
+          "corpus_metadata": { "scope": "repo", "scope_id": "backend" },
+          "query": "connection refused database error",
+          "expected_match": true
+        },
+        {
+          "corpus_content": "Module not found errors usually mean missing npm install",
+          "corpus_metadata": { "scope": "repo", "scope_id": "test-repo" },
+          "query": "cannot find module import error",
+          "expected_match": true
+        }
+      ]
+    },
+    "repository_memories": {
+      "description": "Repo-specific configuration and conventions",
+      "fixtures": [
+        {
+          "corpus_content": "The project uses Vitest for testing, not Jest",
+          "corpus_metadata": { "scope": "repo", "scope_id": "agent-core" },
+          "query": "which test framework does this project use",
+          "expected_match": true
+        },
+        {
+          "corpus_content": "Environment variables are validated at startup using Zod schemas",
+          "corpus_metadata": { "scope": "repo", "scope_id": "agent-core" },
+          "query": "how are config values validated",
+          "expected_match": true
+        },
+        {
+          "corpus_content": "SQLite WAL mode is enabled for concurrent read access",
+          "corpus_metadata": { "scope": "repo", "scope_id": "agent-core" },
+          "query": "database concurrency configuration",
+          "expected_match": true
+        }
+      ]
+    },
+    "procedural_memories": {
+      "description": "Step-by-step procedures and workflows",
+      "fixtures": [
+        {
+          "corpus_content": "To deploy: run pnpm build, then docker build, then push to registry",
+          "corpus_metadata": { "scope": "repo", "scope_id": "test-repo" },
+          "query": "deployment steps",
+          "expected_match": true
+        },
+        {
+          "corpus_content": "Debug failing tests by checking the CI logs first, then running locally with --verbose",
+          "corpus_metadata": { "scope": "repo", "scope_id": "test-repo" },
+          "query": "how to troubleshoot test failures",
+          "expected_match": true
+        },
+        {
+          "corpus_content": "New API routes require adding OpenAPI annotations and updating the schema file",
+          "corpus_metadata": { "scope": "repo", "scope_id": "test-repo" },
+          "query": "adding a new endpoint checklist",
+          "expected_match": true
+        }
+      ]
+    }
+  }
+}

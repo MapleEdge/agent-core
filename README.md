@@ -88,7 +88,7 @@ curl -s http://localhost:3210/sessions/$SESSION/timeline
 
 | Provider | Interface | Strategy | Status |
 |----------|-----------|----------|--------|
-| mem0 | MemoryProvider | Sidecar planned | Mocked — SQLite LIKE search fallback |
+| mem0 | MemoryProvider | Adapter (REST API) | Active — `Mem0MemoryProvider` calls mem0 sidecar; mock fallback when unavailable |
 | claude-mem | SessionProvider | Direct partial utility extraction | Timeline utility extracted (proof-of-concept, does not call claude-mem runtime); session CRUD mocked |
 | OpenViking | ContextProvider | Reference only | Mocked — static context tree |
 | Letta | RuleSolverProvider | Direct integration | Active — deterministic TS port of ToolRulesSolver |
@@ -106,6 +106,8 @@ LLM client: `src/llm/` — provider-neutral `LLMClient` interface with DeepSeek 
 
 Evaluation: `pnpm eval:llm` — fixture-based LLM eval runner (requires `ENABLE_LLM_EVALS=true` and `DEEPSEEK_API_KEY`). See [docs/evaluation.md](docs/evaluation.md).
 
+Memory evaluation: `pnpm memory:eval` — benchmark memory providers (Recall@1/3/5, MRR, nDCG). Use `MEMORY_PROVIDER=mem0` + `MEM0_BASE_URL` to benchmark against mem0. See [docs/memory-roadmap.md](docs/memory-roadmap.md).
+
 See [docs/provider-integration-audit.md](docs/provider-integration-audit.md) for the full audit and [docs/decisions/0004-provider-adapter-strategy.md](docs/decisions/0004-provider-adapter-strategy.md) for the adapter strategy policy.
 
 ## Structure
@@ -120,4 +122,4 @@ agent-core/
   examples/      # Demo repo fixture and HTTP examples
 ```
 
-See [docs/architecture.md](docs/architecture.md) for the full design, [docs/phase-1-scope.md](docs/phase-1-scope.md) for scope boundaries, and [docs/future-platform-contract.md](docs/future-platform-contract.md) for how the future platform will call this service.
+See [docs/architecture.md](docs/architecture.md) for the full design, [docs/phase-1-scope.md](docs/phase-1-scope.md) for scope boundaries, [docs/future-platform-contract.md](docs/future-platform-contract.md) for how the future platform will call this service, and [docs/memory-roadmap.md](docs/memory-roadmap.md) for the memory provider replacement strategy.

@@ -13,7 +13,8 @@
     "lint": "eslint src/ tests/",
     "typecheck": "tsc --noEmit",
     "smoke": "bash scripts/smoke_test.sh",
-    "eval:llm": "tsx scripts/eval_llm.ts"
+    "eval:llm": "tsx scripts/eval_llm.ts",
+    "memory:eval": "tsx scripts/memory-eval.ts"
   },
   "engines": {
     "node": ">=18"
