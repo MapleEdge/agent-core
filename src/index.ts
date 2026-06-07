@@ -12,6 +12,9 @@ import { seedDefaultActions } from "./actions/defaults.js";
 import { closeDb } from "./db.js";
 import { registerDefaultProviders } from "./providers/defaults.js";
 import { providerRoutes } from "./providers/routes.js";
+import { registerOpenAPI } from "./api/openapi.js";
+import { registerAuth } from "./middleware/auth.js";
+import { registerRateLimit } from "./middleware/rateLimit.js";
 
 const PORT = Number(process.env.PORT ?? 3210);
 const HOST = process.env.HOST ?? "0.0.0.0";
@@ -20,6 +23,9 @@ async function main(): Promise<void> {
   const app = Fastify({ logger: true });
 
   await app.register(cors, { origin: true });
+  await registerAuth(app);
+  await registerRateLimit(app);
+  await registerOpenAPI(app);
 
   app.get("/health", async () => ({ status: "ok", service: "agent-core" }));
 

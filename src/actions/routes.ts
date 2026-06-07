@@ -3,8 +3,11 @@ import {
   ActionRegisterInput,
   ActionValidateInput,
   ActionExecuteInput,
+  ActionPipelineInput,
 } from "../schemas/actions.js";
-import { getProvider } from "../providers/registry.js";
+import { getProvider, hasProvider } from "../providers/registry.js";
+import { executeActionPipeline } from "./pipeline.js";
+import type { RuleSolverProvider } from "../providers/RuleSolverProvider.js";
 
 export async function actionRoutes(app: FastifyInstance): Promise<void> {
   app.post("/actions/register", async (req, reply) => {
@@ -71,5 +74,27 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
       execution_mode: result.execution_mode,
       result: result.output,
     };
+  });
+
+  app.post("/actions/pipeline", async (req) => {
+    const input = ActionPipelineInput.parse(req.body);
+    const ruleSolver = hasProvider("ruleSolver")
+      ? (getProvider("ruleSolver") as RuleSolverProvider)
+      : undefined;
+    const traceProvider = hasProvider("trace") ? getProvider("trace") : undefined;
+    const result = await executeActionPipeline(
+      {
+        action_name: input.action_name,
+        params: input.params,
+        session_id: input.session_id,
+        task_type: input.task_type,
+        completed_actions: input.completed_actions,
+      },
+      getProvider("action"),
+      getProvider("policyMatcher"),
+      ruleSolver,
+      traceProvider,
+    );
+    return result;
   });
 }
