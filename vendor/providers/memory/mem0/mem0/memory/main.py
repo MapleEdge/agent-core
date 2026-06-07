@@ -729,11 +729,24 @@ class Memory(MemoryBase):
 
         custom_instr = prompt or self.custom_instructions
 
+        # Extract observation timestamp from metadata so the LLM can resolve
+        # relative date references ("yesterday", "last week") against the
+        # actual conversation date rather than the current system date.
+        observation_ts = metadata.get("observation_timestamp") if metadata else None
+        if observation_ts is not None:
+            from datetime import datetime as _dt, timezone as _tz
+            try:
+                _d = _dt.fromtimestamp(int(observation_ts), tz=_tz.utc)
+                observation_ts = _d.date().isoformat()
+            except (ValueError, TypeError, OSError):
+                observation_ts = None
+
         user_prompt = generate_additive_extraction_prompt(
             existing_memories=existing_memories,
             new_messages=parsed_messages,
             last_k_messages=last_messages,
             custom_instructions=custom_instr,
+            timestamp=observation_ts,
         )
 
         try:
@@ -2172,11 +2185,22 @@ class AsyncMemory(MemoryBase):
 
         custom_instr = prompt or self.custom_instructions
 
+        # Extract observation timestamp from metadata (same logic as sync path)
+        observation_ts = processed_metadata.get("observation_timestamp") if processed_metadata else None
+        if observation_ts is not None:
+            from datetime import datetime as _dt, timezone as _tz
+            try:
+                _d = _dt.fromtimestamp(int(observation_ts), tz=_tz.utc)
+                observation_ts = _d.date().isoformat()
+            except (ValueError, TypeError, OSError):
+                observation_ts = None
+
         user_prompt = generate_additive_extraction_prompt(
             existing_memories=existing_memories,
             new_messages=parsed_messages,
             last_k_messages=last_messages,
             custom_instructions=custom_instr,
+            timestamp=observation_ts,
         )
 
         try:

@@ -188,6 +188,36 @@ export async function memoryRoutes(app: FastifyInstance): Promise<void> {
 
     return { message: "Memories deleted", user_id };
   });
+
+  app.post("/memory/reset-collection", async () => {
+    const provider = getProvider("memory");
+
+    if (!(provider instanceof Mem0MemoryProvider)) {
+      return { error: "reset-collection requires MEMORY_PROVIDER=mem0" };
+    }
+
+    const transport = provider.getTransport();
+    const result = await transport.call<Record<string, unknown>>({
+      method: "reset_collection",
+      params: {},
+    });
+    return result;
+  });
+
+  app.get("/memory/diagnostics", async () => {
+    const provider = getProvider("memory");
+
+    if (!(provider instanceof Mem0MemoryProvider)) {
+      return { error: "diagnostics requires MEMORY_PROVIDER=mem0", provider: "mock" };
+    }
+
+    const transport = provider.getTransport();
+    const result = await transport.call<Record<string, unknown>>({
+      method: "diagnostics",
+      params: {},
+    });
+    return result;
+  });
 }
 
 async function extractWithLLM(

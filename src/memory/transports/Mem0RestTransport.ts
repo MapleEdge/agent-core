@@ -63,7 +63,25 @@ export class Mem0RestTransport implements Mem0Transport {
       init.body = JSON.stringify(body);
     }
 
-    const res = await fetch(url, { ...init, signal: AbortSignal.timeout(this.config.timeoutMs) });
+    // For GET requests, encode remaining params as query string
+    let finalUrl = url;
+    if (route.method === "GET") {
+      const queryParams = { ...request.params };
+      delete queryParams.memory_id;
+      const qs = new URLSearchParams();
+      for (const [k, v] of Object.entries(queryParams)) {
+        if (v !== undefined && v !== null) {
+          qs.set(k, typeof v === "object" ? JSON.stringify(v) : String(v));
+        }
+      }
+      const qsStr = qs.toString();
+      if (qsStr) {
+        const sep = finalUrl.includes("?") ? "&" : "?";
+        finalUrl = `${finalUrl}${sep}${qsStr}`;
+      }
+    }
+
+    const res = await fetch(finalUrl, { ...init, signal: AbortSignal.timeout(this.config.timeoutMs) });
     if (!res.ok) {
       const text = await res.text().catch(() => "");
       throw new Error(`mem0 REST ${route.method} ${url} failed (${res.status}): ${text}`);

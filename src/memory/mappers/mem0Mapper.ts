@@ -173,6 +173,8 @@ export function mem0ToSearchResult(mem: Mem0Memory): MemorySearchResult {
     concepts,
     files_read,
     files_modified,
+    created_at: mem.created_at,
+    updated_at: mem.updated_at,
   };
 }
 

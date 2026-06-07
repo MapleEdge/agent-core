@@ -78,10 +78,20 @@ def create_memory_instance():
         vector_config: Dict[str, Any] = {}
 
         if vector_provider == "qdrant":
-            vector_config = {
-                "collection_name": os.environ.get("MEM0_COLLECTION", "agent_core_memories"),
-                "path": os.environ.get("MEM0_QDRANT_PATH", os.path.expanduser("~/.mem0/qdrant")),
-            }
+            qdrant_host = os.environ.get("MEM0_QDRANT_HOST")
+            if qdrant_host:
+                # Server-mode Qdrant (gRPC/HTTP)
+                vector_config = {
+                    "collection_name": os.environ.get("MEM0_COLLECTION", "agent_core_memories"),
+                    "host": qdrant_host,
+                    "port": int(os.environ.get("MEM0_QDRANT_PORT", "6333")),
+                }
+            else:
+                # Embedded Qdrant (local path)
+                vector_config = {
+                    "collection_name": os.environ.get("MEM0_COLLECTION", "agent_core_memories"),
+                    "path": os.environ.get("MEM0_QDRANT_PATH", os.path.expanduser("~/.mem0/qdrant")),
+                }
         elif vector_provider == "pgvector":
             vector_config = {
                 "host": os.environ.get("MEM0_PG_HOST", "localhost"),
@@ -223,8 +233,91 @@ def dispatch(memory, method: str, params: Dict[str, Any]) -> Any:
     elif method == "history":
         return memory.history(memory_id=params["memory_id"])
 
+    elif method == "reset_collection":
+        # Drop and recreate the collection so it gets the v3 BM25 sparse slot.
+        vs = getattr(memory, "vector_store", None)
+        if vs is None:
+            return {"error": "no vector_store on memory instance"}
+        collection = getattr(vs, "collection_name", "unknown")
+        client = getattr(vs, "client", None)
+        if client is None:
+            return {"error": "no qdrant client"}
+        try:
+            client.delete_collection(collection)
+            log.info("Deleted collection %s", collection)
+        except Exception as e:
+            log.warning("delete_collection failed (may not exist): %s", e)
+        # Also reset entities collection
+        entity_collection = f"{collection}_entities"
+        try:
+            client.delete_collection(entity_collection)
+            log.info("Deleted entity collection %s", entity_collection)
+        except Exception:
+            pass
+        # Re-create via mem0's create_col which adds the BM25 sparse slot
+        dims = getattr(vs, "embedding_model_dims", 1024)
+        on_disk = getattr(vs, "on_disk", False)
+        vs._has_bm25_slot = False
+        vs.create_col(dims, on_disk)
+        # Also recreate entity store collection
+        es = getattr(memory, "entity_store", None)
+        if es is not None and hasattr(es, "create_col"):
+            es_dims = getattr(es, "embedding_model_dims", dims)
+            es.create_col(es_dims, on_disk)
+        return {
+            "status": "ok",
+            "collection": collection,
+            "has_bm25_slot": vs._has_bm25_slot,
+        }
+
     elif method == "ping":
         return {"status": "ok"}
+
+    elif method == "diagnostics":
+        diag: Dict[str, Any] = {
+            "mem0_version": "unknown",
+            "vector_provider": os.environ.get("MEM0_VECTOR_PROVIDER", "qdrant"),
+            "collection": os.environ.get("MEM0_COLLECTION", "agent_core_memories"),
+            "llm_provider": os.environ.get("MEM0_LLM_PROVIDER", "openai"),
+            "llm_model": os.environ.get("MEM0_LLM_MODEL", "gpt-4.1-nano-2025-04-14"),
+            "embedder_provider": os.environ.get("MEM0_EMBEDDER_PROVIDER", "openai"),
+            "embedder_model": os.environ.get("MEM0_EMBEDDER_MODEL", "text-embedding-3-small"),
+        }
+        try:
+            import mem0
+            diag["mem0_version"] = getattr(mem0, "__version__", "unknown")
+        except Exception:
+            pass
+        try:
+            from fastembed import SparseTextEmbedding  # noqa: F401
+            diag["fastembed_available"] = True
+        except ImportError:
+            diag["fastembed_available"] = False
+        try:
+            import spacy
+            diag["spacy_available"] = True
+            try:
+                spacy.load("en_core_web_sm")
+                diag["spacy_model_loaded"] = True
+            except OSError:
+                diag["spacy_model_loaded"] = False
+        except ImportError:
+            diag["spacy_available"] = False
+            diag["spacy_model_loaded"] = False
+        # Check BM25 slot on existing collection
+        if memory is not None:
+            vs = getattr(memory, "vector_store", None)
+            if vs is not None:
+                bm25_encoder = getattr(vs, "bm25_encoder", None)
+                diag["bm25_enabled"] = bm25_encoder is not None
+                entity_store = getattr(memory, "entity_store", None)
+                diag["entity_store_available"] = entity_store is not None
+        # Vendored source check
+        import mem0.embeddings.openai as _emb_mod
+        _emb_file = getattr(_emb_mod, "__file__", "unknown")
+        diag["embeddings_source"] = _emb_file
+        diag["using_vendored"] = "vendor" in _emb_file
+        return diag
 
     elif method == "shutdown":
         log.info("Shutdown requested")

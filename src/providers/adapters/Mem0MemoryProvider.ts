@@ -86,7 +86,11 @@ export async function createMem0Transport(): Promise<Mem0Transport | null> {
     pythonPath: process.env.MEM0_PYTHON_PATH,
     env: Object.fromEntries(
       Object.entries(process.env).filter(
-        ([k]) => k.startsWith("MEM0_") || k.startsWith("OPENAI_"),
+        ([k]) =>
+          k.startsWith("MEM0_") ||
+          k.startsWith("OPENAI_") ||
+          k === "DEEPSEEK_API_KEY" ||
+          k === "VOYAGE_API_KEY",
       ) as [string, string][],
     ),
   });
@@ -173,7 +177,9 @@ export class Mem0MemoryProvider implements MemoryProvider {
       filters,
     };
     if (params.top_k) searchParams.top_k = params.top_k;
-    if (params.threshold) searchParams.threshold = params.threshold;
+    if (params.threshold !== undefined) searchParams.threshold = params.threshold;
+    if (params.rerank !== undefined) searchParams.rerank = params.rerank;
+    if (params.explain !== undefined) searchParams.explain = params.explain;
 
     const response = await this.transport.call<Mem0SearchResponse>({
       method: "search",

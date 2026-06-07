@@ -34,6 +34,8 @@ export interface MemorySearchResult {
   concepts: string[];
   files_read: string[];
   files_modified: string[];
+  created_at?: string;
+  updated_at?: string;
 }
 
 export type MemoryKind = "observation" | "summary" | "prompt" | "manual";
@@ -57,6 +59,8 @@ export interface MemorySearchParams {
   filters?: Record<string, unknown>;
   top_k?: number;
   threshold?: number;
+  rerank?: boolean;
+  explain?: boolean;
 }
 
 export interface MemoryUpdateParams {
