@@ -53,6 +53,48 @@ export class MockSessionProvider implements SessionProvider {
     return row ?? null;
   }
 
+  async list(opts?: { status?: string; repo_id?: string; limit?: number }): Promise<SessionRecord[]> {
+    const db = getDb();
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+    if (opts?.status) {
+      conditions.push("status = ?");
+      params.push(opts.status);
+    }
+    if (opts?.repo_id) {
+      conditions.push("repo_id = ?");
+      params.push(opts.repo_id);
+    }
+    const where = conditions.length > 0 ? ` WHERE ${conditions.join(" AND ")}` : "";
+    const limit = opts?.limit ?? 50;
+    const rows = db
+      .prepare(`SELECT * FROM sessions${where} ORDER BY created_at DESC LIMIT ?`)
+      .all(...params, limit) as SessionRow[];
+    return rows;
+  }
+
+  async close(id: string, summary?: string): Promise<SessionRecord | null> {
+    const db = getDb();
+    if (summary) {
+      db.prepare(
+        "UPDATE sessions SET status = 'closed', summary = ?, updated_at = datetime('now') WHERE id = ?",
+      ).run(summary, id);
+    } else {
+      db.prepare(
+        "UPDATE sessions SET status = 'closed', updated_at = datetime('now') WHERE id = ?",
+      ).run(id);
+    }
+    return this.get(id);
+  }
+
+  async delete(id: string): Promise<boolean> {
+    const db = getDb();
+    db.prepare("DELETE FROM session_events WHERE session_id = ?").run(id);
+    db.prepare("DELETE FROM traces WHERE session_id = ?").run(id);
+    const result = db.prepare("DELETE FROM sessions WHERE id = ?").run(id);
+    return result.changes > 0;
+  }
+
   async addEvent(
     session_id: string,
     event_type: string,
