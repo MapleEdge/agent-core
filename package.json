@@ -15,7 +15,11 @@
     "smoke": "bash scripts/smoke_test.sh",
     "eval:llm": "tsx scripts/eval_llm.ts",
     "test:retrieval": "vitest run tests/retrieval/",
-    "retrieval-benchmark": "tsx scripts/retrieval-benchmark.ts"
+    "retrieval-benchmark": "tsx scripts/retrieval-benchmark.ts",
+    "test:parity": "vitest run tests/parity/",
+    "test:perf": "vitest run tests/performance/",
+    "test:all": "vitest run",
+    "parity-report": "tsx scripts/parity-report.ts"
   },
   "engines": {
     "node": ">=18"
@@ -28,7 +32,8 @@
     "better-sqlite3": "^11.9.1",
     "fastify": "^5.3.3",
     "uuid": "^11.1.0",
-    "zod": "^3.24.4"
+    "zod": "^3.24.4",
+    "zod-to-json-schema": "^3.25.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.27.0",

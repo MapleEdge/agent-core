@@ -1,0 +1,136 @@
+[
+  {
+    "name": "valid_read_file",
+    "action": "read_file",
+    "params": { "path": "src/index.ts" },
+    "expected": {
+      "validation": "pass",
+      "invoked": true,
+      "auditStatuses": ["requested", "validated", "executed"],
+      "timelineEvents": ["ACTION_REQUESTED", "ACTION_VALIDATED", "ACTION_EXECUTED"]
+    }
+  },
+  {
+    "name": "missing_required_field",
+    "action": "read_file",
+    "params": {},
+    "expected": {
+      "validation": "fail",
+      "invoked": false,
+      "failStage": "validate",
+      "errorCode": "ACTION_VALIDATION_ERROR",
+      "issueField": "path",
+      "auditStatuses": ["requested", "failed"],
+      "timelineEvents": ["ACTION_REQUESTED", "ACTION_FAILED"]
+    }
+  },
+  {
+    "name": "wrong_primitive_type",
+    "action": "read_file",
+    "params": { "path": 42 },
+    "expected": {
+      "validation": "fail",
+      "invoked": false,
+      "failStage": "validate",
+      "errorCode": "ACTION_VALIDATION_ERROR",
+      "issueField": "path"
+    }
+  },
+  {
+    "name": "wrong_nested_type_write_file",
+    "action": "write_file",
+    "params": { "path": "foo.ts", "content": 123 },
+    "expected": {
+      "validation": "fail",
+      "invoked": false,
+      "failStage": "validate",
+      "errorCode": "ACTION_VALIDATION_ERROR",
+      "issueField": "content"
+    }
+  },
+  {
+    "name": "empty_string_min1",
+    "action": "read_file",
+    "params": { "path": "" },
+    "expected": {
+      "validation": "fail",
+      "invoked": false,
+      "failStage": "validate",
+      "errorCode": "ACTION_VALIDATION_ERROR"
+    }
+  },
+  {
+    "name": "null_value",
+    "action": "read_file",
+    "params": { "path": null },
+    "expected": {
+      "validation": "fail",
+      "invoked": false,
+      "failStage": "validate",
+      "errorCode": "ACTION_VALIDATION_ERROR"
+    }
+  },
+  {
+    "name": "unknown_action",
+    "action": "nonexistent_action_xyz",
+    "params": {},
+    "expected": {
+      "validation": "fail",
+      "invoked": false,
+      "failStage": "lookup",
+      "errorCode": "ACTION_NOT_FOUND",
+      "auditStatuses": ["requested", "failed"],
+      "timelineEvents": ["ACTION_REQUESTED", "ACTION_FAILED"]
+    }
+  },
+  {
+    "name": "optional_params_empty",
+    "action": "run_tests",
+    "params": {},
+    "expected": {
+      "validation": "pass",
+      "invoked": true,
+      "auditStatuses": ["requested", "validated", "executed"],
+      "timelineEvents": ["ACTION_REQUESTED", "ACTION_VALIDATED", "ACTION_EXECUTED"]
+    }
+  },
+  {
+    "name": "valid_grep",
+    "action": "grep",
+    "params": { "pattern": "test" },
+    "expected": {
+      "validation": "pass",
+      "invoked": true,
+      "auditStatuses": ["requested", "validated", "executed"]
+    }
+  },
+  {
+    "name": "malformed_commit_missing_message",
+    "action": "commit",
+    "params": {},
+    "expected": {
+      "validation": "fail",
+      "invoked": false,
+      "failStage": "permission",
+      "errorCode": "ACTION_PERMISSION_ERROR"
+    }
+  },
+  {
+    "name": "invalid_array_element",
+    "action": "commit",
+    "params": { "message": "test", "files": [123, null] },
+    "expected": {
+      "validation": "fail",
+      "invoked": false
+    }
+  },
+  {
+    "name": "valid_write_file",
+    "action": "write_file",
+    "params": { "path": "test.ts", "content": "console.log('hello')" },
+    "expected": {
+      "validation": "pass",
+      "invoked": true
+    }
+  }
+]

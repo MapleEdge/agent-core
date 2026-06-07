@@ -1,0 +1,50 @@
+[
+  {
+    "name": "valid_rationale_format",
+    "rationale": "Since the user wants the failing login test fixed, thus I am running the authentication test suite to reproduce the failure.",
+    "action": "run_tests",
+    "params": {},
+    "expected": {
+      "valid": true,
+      "persistedInAudit": true,
+      "persistedInTimeline": true,
+      "persistedInResponse": true
+    }
+  },
+  {
+    "name": "rationale_with_goal_action_objective",
+    "rationale": "Since the user wants OAuth support added, thus I am examining the existing authentication flow to identify integration points.",
+    "action": "grep",
+    "params": { "pattern": "auth" },
+    "expected": {
+      "valid": true,
+      "persistedInAudit": true,
+      "persistedInTimeline": true,
+      "persistedInResponse": true
+    }
+  },
+  {
+    "name": "no_rationale_provided",
+    "rationale": null,
+    "action": "grep",
+    "params": { "pattern": "test" },
+    "expected": {
+      "valid": true,
+      "persistedInAudit": false,
+      "persistedInTimeline": false,
+      "persistedInResponse": false
+    }
+  },
+  {
+    "name": "rationale_survives_failure",
+    "rationale": "Since the user wants the file contents, thus I am reading the file to display them.",
+    "action": "read_file",
+    "params": {},
+    "expected": {
+      "valid": true,
+      "invoked": false,
+      "persistedInAudit": true,
+      "persistedInResponse": true
+    }
+  }
+]

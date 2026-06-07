@@ -39,6 +39,7 @@ export async function registerOpenAPI(app: FastifyInstance): Promise<void> {
         { name: "sessions", description: "Session lifecycle and event tracking" },
         { name: "traces", description: "Tool-call and skill-run execution traces" },
         { name: "actions", description: "Action registry, validation, and execution pipeline" },
+        { name: "audits", description: "Action audit records — durable execution history" },
         { name: "rules", description: "Letta-style tool rule sequences and validation" },
         { name: "classify", description: "Task classification (keyword or LLM)" },
         { name: "policy", description: "Parlant-style policy rule matching" },
