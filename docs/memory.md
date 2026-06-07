@@ -1,171 +1,187 @@
-# Memory Subsystem
+# Memory System
 
-## Architecture
+## Overview
 
-```
-MemoryProvider
- └─ SQLiteHybridMemoryProvider (default, status: direct)
+agent-core's memory system is a pluggable provider architecture. Memory consumers interact with a single `MemoryProvider` interface regardless of which backend is active.
 
-EmbeddingProvider
- ├─ MockEmbeddingProvider       (default, status: mock)
- ├─ OpenAICompatibleEmbeddingProvider (DeepSeek/OpenAI/local, status: adapter)
- └─ LocalEmbeddingProvider      (stub, status: mock)
-
-SQLiteEmbeddingStore
- └─ Compact Float32 BLOB storage + brute-force cosine similarity
+```text
+API routes (memory/write, memory/search, ...)
+  └─ getProvider("memory")
+       ├─ MockMemoryProvider   — SQLite FTS, keyword matching
+       └─ Mem0MemoryProvider   — mem0 via embedded worker or REST
 ```
 
-## Hybrid Retrieval
+## Why mem0 Cannot Run In-Process
 
-Search combines BM25 keyword ranking with vector cosine similarity:
+mem0 is a Python-only library. Its core dependencies — qdrant-client (C via grpc), pydantic, openai, sqlalchemy, protobuf — are native Python packages with C extensions. They cannot:
 
-```
-query
-→ metadata filtering
-→ BM25 retrieval (SQLite FTS5)
-→ embedding generation
-→ vector retrieval (cosine similarity)
-→ hybrid rerank
-→ return
-```
+- Be imported into a Node.js/TypeScript process
+- Run in WebAssembly (Pyodide lacks C extension support)
+- Be trivially ported to TypeScript (200K+ LoC across dependencies)
 
-Hybrid score formula:
+We evaluated three integration strategies:
 
-```
-score = vectorWeight × cosineSimilarity + bm25Weight × normalizedBm25
-```
+| Strategy | Feasibility | Overhead | Operations |
+|----------|-------------|----------|------------|
+| **REST sidecar** | Works | Network I/O, port management, auth | Separate deployment |
+| **Embedded Python worker** | Works | stdin/stdout IPC (~μs per call) | Zero — agent-core manages lifecycle |
+| **In-process (WASM)** | Not feasible | N/A | N/A |
 
-Default weights: `vectorWeight = 0.7`, `bm25Weight = 0.3`.
+**Decision:** Embedded Python worker is the default. REST is retained as fallback for shared/multi-instance deployments.
 
-Configurable via environment:
+## Transport Modes
+
+### Embedded Worker (default)
+
+Spawns `vendor/mem0/worker.py` as a child process. Communicates via JSON-RPC over stdin/stdout.
+
+- No network, no ports, no auth configuration
+- agent-core owns the Python process lifecycle (spawn, health check, graceful shutdown)
+- Operationally indistinguishable from in-process
+- Lazy-starts on first memory operation
 
 ```env
-MEMORY_VECTOR_WEIGHT=0.7
-MEMORY_BM25_WEIGHT=0.3
+MEMORY_PROVIDER=mem0
+MEM0_TRANSPORT=embedded            # default when MEMORY_PROVIDER=mem0
+MEM0_PYTHON_PATH=python3           # optional, defaults to python3
 ```
 
-## Fallback Behavior
+### REST (fallback)
 
-If embedding generation or vector search fails, search falls back to BM25-only.
-The search endpoint never fails solely because embeddings are unavailable.
+Calls an external mem0 HTTP server. Use when:
 
-## Memory Write Path
+- A centralized mem0 server is shared across multiple agent-core instances
+- Python is not available on the agent-core host
+- You need a pre-existing mem0 server deployment
 
+```env
+MEMORY_PROVIDER=mem0
+MEM0_TRANSPORT=rest
+MEM0_BASE_URL=http://localhost:8000
+MEM0_API_KEY=your-api-key          # optional
 ```
-persist memory to SQLite
-→ generate embedding (async, non-blocking)
-→ store embedding
+
+Backward compatible: setting `MEM0_BASE_URL` without `MEM0_TRANSPORT` implies REST mode.
+
+## Provider Selection
+
+Set via environment variable:
+
+```env
+MEMORY_PROVIDER=mock     # default — no external deps
+MEMORY_PROVIDER=mem0     # embedded worker or REST (see Transport Modes)
 ```
 
-Embedding failure does not block memory writes. Memory remains searchable via FTS.
+### Mock Provider (default)
 
-## EmbeddingProvider
+- SQLite-backed CRUD
+- FTS5 full-text search
+- Metadata filtering (eq, ne, in, nin, gt, gte, lt, lte, contains, icontains)
+- AND/OR/NOT logical combinators
+- No LLM calls, no external services
+
+### Mem0 Provider
+
+- LLM-driven fact extraction on write
+- Hybrid BM25 + vector semantic search
+- Entity extraction and entity boost scoring
+- Hash-based memory deduplication
+- Configurable reranking
+
+## Feature Flags
+
+Individual memory subsystems can be independently configured for hybrid strategies:
+
+```env
+MEMORY_EXTRACTION_PROVIDER=mem0     # LLM-based fact extraction
+MEMORY_RETRIEVAL_PROVIDER=mem0      # Hybrid search
+MEMORY_DEDUP_PROVIDER=mem0          # Deduplication
+```
+
+## Memory Provider Interface
 
 ```typescript
-interface EmbeddingProvider {
+interface MemoryProvider {
   readonly name: string;
   readonly status: ProviderStatus;
-  readonly dimensions: number;
-  embed(texts: string[]): Promise<number[][]>;
+
+  write(params: MemoryWriteParams): Promise<MemoryRecord>;
+  search(params: MemorySearchParams): Promise<MemorySearchResult[]>;
+  get(id: string): Promise<MemoryRecord | null>;
+  update(id: string, params: MemoryUpdateParams): Promise<MemoryRecord | null>;
+  delete(id: string): Promise<boolean>;
 }
 ```
 
-### MockEmbeddingProvider
+## Transport Interface
 
-Deterministic hash-based pseudo-embeddings. Same input → same vector.
-No external APIs. Default for tests and development.
-
-### OpenAICompatibleEmbeddingProvider
-
-Works with any OpenAI-compatible `/v1/embeddings` endpoint:
-
-```env
-EMBEDDING_API_KEY=your-api-key
-EMBEDDING_BASE_URL=https://api.deepseek.com/v1  # default
-EMBEDDING_MODEL=text-embedding-3-small           # default
-EMBEDDING_DIMENSIONS=1536                        # optional
+```typescript
+interface Mem0Transport {
+  readonly mode: "embedded" | "rest";
+  call<T>(request: Mem0Request): Promise<T>;
+  ping(): Promise<boolean>;
+  shutdown(): Promise<void>;
+}
 ```
 
-Providers: DeepSeek, OpenAI, OpenRouter, vLLM, llama.cpp, etc.
+## Scope Mapping
 
-### LocalEmbeddingProvider
+agent-core uses `scope`/`scope_id` pairs. mem0 uses `user_id`/`agent_id`/`run_id`.
 
-Stub for future local embedding support (Ollama, sentence-transformers, ONNX Runtime).
-Currently delegates to MockEmbeddingProvider.
+The mapping layer (`src/memory/mappers/mem0Mapper.ts`) translates between them:
 
-## SQLiteEmbeddingStore
+| agent-core scope | mem0 entity |
+|-----------------|-------------|
+| `user` | `user_id` |
+| `agent` | `agent_id` |
+| `session` | `run_id` |
+| `repo` | `user_id: "repo:<scope_id>"` |
+| other | `user_id: "<scope>:<scope_id>"` |
 
-Stores vectors as compact Float32 BLOBs in SQLite.
+Agent-core metadata extensions (kind, facts, concepts, file lists) are preserved via `_ac_` prefixed keys in mem0 metadata, stripped on read.
 
-```sql
-CREATE TABLE memory_embeddings (
-  id TEXT PRIMARY KEY,
-  memory_id TEXT NOT NULL,
-  vector BLOB NOT NULL,
-  created_at TEXT NOT NULL
-);
+## Benchmarking
+
+Run the memory quality eval harness:
+
+```bash
+pnpm memory:eval
 ```
 
-Search uses brute-force cosine similarity. Correct before fast.
+Output is a JSON report with Recall@1/3/5, MRR, nDCG@5, and per-category breakdowns.
 
-### Storage Efficiency
+Compare providers:
 
-Float32 encoding: 4 bytes per dimension.
-128-dim vector: 512 bytes. 1536-dim vector: 6 KB.
+```bash
+# Mock baseline
+pnpm memory:eval > mock.json
 
-## API Endpoints
+# Mem0 (requires Python + mem0 deps for embedded, or running server for REST)
+MEMORY_PROVIDER=mem0 pnpm memory:eval > mem0.json
 
-### POST /memory/write
+diff mock.json mem0.json
+```
 
-Creates a memory and generates an embedding.
+## Files
 
-### POST /memory/search
+| File | Purpose |
+|------|---------|
+| `src/providers/MemoryProvider.ts` | Interface definition |
+| `src/providers/mocks/MockMemoryProvider.ts` | SQLite-backed mock |
+| `src/providers/adapters/Mem0MemoryProvider.ts` | mem0 adapter (transport-agnostic) |
+| `src/memory/transports/Mem0Transport.ts` | Transport interface |
+| `src/memory/transports/Mem0EmbeddedTransport.ts` | Embedded Python worker transport |
+| `src/memory/transports/Mem0RestTransport.ts` | REST HTTP transport |
+| `src/memory/mappers/mem0Mapper.ts` | Scope/metadata mapping |
+| `vendor/mem0/worker.py` | Python worker script (JSON-RPC over stdio) |
+| `src/memory/routes.ts` | HTTP endpoints |
+| `scripts/memory-eval.ts` | Benchmark harness |
+| `tests/fixtures/memory-retrieval-benchmarks.json` | Benchmark fixtures |
+| `docs/memory-roadmap.md` | Replacement strategy |
+| `docs/memory/upstream-tracking.md` | Upstream version tracking |
 
-Hybrid search with BM25 + vector retrieval.
+## See Also
 
-Parameters:
-- `query` (string, required)
-- `scope` (string, optional)
-- `scope_id` (string, optional)
-- `filters` (object, optional) — metadata filters
-- `limit` (number, optional, default 10)
-
-### GET /memory/:memory_id
-
-Retrieve a single memory.
-
-### PATCH /memory/:memory_id
-
-Update a memory. Re-embeds on content change.
-
-### DELETE /memory/:memory_id
-
-Delete a memory and its embedding.
-
-## Benchmarks
-
-Run: `pnpm test:retrieval`
-
-Metrics reported:
-- Recall@1, Recall@3, Recall@5
-- MRR (Mean Reciprocal Rank)
-- nDCG@5
-
-Performance measured at 100, 1000, 10000 memories:
-- Embedding latency
-- Vector search latency
-- Hybrid search latency
-- Memory write latency
-
-## Design Decisions
-
-1. **No VectorStore abstraction** — SQLite is the only persistence target.
-   A future VectorStore interface can wrap SQLiteEmbeddingStore without refactoring.
-
-2. **EmbeddingProvider is the abstraction** — embedding generation varies between
-   deployments (mock, local, cloud API), so it gets the interface.
-
-3. **Brute-force search** — correctness over optimization. Adequate for 10K+ memories.
-   Future: approximate nearest neighbor index if needed.
-
-4. **Float32 BLOB** — compact, fast decode, no JSON parsing overhead.
+- [Memory Roadmap](memory-roadmap.md) — replacement strategy and benchmark gate
+- [Upstream Tracking](memory/upstream-tracking.md) — mem0 version management
+- [Providers](providers.md) — architecture and provider registry
