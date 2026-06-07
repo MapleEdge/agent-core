@@ -63,7 +63,7 @@ export class Mem0RestTransport implements Mem0Transport {
       init.body = JSON.stringify(body);
     }
 
-    const res = await fetch(url, init);
+    const res = await fetch(url, { ...init, signal: AbortSignal.timeout(this.config.timeoutMs) });
     if (!res.ok) {
       const text = await res.text().catch(() => "");
       throw new Error(`mem0 REST ${route.method} ${url} failed (${res.status}): ${text}`);

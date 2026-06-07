@@ -103,9 +103,8 @@ export class Mem0EmbeddedTransport implements Mem0Transport {
     });
 
     // Wait for worker to be ready
-    try {
-      await this.ping();
-    } catch {
+    const healthy = await this.ping();
+    if (!healthy) {
       const logs = this.stderrBuffer.join("\n");
       throw new Error(`mem0 worker failed to start. Logs:\n${logs}`);
     }
@@ -141,11 +140,11 @@ export class Mem0EmbeddedTransport implements Mem0Transport {
 
   async ping(): Promise<boolean> {
     try {
-      const result = await this.call<{ status: string }>({
+      const result = await this.call<{ status: string; initialized?: boolean }>({
         method: "ping",
         params: {},
       });
-      return result.status === "ok";
+      return result.status === "ok" && result.initialized !== false;
     } catch {
       return false;
     }

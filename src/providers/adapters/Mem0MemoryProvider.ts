@@ -192,12 +192,20 @@ export class Mem0MemoryProvider implements MemoryProvider {
 
   async update(id: string, params: MemoryUpdateParams): Promise<MemoryRecord | null> {
     try {
+      // Fetch existing content to avoid erasing it when only metadata changes
+      let data = params.content;
+      if (data === undefined) {
+        const existing = await this.get(id);
+        if (!existing) return null;
+        data = existing.content;
+      }
+
       const metadata = packAgentCoreMetadata(params);
       await this.transport.call<{ message: string }>({
         method: "update",
         params: {
           memory_id: id,
-          data: params.content ?? "",
+          data,
           metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
         },
       });
