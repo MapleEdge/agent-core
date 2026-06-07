@@ -174,7 +174,22 @@ def dispatch(memory, method: str, params: Dict[str, Any]) -> Any:
 
     if method == "add":
         messages = params.get("messages", [])
-        kwargs = {k: v for k, v in params.items() if k != "messages" and v is not None}
+        # mem0 Memory.add() accepts: user_id, agent_id, run_id, metadata, infer,
+        # memory_type, prompt.  Filter out benchmark-specific keys.
+        allowed_add_keys = {"user_id", "agent_id", "run_id", "metadata", "infer", "memory_type", "prompt"}
+        kwargs = {}
+        for k, v in params.items():
+            if k == "messages" or v is None:
+                continue
+            if k == "custom_instructions":
+                kwargs["prompt"] = v  # map to mem0's prompt parameter
+            elif k == "timestamp":
+                # Inject timestamp into metadata for later retrieval
+                md = kwargs.get("metadata") or params.get("metadata") or {}
+                md["observation_timestamp"] = v
+                kwargs["metadata"] = md
+            elif k in allowed_add_keys:
+                kwargs[k] = v
         return memory.add(messages=messages, **kwargs)
 
     elif method == "search":
