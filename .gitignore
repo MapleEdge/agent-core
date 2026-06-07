@@ -6,3 +6,6 @@ dist/
 .env.local
 # Vendor provider .git dirs (we commit source snapshots, not submodules)
 vendor/providers/**/.git/
+# Generated benchmark artifacts
+retrieval-benchmark-results.json
+retrieval-report.json
