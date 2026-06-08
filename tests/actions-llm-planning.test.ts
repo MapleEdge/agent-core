@@ -414,7 +414,7 @@ describe("POST /actions/execute — mock-only", () => {
   it("marks response as mock_contract_only", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/execute",
+      url: "/actions/mock-execute",
       payload: { action_name: "grep", params: { pattern: "test" } },
     });
     const body = res.json();

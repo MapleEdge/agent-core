@@ -82,7 +82,7 @@ describe("Fault Injection — Schema Validation Stage", () => {
     it(`[${description}] never reaches invoke`, async () => {
       const res = await app.inject({
         method: "POST",
-        url: "/actions/pipeline",
+        url: "/actions/simulate-pipeline",
         payload: { action_name: action, params },
       });
       const body = res.json();
@@ -97,7 +97,7 @@ describe("Fault Injection — Permission Stage", () => {
   it("destructive action never invokes", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "commit", params: { message: "force push" } },
     });
     expect(res.json().success).toBe(false);
@@ -107,7 +107,7 @@ describe("Fault Injection — Permission Stage", () => {
   it("scoped-out action never invokes", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: {
         action_name: "summarize_diff",
         params: {},
@@ -133,7 +133,7 @@ describe("Fault Injection — Lookup Stage", () => {
     it(`[${action}] unknown action never invokes`, async () => {
       const res = await app.inject({
         method: "POST",
-        url: "/actions/pipeline",
+        url: "/actions/simulate-pipeline",
         payload: { action_name: action, params: {} },
       });
       const body = res.json();
@@ -155,7 +155,7 @@ describe("Fault Injection — Structured Error Returns", () => {
     for (const payload of failures) {
       const res = await app.inject({
         method: "POST",
-        url: "/actions/pipeline",
+        url: "/actions/simulate-pipeline",
         payload,
       });
       const body = res.json();

@@ -37,7 +37,7 @@ describe("Mutation: Remove safeParse()", () => {
   it("M1a: missing field is caught by validation", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "read_file", params: {} },
     });
     const body = res.json();
@@ -49,7 +49,7 @@ describe("Mutation: Remove safeParse()", () => {
   it("M1b: wrong type is caught by validation", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "read_file", params: { path: 42 } },
     });
     const body = res.json();
@@ -63,7 +63,7 @@ describe("Mutation: Skip permission check", () => {
   it("M2a: approval-required action is blocked", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "commit", params: { message: "test" } },
     });
     const body = res.json();
@@ -76,7 +76,7 @@ describe("Mutation: Skip permission check", () => {
   it("M2b: scope-denied action is blocked", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: {
         action_name: "summarize_diff",
         params: {},
@@ -95,7 +95,7 @@ describe("Mutation: Skip audit creation", () => {
   it("M3a: successful execution has audit", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "grep", params: { pattern: "mutation-audit" } },
     });
     expect(res.json().audit_id).toBeDefined();
@@ -110,7 +110,7 @@ describe("Mutation: Skip audit creation", () => {
   it("M3b: failed execution has audit", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "read_file", params: {} },
     });
     expect(res.json().audit_id).toBeDefined();
@@ -128,7 +128,7 @@ describe("Mutation: Skip rationale persistence", () => {
     const rationale = "Since the user wants mutation testing, thus I am verifying rationale persistence.";
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "grep", params: { pattern: "mutation-rationale" }, rationale },
     });
     const auditRes = await app.inject({
@@ -143,7 +143,7 @@ describe("Mutation: Skip rationale persistence", () => {
     const rationale = "Since the user wants quality assurance, thus I am running checks.";
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "run_tests", params: {}, rationale },
     });
     expect(res.json().rationale).toBe(rationale);
@@ -155,7 +155,7 @@ describe("Mutation: Allow unknown action", () => {
   it("M5a: unknown action is rejected at lookup", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "exec_arbitrary_code", params: {} },
     });
     expect(res.json().success).toBe(false);
@@ -167,7 +167,7 @@ describe("Mutation: Allow unknown action", () => {
   it("M5b: unregistered action name rejected", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "inject_payload", params: {} },
     });
     expect(res.json().success).toBe(false);
@@ -179,7 +179,7 @@ describe("Mutation: Ignore approval gate", () => {
   it("M6a: commit is always blocked", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "commit", params: { message: "bypass" } },
     });
     expect(res.json().success).toBe(false);
@@ -190,7 +190,7 @@ describe("Mutation: Ignore approval gate", () => {
   it("M6b: deploy blocked by policy", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "deploy", params: {} },
     });
     const body = res.json();

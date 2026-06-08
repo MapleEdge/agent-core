@@ -101,7 +101,7 @@ describe("Audit — Status Transitions", () => {
   it("successful execution: requested → validated → executed", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "grep", params: { pattern: "status-transition" } },
     });
     const body = res.json();
@@ -116,7 +116,7 @@ describe("Audit — Status Transitions", () => {
   it("validation failure: requested → failed", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "read_file", params: {} },
     });
     const body = res.json();
@@ -131,7 +131,7 @@ describe("Audit — Status Transitions", () => {
   it("permission denial: requested → failed", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "commit", params: { message: "test" } },
     });
     const body = res.json();
@@ -145,7 +145,7 @@ describe("Audit — Status Transitions", () => {
   it("lookup failure: requested → failed", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "does_not_exist", params: {} },
     });
     const body = res.json();
@@ -162,7 +162,7 @@ describe("Audit — Input/Output Capture", () => {
     const params = { pattern: "capture-test-input" };
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "grep", params },
     });
     const auditRes = await app.inject({ method: "GET", url: `/audits/${res.json().audit_id}` });
@@ -172,7 +172,7 @@ describe("Audit — Input/Output Capture", () => {
   it("captures output in audit record on success", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "run_tests", params: {} },
     });
     const auditRes = await app.inject({ method: "GET", url: `/audits/${res.json().audit_id}` });
@@ -184,7 +184,7 @@ describe("Audit — Input/Output Capture", () => {
   it("captures error in audit record on failure", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "read_file", params: { path: 42 } },
     });
     const auditRes = await app.inject({ method: "GET", url: `/audits/${res.json().audit_id}` });

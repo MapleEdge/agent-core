@@ -125,7 +125,7 @@ describe("Zod Schema Validation", () => {
   it("pipeline rejects invalid params at validate stage", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "read_file", params: {} },
     });
     expect(res.statusCode).toBe(200);
@@ -140,7 +140,7 @@ describe("Zod Schema Validation", () => {
   it("pipeline passes valid params through validate stage", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "read_file", params: { path: "README.md" } },
     });
     expect(res.statusCode).toBe(200);
@@ -186,7 +186,7 @@ describe("Audit Records", () => {
   it("pipeline creates an audit record on successful execution", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "grep", params: { pattern: "test" } },
     });
     const body = res.json();
@@ -211,7 +211,7 @@ describe("Audit Records", () => {
   it("pipeline creates a failed audit on validation failure", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "read_file", params: {} },
     });
     const body = res.json();
@@ -230,7 +230,7 @@ describe("Audit Records", () => {
   it("pipeline creates a failed audit on lookup failure", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "nonexistent", params: {} },
     });
     const body = res.json();
@@ -274,7 +274,7 @@ describe("Audit Records", () => {
     // Execute pipeline with session_id
     await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: {
         action_name: "grep",
         params: { pattern: "audit" },
@@ -310,7 +310,7 @@ describe("Rationale", () => {
     const rationale = "Since the user wants to find test patterns, thus I am searching the codebase to identify test locations.";
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: {
         action_name: "grep",
         params: { pattern: "test" },
@@ -327,7 +327,7 @@ describe("Rationale", () => {
     const rationale = "Since the user wants the file read, thus I am reading the file to understand its contents.";
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: {
         action_name: "read_file",
         params: { path: "README.md" },
@@ -347,7 +347,7 @@ describe("Rationale", () => {
     const rationale = "Since the user wants tests run, thus I am executing the test suite to verify correctness.";
     const res = await app.inject({
       method: "POST",
-      url: "/actions/execute",
+      url: "/actions/mock-execute",
       payload: {
         action_name: "run_tests",
         params: {},
@@ -361,7 +361,7 @@ describe("Rationale", () => {
   it("pipeline works without rationale (optional)", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "grep", params: { pattern: "test" } },
     });
     expect(res.statusCode).toBe(200);
@@ -383,7 +383,7 @@ describe("Timeline Integration", () => {
     const rationale = "Since the user wants to search, thus I am grepping for the pattern.";
     await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: {
         action_name: "grep",
         params: { pattern: "test" },
@@ -414,7 +414,7 @@ describe("Timeline Integration", () => {
 
     await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: {
         action_name: "read_file",
         params: {},
@@ -447,7 +447,7 @@ describe("Timeline Integration", () => {
     const rationale = "Since the user wants context, thus I am retrieving context nodes.";
     const pipelineRes = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: {
         action_name: "retrieve_context",
         params: {},
@@ -494,7 +494,7 @@ describe("Regression", () => {
   it("existing execute endpoint still works", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/execute",
+      url: "/actions/mock-execute",
       payload: { action_name: "run_tests", params: {} },
     });
     expect(res.statusCode).toBe(200);
@@ -504,7 +504,7 @@ describe("Regression", () => {
   it("pipeline still handles approval-required actions", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "commit", params: { message: "test" } },
     });
     const body = res.json();

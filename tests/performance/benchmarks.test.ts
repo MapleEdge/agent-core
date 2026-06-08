@@ -103,7 +103,7 @@ describe("Benchmark — Pipeline Overhead", () => {
   it("warmup", async () => {
     await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "grep", params: { pattern: "warmup" } },
     });
   });
@@ -113,7 +113,7 @@ describe("Benchmark — Pipeline Overhead", () => {
       const result = await benchmarkOperation(`pipeline_${count}`, count, async () => {
         await app.inject({
           method: "POST",
-          url: "/actions/pipeline",
+          url: "/actions/simulate-pipeline",
           payload: { action_name: "grep", params: { pattern: "bench" } },
         });
       });
@@ -127,7 +127,7 @@ describe("Benchmark — Audit Write Latency", () => {
     const result = await benchmarkOperation("audit_write_100", 100, async () => {
       await app.inject({
         method: "POST",
-        url: "/actions/pipeline",
+        url: "/actions/simulate-pipeline",
         payload: { action_name: "run_tests", params: {} },
       });
     });
@@ -152,7 +152,7 @@ describe("Benchmark — Timeline Write Latency", () => {
     const result = await benchmarkOperation("timeline_write_100", 100, async () => {
       await app.inject({
         method: "POST",
-        url: "/actions/pipeline",
+        url: "/actions/simulate-pipeline",
         payload: {
           action_name: "grep",
           params: { pattern: "timeline-bench" },
@@ -175,7 +175,7 @@ describe("Benchmark — Large Scale", () => {
       const promises = Array.from({ length: batchSize }, (_, i) =>
         app.inject({
           method: "POST",
-          url: "/actions/pipeline",
+          url: "/actions/simulate-pipeline",
           payload: { action_name: "grep", params: { pattern: `scale_${batch}_${i}` } },
         }),
       );

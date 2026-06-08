@@ -93,7 +93,7 @@ describe("Schema Validation — Structured Errors", () => {
   it("structured errors propagate through pipeline", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "grep", params: {} },
     });
     const body = res.json();

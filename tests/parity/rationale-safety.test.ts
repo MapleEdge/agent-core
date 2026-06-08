@@ -55,7 +55,7 @@ describe("Rationale — Survives Entire Pipeline", () => {
     const rationale = "Since the user wants code patterns found, thus I am searching to locate them.";
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: {
         action_name: "grep",
         params: { pattern: "rationale-survive" },
@@ -69,7 +69,7 @@ describe("Rationale — Survives Entire Pipeline", () => {
     const rationale = "Since the user wants the file, thus I am reading it.";
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: {
         action_name: "read_file",
         params: {},
@@ -84,7 +84,7 @@ describe("Rationale — Survives Entire Pipeline", () => {
     const rationale = "Since the user wants tests run, thus I am executing the suite.";
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: {
         action_name: "run_tests",
         params: {},

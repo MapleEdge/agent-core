@@ -69,7 +69,7 @@ describe("Permission — Scope Enforcement", () => {
   it("action outside rule-solver scope is denied", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: {
         action_name: "summarize_diff",
         params: {},
@@ -86,7 +86,7 @@ describe("Permission — Scope Enforcement", () => {
   it("action within scope after correct history is allowed", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: {
         action_name: "read_file",
         params: { path: "index.ts" },
@@ -104,7 +104,7 @@ describe("Permission — Approval Gate", () => {
   it("approval-required action stops at permission stage", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "commit", params: { message: "deploy" } },
     });
     const body = res.json();
