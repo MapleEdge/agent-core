@@ -6,6 +6,7 @@ import {
   ActionPipelineInput,
   AuditListInput,
   OutcomeInput,
+  RecommendNextInput,
 } from "../schemas/actions.js";
 import { getProvider, hasProvider, getCapabilityMatrix } from "../providers/registry.js";
 import { executeActionPipeline } from "./pipeline.js";
@@ -175,13 +176,25 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
       const provider = getProvider("action");
       if ("buildPlan" in provider) {
         const plan = await (provider as ActionKnowledgeProvider).buildPlan({
-          task_type: input.mode_preference ?? "code_edit",
+          task_type: "code_edit",
           prompt: input.prompt,
           repo_id: input.repo_id,
         });
 
         const allowedSet = new Set(input.allowed_actions);
         const filteredSteps = plan.steps.filter((s) => allowedSet.has(s.action_name));
+
+        if (filteredSteps.length === 0) {
+          return {
+            ok: false,
+            plan: null,
+            schema_valid: false,
+            requires_platform_validation: true,
+            source: "template_plan_validated_by_agent_core",
+            warnings: [{ source: "planner", message: "No LLM configured; using template fallback." }],
+            errors: ["No template steps match the given allowed_actions."],
+          } satisfies PlanResponse;
+        }
 
         return {
           ok: true,
@@ -289,17 +302,12 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
     if (!("recommendNextActions" in provider)) {
       return { error: "ActionKnowledgeProvider not available", recommendations: [] };
     }
-    const body = req.body as {
-      task_type: string;
-      current_action?: string;
-      completed_actions?: string[];
-      context?: Record<string, unknown>;
-    };
+    const body = RecommendNextInput.parse(req.body);
     const recommendations = await (provider as ActionKnowledgeProvider).recommendNextActions({
-      task_type: body.task_type ?? "code_edit",
+      task_type: body.task_type,
       current_action: body.current_action,
-      completed_actions: body.completed_actions ?? [],
-      context: body.context ?? {},
+      completed_actions: body.completed_actions,
+      context: body.context,
     });
     return { recommendations };
   });

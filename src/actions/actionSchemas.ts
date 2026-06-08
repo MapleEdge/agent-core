@@ -70,6 +70,17 @@ export const ACTION_ZOD_SCHEMAS: Record<string, ZodType> = {
     reason: z.string().optional(),
   }),
 
+  apply_patch: z.object({
+    patch: z.string().optional(),
+    file: z.string().optional(),
+    content: z.string().optional(),
+  }),
+
+  identify_relevant_tests: z.object({
+    files: z.array(z.string()).optional(),
+    context: z.string().optional(),
+  }),
+
   commit: z.object({
     message: z.string().min(1),
     files: z.array(z.string()).optional(),

@@ -126,8 +126,8 @@ export function getActionStats(actionName: string): {
     .prepare(
       `SELECT
          COUNT(*) as total,
-         SUM(CASE WHEN status = 'succeeded' THEN 1 ELSE 0 END) as succeeded,
-         SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed,
+         COALESCE(SUM(CASE WHEN status = 'succeeded' THEN 1 ELSE 0 END), 0) as succeeded,
+         COALESCE(SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END), 0) as failed,
          COALESCE(AVG(duration_ms), 0) as avg_duration_ms
        FROM action_outcomes
        WHERE action_name = ?`,
