@@ -25,6 +25,7 @@ import { registerDefaultProviders } from "../src/providers/defaults.js";
 import { resetProviderRegistry } from "../src/providers/registry.js";
 import { ensureOutcomeTable } from "../src/actions/outcomeStore.js";
 import { seedActionSchemas } from "../src/actions/actionSchemas.js";
+import { seedDefaultActions } from "../src/actions/defaults.js";
 
 let app: FastifyInstance;
 const originalDeepSeekKey = process.env.DEEPSEEK_API_KEY;
@@ -37,6 +38,7 @@ beforeAll(async () => {
 
   resetProviderRegistry();
   registerDefaultProviders();
+  seedDefaultActions();
   seedActionSchemas();
   ensureOutcomeTable();
   app = Fastify();
