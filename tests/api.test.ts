@@ -7,7 +7,6 @@ import { actionRoutes } from "../src/actions/routes.js";
 import { rulesRoutes, seedDefaultRules } from "../src/rules/routes.js";
 import { classifyRoutes } from "../src/api/classify.js";
 import { policyRoutes, seedDefaultPolicies } from "../src/api/policy.js";
-import { mockPlatformRoutes } from "../src/mock_platform/routes.js";
 import { seedDefaultActions } from "../src/actions/defaults.js";
 import { seedActionSchemas } from "../src/actions/actionSchemas.js";
 import { closeDb } from "../src/db.js";
@@ -28,7 +27,6 @@ beforeAll(async () => {
   await app.register(rulesRoutes);
   await app.register(classifyRoutes);
   await app.register(policyRoutes);
-  await app.register(mockPlatformRoutes);
   await app.register(providerRoutes);
   seedDefaultActions();
   seedActionSchemas();
@@ -382,28 +380,6 @@ describe("Classifier", () => {
   });
 });
 
-describe("Policy", () => {
-  it("allows safe actions", async () => {
-    const res = await app.inject({
-      method: "POST",
-      url: "/mock-platform/policy/check",
-      payload: { session_id: "s1", action_name: "read_file" },
-    });
-    expect(res.statusCode).toBe(200);
-    expect(res.json().allowed).toBe(true);
-  });
-
-  it("blocks dangerous actions", async () => {
-    const res = await app.inject({
-      method: "POST",
-      url: "/mock-platform/policy/check",
-      payload: { session_id: "s1", action_name: "deploy" },
-    });
-    expect(res.statusCode).toBe(200);
-    expect(res.json().allowed).toBe(false);
-    expect(res.json().requires_approval).toBe(true);
-  });
-});
 
 describe("Providers", () => {
   it("exposes a capability matrix for all provider slots", async () => {
@@ -429,44 +405,4 @@ describe("Providers", () => {
   });
 });
 
-describe("Mock platform", () => {
-  it("opens a repo", async () => {
-    const res = await app.inject({
-      method: "POST",
-      url: "/mock-platform/repos/open",
-      payload: { repo_url: "https://github.com/org/repo", branch: "main" },
-    });
-    expect(res.statusCode).toBe(201);
-    expect(res.json().status).toBe("opened");
-  });
 
-  it("creates a worktree", async () => {
-    const res = await app.inject({
-      method: "POST",
-      url: "/mock-platform/worktrees/create",
-      payload: { repo_id: "repo-abc", branch: "fix/login" },
-    });
-    expect(res.statusCode).toBe(201);
-    expect(res.json().status).toBe("created");
-  });
-
-  it("selects an executor", async () => {
-    const res = await app.inject({
-      method: "POST",
-      url: "/mock-platform/executors/select",
-      payload: { task_type: "code_edit", complexity_score: 80 },
-    });
-    expect(res.statusCode).toBe(200);
-    expect(res.json().executor).toBe("openhands");
-  });
-
-  it("mocks a commit", async () => {
-    const res = await app.inject({
-      method: "POST",
-      url: "/mock-platform/commits/mock",
-      payload: { session_id: "s1", repo_id: "demo", message: "fix tests", files: ["src/auth.ts"] },
-    });
-    expect(res.statusCode).toBe(201);
-    expect(res.json().status).toBe("mock_committed");
-  });
-});
