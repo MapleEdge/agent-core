@@ -171,8 +171,9 @@ describe("Action Schema Exposure", () => {
     const res = await app.inject({ method: "GET", url: "/actions/grep" });
     expect(res.statusCode).toBe(200);
     const body = res.json();
-    expect(body.schema).toBeDefined();
-    expect(body.schema.properties.pattern).toBeDefined();
+    // MCP-compatible response uses params_json_schema
+    expect(body.params_json_schema).toBeDefined();
+    expect(body.params_json_schema.properties.pattern).toBeDefined();
   });
 });
 
