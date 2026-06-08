@@ -156,3 +156,11 @@ jubilant-goggles:
 ```
 
 It also lets agent-core remain reusable across different platforms and runners, while jubilant-goggles retains responsibility for user-visible control, execution safety, and real-world side effects.
+
+## Canonical Catalog
+
+As of the canonical catalog refactor, all actions are defined in a single source of truth at `src/actions/catalog/canonicalActions.ts`. The DB seed, Zod schema registry, prompt builder, and deterministic validator all derive from this file. This eliminates the previous divergence between `defaults.ts` and `actionSchemas.ts`.
+
+Each canonical action defines: name, category, description, zodSchema, params_json_schema, output_json_schema, risk, side_effects, requires_platform_validation (always true), requires_approval, and planner_guidance.
+
+The validator returns structured errors (`{ code, path, message, action_name, step_index }`) and treats `run_tests` before edits as a warning (not an error) to support baseline/reproduction workflows. Secret-looking values are recursively rejected from all params.

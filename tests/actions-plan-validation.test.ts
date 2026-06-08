@@ -42,7 +42,7 @@ describe("validatePlanDeterministic", () => {
       allowedActions: ["grep"],
     });
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes("commit"))).toBe(true);
+    expect(result.errors.some((e) => e.message.includes("commit"))).toBe(true);
   });
 
   it("fails when params schema is invalid", async () => {
@@ -58,7 +58,7 @@ describe("validatePlanDeterministic", () => {
       allowedActions: ["read_file"],
     });
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes("read_file"))).toBe(true);
+    expect(result.errors.some((e) => e.action_name === "read_file" || e.message.includes("read_file"))).toBe(true);
   });
 
   it("warns when loop mode has no loop_condition", async () => {
@@ -92,14 +92,14 @@ describe("validatePlanDeterministic", () => {
     expect(result.errors).toEqual([]);
   });
 
-  it("passes open_ended mode with loop_condition", async () => {
+  it("passes open_ended mode with valid apply_patch params", async () => {
     const result = await validatePlanDeterministic({
       plan: {
         goal: "Autonomous",
         mode: "open_ended",
         steps: [
           { action_name: "grep", params: { pattern: "x" }, requires_platform_validation: true },
-          { action_name: "apply_patch", params: { file: "src/index.ts" }, requires_platform_validation: true },
+          { action_name: "apply_patch", params: { path: "src/index.ts", intent: "Fix the bug" }, requires_platform_validation: true },
           { action_name: "run_tests", params: {}, requires_platform_validation: true },
         ],
         loop_condition: "Continue improving",
@@ -121,7 +121,7 @@ describe("validatePlanDeterministic", () => {
       allowedActions: ["grep"],
     });
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes("mode"))).toBe(true);
+    expect(result.errors.some((e) => e.message.includes("mode"))).toBe(true);
   });
 
   it("does not impose a max-step cap", async () => {
@@ -150,7 +150,7 @@ describe("validatePlanDeterministic", () => {
         mode: "loop",
         steps: [
           { action_name: "grep", params: { pattern: "FIXME" }, requires_platform_validation: true },
-          { action_name: "apply_patch", params: { file: "src/fix.ts" }, requires_platform_validation: true },
+          { action_name: "apply_patch", params: { path: "src/fix.ts", intent: "Fix the FIXME" }, requires_platform_validation: true },
           { action_name: "run_tests", params: {}, requires_platform_validation: true },
           { action_name: "commit", params: { message: "fix" }, requires_platform_validation: true },
         ],

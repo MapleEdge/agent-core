@@ -1,15 +1,16 @@
 /**
- * Zod schemas for registered actions.
+ * Zod schema registry for registered actions.
  *
- * Each action defines its parameter schema using Zod. The pipeline's
- * validate stage runs safeParse() against these schemas before invocation.
+ * The runtime Map is populated by seedCanonicalCatalog(). Individual schemas
+ * can also be registered at runtime via registerActionSchema().
  *
- * Reference: Letta tool_manager.create_tool() — extracts parameter schemas
- * from Python type hints and JSON schema. We use Zod directly since we're
- * in TypeScript.
+ * The canonical Zod schemas live in catalog/canonicalActions.ts. This file
+ * provides the registry API and the backwards-compatible ACTION_ZOD_SCHEMAS
+ * re-export.
  */
 
-import { z, type ZodType } from "zod";
+import { type ZodType } from "zod";
+import { CANONICAL_ZOD_SCHEMAS } from "./catalog/canonicalActions.js";
 
 /** Runtime-registered Zod schemas, keyed by action name. */
 const actionZodSchemas = new Map<string, ZodType>();
@@ -31,75 +32,17 @@ export function resetActionSchemas(): void {
 }
 
 /**
- * Default Zod schemas for built-in actions.
- *
- * These define the parameter contracts that the validate stage enforces.
+ * Backwards-compatible export. Points to the canonical schemas.
+ * Prefer CANONICAL_ZOD_SCHEMAS from catalog/canonicalActions.ts for new code.
  */
-export const ACTION_ZOD_SCHEMAS: Record<string, ZodType> = {
-  classify_task: z.object({
-    task_type: z.string().optional(),
-    prompt: z.string().optional(),
-  }),
+export const ACTION_ZOD_SCHEMAS: Record<string, ZodType> = CANONICAL_ZOD_SCHEMAS;
 
-  read_file: z.object({
-    path: z.string().min(1),
-  }),
-
-  grep: z.object({
-    pattern: z.string().min(1),
-    path: z.string().optional(),
-  }),
-
-  write_file: z.object({
-    path: z.string().min(1),
-    content: z.string(),
-  }),
-
-  run_tests: z.object({
-    suite: z.string().optional(),
-    filter: z.string().optional(),
-  }),
-
-  summarize_diff: z.object({
-    base: z.string().optional(),
-    head: z.string().optional(),
-  }),
-
-  request_approval: z.object({
-    action: z.string().min(1),
-    reason: z.string().optional(),
-  }),
-
-  apply_patch: z.object({
-    patch: z.string().optional(),
-    file: z.string().optional(),
-    content: z.string().optional(),
-  }),
-
-  identify_relevant_tests: z.object({
-    files: z.array(z.string()).optional(),
-    context: z.string().optional(),
-  }),
-
-  commit: z.object({
-    message: z.string().min(1),
-    files: z.array(z.string()).optional(),
-  }),
-
-  search_memory: z.object({
-    query: z.string().min(1),
-    scope: z.string().optional(),
-  }),
-
-  retrieve_context: z.object({
-    repo_id: z.string().optional(),
-    path: z.string().optional(),
-  }),
-};
-
-/** Register all default Zod schemas. */
+/**
+ * Register all canonical Zod schemas into the runtime Map.
+ * Called by seedCanonicalCatalog(); also available standalone for tests.
+ */
 export function seedActionSchemas(): void {
-  for (const [name, schema] of Object.entries(ACTION_ZOD_SCHEMAS)) {
+  for (const [name, schema] of Object.entries(CANONICAL_ZOD_SCHEMAS)) {
     registerActionSchema(name, schema);
   }
 }

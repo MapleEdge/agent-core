@@ -229,7 +229,26 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
         });
 
         const allowedSet = new Set(input.allowed_actions);
-        const filteredSteps = plan.steps.filter((s) => allowedSet.has(s.action_name));
+        // Filter to allowed actions AND strip steps with invalid placeholder params
+        const filteredSteps = plan.steps.filter((s) => {
+          if (!allowedSet.has(s.action_name)) return false;
+          // Reject read_file with empty path
+          if (s.action_name === "read_file") {
+            const p = s.params as Record<string, unknown>;
+            if (!p.path || (typeof p.path === "string" && p.path.trim() === "")) return false;
+          }
+          // Reject grep with empty pattern
+          if (s.action_name === "grep") {
+            const p = s.params as Record<string, unknown>;
+            if (!p.pattern || (typeof p.pattern === "string" && p.pattern.trim() === "")) return false;
+          }
+          // Reject write_file with empty path
+          if (s.action_name === "write_file") {
+            const p = s.params as Record<string, unknown>;
+            if (!p.path || (typeof p.path === "string" && p.path.trim() === "")) return false;
+          }
+          return true;
+        });
 
         if (filteredSteps.length === 0) {
           return {
@@ -239,27 +258,38 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
             requires_platform_validation: true,
             source: "template_plan_validated_by_agent_core",
             warnings: [{ source: "planner", message: "No LLM configured; using template fallback." }],
-            errors: ["No template steps match the given allowed_actions."],
+            errors: [{ code: "NO_VALID_STEPS", message: "No template steps match the given allowed_actions." }],
           } satisfies PlanResponse;
         }
 
+        const fallbackPlan = {
+          goal: input.prompt,
+          mode: (input.mode_preference ?? "finite") as "finite" | "loop" | "open_ended",
+          steps: filteredSteps.map((s) => ({
+            action_name: s.action_name,
+            params: s.params,
+            rationale: "",
+            requires_platform_validation: true as const,
+          })),
+        };
+
+        // Validate the fallback plan before claiming schema_valid=true
+        const fallbackValidation = await validatePlanDeterministic(
+          { plan: fallbackPlan, allowedActions: input.allowed_actions },
+          hasProvider("ruleSolver") ? (getProvider("ruleSolver") as RuleSolverProvider) : null,
+        );
+
         return {
-          ok: true,
-          plan: {
-            goal: input.prompt,
-            mode: input.mode_preference ?? "finite",
-            steps: filteredSteps.map((s) => ({
-              action_name: s.action_name,
-              params: s.params,
-              rationale: "",
-              requires_platform_validation: true as const,
-            })),
-          },
-          schema_valid: true,
+          ok: fallbackValidation.valid,
+          plan: fallbackPlan,
+          schema_valid: fallbackValidation.valid,
           requires_platform_validation: true,
           source: "template_plan_validated_by_agent_core",
-          warnings: [{ source: "planner", message: "No LLM configured; using template fallback." }],
-          errors: [],
+          warnings: [
+            { source: "planner", message: "No LLM configured; using template fallback." },
+            ...fallbackValidation.warnings,
+          ],
+          errors: fallbackValidation.errors,
         } satisfies PlanResponse;
       }
 
@@ -270,7 +300,7 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
         requires_platform_validation: true,
         source: "llm_plan_validated_by_agent_core",
         warnings: [],
-        errors: ["No LLM client configured (set DEEPSEEK_API_KEY or GEMINI_API_KEY)."],
+        errors: [{ code: "NO_LLM", message: "No LLM client configured (set DEEPSEEK_API_KEY or GEMINI_API_KEY)." }],
       } satisfies PlanResponse;
     }
 

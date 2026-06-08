@@ -45,47 +45,49 @@ interface ActionRow {
   requires_approval: number;
 }
 
-/** Side-effect annotations per known action. */
-const ACTION_SIDE_EFFECTS: Record<string, string[]> = {
-  read_file: [],
-  grep: [],
-  classify_task: [],
-  retrieve_context: [],
-  search_memory: [],
-  summarize_diff: [],
-  write_file: ["filesystem"],
-  run_tests: ["filesystem", "process"],
-  commit: ["git", "filesystem"],
-  request_approval: ["notification"],
-};
+/** Side-effect annotations, derived from canonical catalog at startup. */
+const ACTION_SIDE_EFFECTS: Record<string, string[]> = {};
 
-/** Static plan templates per task_type. */
+// Populate side effects from canonical catalog when the module is loaded.
+// Intentionally lazy: canonical catalog is always available as a static import.
+import { CANONICAL_ACTIONS } from "../../actions/catalog/canonicalActions.js";
+for (const a of CANONICAL_ACTIONS) {
+  ACTION_SIDE_EFFECTS[a.name] = a.side_effects;
+}
+
+/**
+ * Static plan templates per task_type.
+ *
+ * Steps must NOT contain invalid placeholder params (no empty path, pattern,
+ * or content). Only include params that can be populated at template-
+ * hydration time. Steps that need runtime-discovered values (e.g., file
+ * paths) should use actions like inspect_repo/search_code that don't
+ * require prior knowledge.
+ */
 const PLAN_TEMPLATES: Record<string, Array<{ action_name: string; params: Record<string, unknown> }>> = {
   code_edit: [
     { action_name: "classify_task", params: {} },
     { action_name: "retrieve_context", params: {} },
-    { action_name: "grep", params: { pattern: "" } },
-    { action_name: "read_file", params: { path: "" } },
-    { action_name: "write_file", params: { path: "", content: "" } },
-    { action_name: "run_tests", params: {} },
+    { action_name: "inspect_repo", params: {} },
+    { action_name: "search_code", params: { query: "relevant implementation" } },
+    { action_name: "run_tests", params: { purpose: "baseline" } },
     { action_name: "summarize_diff", params: {} },
-    { action_name: "request_approval", params: { action: "commit", reason: "" } },
-    { action_name: "commit", params: { message: "" } },
+    { action_name: "request_approval", params: { action: "commit", reason: "Ready to commit changes" } },
+    { action_name: "commit", params: { message: "Apply changes" } },
   ],
   bug_fix: [
     { action_name: "classify_task", params: {} },
-    { action_name: "grep", params: { pattern: "" } },
-    { action_name: "read_file", params: { path: "" } },
-    { action_name: "run_tests", params: {} },
-    { action_name: "write_file", params: { path: "", content: "" } },
-    { action_name: "run_tests", params: {} },
+    { action_name: "inspect_repo", params: {} },
+    { action_name: "search_code", params: { query: "bug location" } },
+    { action_name: "run_tests", params: { purpose: "baseline" } },
+    { action_name: "run_tests", params: { purpose: "targeted_validation" } },
     { action_name: "summarize_diff", params: {} },
-    { action_name: "commit", params: { message: "" } },
+    { action_name: "commit", params: { message: "Fix bug" } },
   ],
   review: [
     { action_name: "classify_task", params: {} },
     { action_name: "retrieve_context", params: {} },
-    { action_name: "read_file", params: { path: "" } },
+    { action_name: "inspect_repo", params: {} },
     { action_name: "summarize_diff", params: {} },
   ],
 };
