@@ -20,7 +20,7 @@ import type { RuleSolverProvider } from "../providers/RuleSolverProvider.js";
 import { llmJson } from "../llm/LLMJson.js";
 import { buildPlanPrompt } from "./actionPromptBuilder.js";
 import { ActionPlanOutputSchema } from "./actionPlanSchemas.js";
-import type { ActionPlanOutput, PlanResponse, PlanWarning } from "./actionPlanSchemas.js";
+import type { ActionPlanOutput, PlanResponse, PlanWarning, ValidationError } from "./actionPlanSchemas.js";
 import { validatePlanDeterministic } from "./actionPlanValidator.js";
 import { attemptPlanRepair } from "./actionPlanRepair.js";
 import { SAMPLE_TEMPLATES } from "./sampleTemplates.js";
@@ -42,13 +42,18 @@ export interface PlannerDependencies {
   ruleSolver?: RuleSolverProvider | null;
 }
 
+/** Convert a plain error string to a structured ValidationError. */
+function strError(message: string, code = "PLANNER_ERROR"): ValidationError {
+  return { code, message };
+}
+
 export async function generatePlan(
   input: PlannerInput,
   deps: PlannerDependencies,
 ): Promise<PlanResponse> {
   const allowedSet = new Set(input.allowed_actions);
   const warnings: PlanWarning[] = [];
-  const errors: string[] = [];
+  const errors: ValidationError[] = [];
 
   // Filter catalog to only session-visible actions
   const visibleCatalog = deps.actionCatalog.filter((a) => allowedSet.has(a.name));
@@ -61,7 +66,7 @@ export async function generatePlan(
       requires_platform_validation: true,
       source: "llm_plan_validated_by_agent_core",
       warnings: [],
-      errors: ["No visible actions in catalog for the given allowed_actions."],
+      errors: [strError("No visible actions in catalog for the given allowed_actions.")],
     };
   }
 
@@ -114,13 +119,13 @@ export async function generatePlan(
           message: `Plan was repaired: ${repair.repairs.join("; ")}`,
         });
       } else {
-        errors.push(`LLM output invalid and repair failed: ${llmResult.error}`);
+        errors.push(strError(`LLM output invalid and repair failed: ${llmResult.error}`, "LLM_REPAIR_FAILED"));
         if (repair.repairs.length > 0) {
-          errors.push(`Repair attempts: ${repair.repairs.join("; ")}`);
+          errors.push(strError(`Repair attempts: ${repair.repairs.join("; ")}`, "LLM_REPAIR_DETAIL"));
         }
       }
     } else {
-      errors.push(`LLM failed to produce valid JSON: ${llmResult.error}`);
+      errors.push(strError(`LLM failed to produce valid JSON: ${llmResult.error}`, "LLM_PARSE_FAILED"));
     }
   }
 

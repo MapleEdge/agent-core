@@ -1,174 +1,192 @@
-# Action API
+# Action Catalog and Plan Validation
 
-agent-core provides an action catalog, LLM-first planning, deterministic validation, and outcome recording. It does **not** execute actions — execution, permission enforcement, and commit authorization belong to the platform (jubilant-goggles).
+## Overview
 
-## Governing Principle
+agent-core owns the **canonical action catalog** — the single source of truth for all actions that any agent or executor can use. The catalog defines schemas, risk levels, side effects, and planner guidance for each action.
 
-```
-LLM proposes.
-agent-core validates.
-jubilant-goggles authorizes and executes.
-```
+**Architecture boundary (decision 0006):**
+- `agent-core` — action catalog, Zod schemas, advisory planning, deterministic validation, plan repair, outcome records
+- `jubilant-goggles` — runtime authorization, worktree/path validation, execution, service control, browser/desktop control, commits/PRs, approvals/secrets
 
-## Endpoints
+agent-core does **not** execute actions. It validates plans deterministically and provides advisory planning.
 
-### `GET /actions`
+## Canonical Action Catalog
 
-Returns the full action catalog with MCP-compatible schemas.
+The catalog is defined in `src/actions/catalog/canonicalActions.ts`. Every action specifies:
 
-```json
-{
-  "actions": [
-    {
-      "name": "grep",
-      "description": "Search repository files using a pattern.",
-      "params_json_schema": { "type": "object", "required": ["pattern"], "properties": { "pattern": { "type": "string" } } },
-      "output_json_schema": {},
-      "risk": "low",
-      "side_effects": [],
-      "requires_platform_validation": true
-    }
-  ]
-}
-```
+| Field | Description |
+|---|---|
+| `name` | Unique action identifier |
+| `category` | One of: context, repo, files, validation, browser_desktop, services, git_pr, control |
+| `description` | Human-readable description |
+| `zodSchema` | Zod schema for params validation |
+| `params_json_schema` | Auto-generated JSON Schema for LLM/API consumption |
+| `output_json_schema` | Expected output shape (informational) |
+| `risk` | low, medium, high, or critical |
+| `side_effects` | Array of side effect categories (filesystem, process, git, browser, service, etc.) |
+| `requires_platform_validation` | Always `true` — every step must be validated by the platform |
+| `requires_approval` | Whether the action requires explicit approval before execution |
+| `planner_guidance` | Advisory text for the LLM planner |
 
-Every action includes `requires_platform_validation: true` — agent-core validates contracts, the platform validates runtime permissions.
+## Action Categories
 
-### `GET /actions/:name`
+### Context
+| Action | Risk | Approval | Description |
+|---|---|---|---|
+| `retrieve_context` | low | no | Retrieve context from the context tree |
+| `search_memory` | low | no | Search the memory store |
+| `inspect_session_state` | low | no | Inspect current session state |
+| `record_outcome` | low | no | Record an action outcome |
 
-Returns a single action definition by name.
+### Repo
+| Action | Risk | Approval | Description |
+|---|---|---|---|
+| `inspect_repo` | low | no | Inspect repo structure and config |
+| `list_files` | low | no | List files in a directory or by pattern |
+| `search_code` | low | no | Semantic/structural code search |
+| `grep` | low | no | Regex search in file contents |
 
-### `POST /actions/plan`
+### Files
+| Action | Risk | Approval | Description |
+|---|---|---|---|
+| `read_file` | low | no | Read a file |
+| `apply_patch` | medium | no | Apply a code change (requires `patch` or `path + intent`) |
+| `write_file` | medium | no | Write or create a file |
+| `delete_file` | high | **yes** | Delete a file |
+| `inspect_diff` | low | no | Inspect staged/unstaged diff |
+| `summarize_diff` | low | no | Summarize recent changes |
 
-**LLM-first action planning.** Primary planning endpoint. Replaces classifier-first routing.
+### Validation
+| Action | Risk | Approval | Description |
+|---|---|---|---|
+| `run_command` | medium | no | Run an allowlisted shell command |
+| `run_tests` | low | no | Run the test suite (supports `purpose`: baseline, targeted_validation, final_validation) |
+| `run_lint` | low | no | Run the linter |
+| `run_typecheck` | low | no | Run the type checker |
+| `run_build` | low | no | Run the project build |
+| `health_check` | low | no | Check service health |
+| `identify_relevant_tests` | low | no | Identify which tests are relevant to changes |
 
-The LLM planner receives only the actions visible in the current session. Actions not in `allowed_actions` are excluded from the catalog passed to the LLM.
+### Browser/Desktop
+| Action | Risk | Approval | Description |
+|---|---|---|---|
+| `open_browser_url` | low | no | Open a URL in the browser |
+| `inspect_route_or_response` | low | no | Inspect HTTP response or page state |
+| `browser_click` | low | no | Click a browser element |
+| `browser_type` | low | no | Type text (uses `secret_ref` for secrets) |
+| `browser_screenshot` | low | no | Take a screenshot |
+| `open_remote_desktop` | low | no | Open a remote desktop session |
 
-**Request:**
+### Services
+| Action | Risk | Approval | Description |
+|---|---|---|---|
+| `list_services` | low | no | List managed services |
+| `inspect_service_status` | low | no | Inspect a service's status |
+| `update_latest_from_github` | high | no | Fetch latest code from GitHub (uses `token_ref`, never raw token) |
+| `restart_service` | medium | no | Restart a service |
+| `start_service` | medium | no | Start a service |
+| `stop_service` | critical | **yes** | Stop a service |
 
-```json
-{
-  "session_id": "s1",
-  "repo_id": "my-repo",
-  "prompt": "Fix the login bug and commit the fix.",
-  "allowed_actions": ["retrieve_context", "grep", "read_file", "run_tests", "commit"],
-  "mode_preference": "finite"
-}
-```
+### Git/PR
+| Action | Risk | Approval | Description |
+|---|---|---|---|
+| `git_status` | low | no | Show git status |
+| `git_diff` | low | no | Show git diff |
+| `commit` | high | **yes** | Commit changes |
+| `push_branch` | high | **yes** | Push branch to remote |
+| `create_pr` | high | **yes** | Create a pull request |
+| `check_pr_status` | low | no | Check PR status |
+| `check_ci_status` | low | no | Check CI pipeline status |
+| `merge_pr` | critical | **yes** | Merge a pull request |
 
-**Response:**
+### Control
+| Action | Risk | Approval | Description |
+|---|---|---|---|
+| `classify_task` | low | no | Classify task intent |
+| `ask_user` | low | no | Ask the user a question |
+| `request_approval` | low | no | Request approval for a gated action |
+| `wait_for_approval` | low | no | Wait for approval decision |
+| `request_credential` | low | no | Request a credential |
+| `wait_for_secret` | low | no | Wait for a credential |
+| `record_skipped_validation` | low | no | Record a skipped validation step |
+| `summarize_result` | low | no | Summarize the workflow result |
 
-```json
-{
-  "ok": true,
-  "plan": {
-    "goal": "Fix the login bug and commit the fix.",
-    "mode": "finite",
-    "steps": [
-      { "action_name": "retrieve_context", "params": { "query": "login bug" }, "rationale": "Load context.", "requires_platform_validation": true },
-      { "action_name": "grep", "params": { "pattern": "login|auth" }, "rationale": "Find relevant files.", "requires_platform_validation": true },
-      { "action_name": "run_tests", "params": {}, "rationale": "Validate fix.", "requires_platform_validation": true },
-      { "action_name": "commit", "params": { "message": "fix: login bug" }, "rationale": "Checkpoint work.", "requires_platform_validation": true }
-    ]
-  },
-  "schema_valid": true,
-  "requires_platform_validation": true,
-  "source": "llm_plan_validated_by_agent_core",
-  "warnings": []
-}
-```
+## Atomic vs. Composite Actions
 
-**Plan modes:**
+All actions in the catalog are **atomic** — they represent a single operation. Composite workflows are expressed as plans (sequences of atomic actions).
 
-| Mode | Behavior |
-|------|----------|
-| `finite` | Bounded sequence with a known end. |
-| `loop` | Repeat until platform stops, user stops, guard blocks, or goal satisfied. |
-| `open_ended` | Ongoing autonomous work with periodic checkpoints and plan refreshes. |
+## Advisory-Only Actions
 
-**Important:**
-- Plans may contain `commit` if `commit` is in the session's `allowed_actions`.
-- Plans are not capped at a fixed step count.
-- Loop and open-ended plans are not rejected — the platform decides when to stop.
-- The rule solver produces advisory warnings, not blocking errors (unless hard enforcement is configured).
+All agent-core actions are advisory. agent-core does not execute anything; it produces plans that jubilant-goggles validates and executes.
 
-### `POST /actions/validate-plan`
+## Schema Validation vs. Runtime Authorization
 
-**Deterministic validation only. No LLM calls.**
+| Concern | Owner | When |
+|---|---|---|
+| Params match Zod schema | agent-core | Plan validation (deterministic) |
+| Action is in `allowed_actions` | agent-core | Plan validation |
+| No secret-looking values in params | agent-core | Plan validation |
+| `requires_platform_validation: true` | agent-core | Plan validation |
+| File path is safe and within worktree | jubilant-goggles | Runtime |
+| User has permission to execute action | jubilant-goggles | Runtime |
+| Service exists and is manageable | jubilant-goggles | Runtime |
+| Approval has been granted | jubilant-goggles | Runtime |
 
-Validates:
-1. JSON shape matches plan schema.
-2. Every action exists in the catalog.
-3. Every action is in `allowed_actions`.
-4. Every action's params validate against its Zod schema.
-5. Every step has `requires_platform_validation: true`.
-6. Plan mode is `finite`, `loop`, or `open_ended`.
-7. `commit` appears only if `commit` is in `allowed_actions`.
+## Secret-Ref Rules
 
-Does **not** validate: platform permission, file safety, command safety, approvals, execution safety.
+1. **Never** pass raw tokens, API keys, or passwords in action params.
+2. Use `secret_ref` fields (e.g., `browser_type.secret_ref`, `update_latest_from_github.token_ref`) to reference secrets by name.
+3. The platform resolves secret refs at runtime from secure storage.
+4. The deterministic validator recursively scans all params for secret-looking patterns and rejects them with `SECRET_IN_PARAMS` errors.
 
-**Request:**
+Recognized secret patterns include:
+- GitHub PATs (`ghp_`, `github_pat_`, `gho_`, `ghu_`, `ghs_`, `ghr_`)
+- OpenAI-style keys (`sk-`)
+- Slack tokens (`xoxb-`, `xoxp-`)
+- AWS access keys (`AKIA`)
+- Bearer tokens (`Bearer ...`)
+- JWTs (`eyJ...`)
 
-```json
-{
-  "allowed_actions": ["grep", "read_file", "run_tests"],
-  "plan": {
-    "goal": "Find and fix bug",
-    "mode": "finite",
-    "steps": [
-      { "action_name": "grep", "params": { "pattern": "TODO" }, "requires_platform_validation": true },
-      { "action_name": "run_tests", "params": {}, "requires_platform_validation": true }
-    ]
-  }
-}
-```
+## Plan Validation
 
-### `POST /actions/outcome`
+The deterministic validator (`actionPlanValidator.ts`) checks:
 
-Records what the platform actually executed. Feeds the outcome learning loop.
+1. Plan mode is `finite`, `loop`, or `open_ended`
+2. Loop/open_ended plans should include `loop_condition`
+3. Every action exists in the canonical catalog
+4. Every action is in the session's `allowed_actions`
+5. Every action's params match its Zod schema
+6. Every step has `requires_platform_validation: true`
+7. No secret-looking values appear recursively in params
+8. `apply_patch` has `patch` or `path + intent`
+9. `read_file` has non-empty `path`
+10. `grep` has non-empty `pattern`
+11. `commit` only appears if in `allowed_actions`
+12. `merge_pr` only appears if in `allowed_actions`
+13. `stop_service` triggers an approval warning
+14. `run_tests` before edits is a **warning**, not an error (to allow baseline test runs)
 
-**Request:**
+Errors are returned as structured objects with `code`, `path`, `message`, `action_name`, and `step_index`.
 
-```json
-{
-  "session_id": "s1",
-  "action_name": "run_tests",
-  "params": { "suite": "unit" },
-  "status": "succeeded",
-  "output": { "passed": 42 },
-  "duration_ms": 1234,
-  "executor": "jubilant-goggles",
-  "rationale": "Validate before commit."
-}
-```
+## API Endpoints
 
-Records a trace event and session event. Returns `{ recorded: true, outcome_id: "..." }`.
+### GET /actions
+Returns the full action catalog with schemas.
 
-### `POST /actions/recommend-next`
+### GET /actions/:name
+Returns a single action definition.
 
-Stepwise recommendations for agents that operate action-by-action. Delegates to `RuleSolverProvider.getAllowedNext()` and enriches with outcome stats.
+### POST /actions/plan
+Generates an advisory plan. Uses LLM when available, falls back to templates.
 
-### `GET /providers`
+### POST /actions/validate-plan
+Deterministic validation only. No LLM calls.
 
-Returns the provider capability matrix: configured provider names, implementation type, status.
+### POST /actions/outcome
+Record what jubilant-goggles actually executed.
 
-## Rule Solver
+### GET /actions/outcomes/:session_id
+Retrieve outcomes for a session.
 
-The Letta-style rule solver is demoted to advisory:
-
-- **Default (radical mode):** LLM chooses freely from visible catalog. Rule solver produces warnings.
-- **Hard enforcement:** Only when session settings explicitly request it.
-
-Advisory warnings look like:
-
-```json
-{
-  "warnings": [
-    { "source": "rule_solver", "message": "summarize_diff usually appears before commit" }
-  ]
-}
-```
-
-## Execution Boundary
-
-agent-core may produce finite, loop-mode, open-ended, and commit-capable plans. It **must not** execute them. It **must not** authorize commits. The platform decides whether commits actually happen and performs them.
+### GET /actions/stats/:action_name
+Retrieve execution statistics for an action.
