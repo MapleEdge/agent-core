@@ -57,6 +57,8 @@ const ALL_ACTIONS = [
   "classify_task",
   "retrieve_context",
   "search_memory",
+  "inspect_repo",
+  "search_code",
   "grep",
   "read_file",
   "write_file",
@@ -96,13 +98,13 @@ describe("POST /actions/plan — LLM-first planning", () => {
       payload: {
         session_id: "s1",
         prompt: "Fix bug",
-        allowed_actions: ["grep", "read_file"],
+        allowed_actions: ["classify_task", "retrieve_context", "inspect_repo", "search_code", "grep", "read_file", "run_tests"],
       },
     });
     const body = res.json();
     expect(body.ok).toBe(true);
     for (const step of body.plan.steps) {
-      expect(["grep", "read_file"]).toContain(step.action_name);
+      expect(["classify_task", "retrieve_context", "inspect_repo", "search_code", "grep", "read_file", "run_tests"]).toContain(step.action_name);
     }
   });
 
@@ -233,7 +235,7 @@ describe("POST /actions/validate-plan — deterministic validation", () => {
           steps: [
             { action_name: "grep", params: { pattern: "TODO" }, requires_platform_validation: true },
             { action_name: "read_file", params: { path: "src/index.ts" }, requires_platform_validation: true },
-            { action_name: "apply_patch", params: { file: "src/index.ts" }, requires_platform_validation: true },
+            { action_name: "apply_patch", params: { path: "src/index.ts", intent: "Fix the bug" }, requires_platform_validation: true },
             { action_name: "run_tests", params: {}, requires_platform_validation: true },
           ],
         },
@@ -261,7 +263,7 @@ describe("POST /actions/validate-plan — deterministic validation", () => {
     });
     const body = res.json();
     expect(body.valid).toBe(false);
-    expect(body.errors.some((e: string) => e.includes("nonexistent_action"))).toBe(true);
+    expect(body.errors.some((e: { message: string }) => e.message.includes("nonexistent_action"))).toBe(true);
   });
 
   it("rejects actions not in allowed_actions", async () => {
@@ -281,7 +283,7 @@ describe("POST /actions/validate-plan — deterministic validation", () => {
     });
     const body = res.json();
     expect(body.valid).toBe(false);
-    expect(body.errors.some((e: string) => e.includes("commit"))).toBe(true);
+    expect(body.errors.some((e: { message: string }) => e.message.includes("commit"))).toBe(true);
   });
 
   it("rejects invalid params against Zod schema", async () => {
@@ -302,7 +304,7 @@ describe("POST /actions/validate-plan — deterministic validation", () => {
     });
     const body = res.json();
     expect(body.valid).toBe(false);
-    expect(body.errors.some((e: string) => e.includes("grep"))).toBe(true);
+    expect(body.errors.some((e: { message?: string; action_name?: string } ) => (e.message?.includes("grep") || e.action_name === "grep"))).toBe(true);
   });
 
   it("validates loop mode plans", async () => {
@@ -339,7 +341,7 @@ describe("POST /actions/validate-plan — deterministic validation", () => {
           steps: [
             { action_name: "retrieve_context", params: {}, requires_platform_validation: true },
             { action_name: "grep", params: { pattern: "FIXME" }, requires_platform_validation: true },
-            { action_name: "apply_patch", params: { file: "src/fix.ts" }, requires_platform_validation: true },
+            { action_name: "apply_patch", params: { path: "src/fix.ts", intent: "Apply improvement" }, requires_platform_validation: true },
             { action_name: "run_tests", params: {}, requires_platform_validation: true },
             { action_name: "commit", params: { message: "improvement" }, requires_platform_validation: true },
           ],
@@ -388,7 +390,7 @@ describe("POST /actions/validate-plan — deterministic validation", () => {
     });
     const body2 = res2.json();
     expect(body2.valid).toBe(false);
-    expect(body2.errors.some((e: string) => e.includes("commit"))).toBe(true);
+    expect(body2.errors.some((e: { message: string }) => e.message.includes("commit"))).toBe(true);
   });
 
   it("always returns requires_platform_validation=true in response", async () => {

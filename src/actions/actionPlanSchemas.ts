@@ -15,10 +15,16 @@ import { z } from "zod";
 // ── Plan step ───────────────────────────────────────────────────────
 
 export const PlanStepSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().optional(),
   action_name: z.string().min(1),
   params: z.record(z.unknown()).default({}),
   rationale: z.string().optional(),
+  expected_result: z.string().optional(),
   requires_platform_validation: z.literal(true).default(true),
+  can_retry: z.boolean().optional(),
+  on_failure: z.enum(["stop", "skip", "retry", "ask_user"]).optional(),
+  ui_event_hint: z.string().optional(),
 });
 
 export type PlanStep = z.infer<typeof PlanStepSchema>;
@@ -81,7 +87,7 @@ export interface PlanResponse {
   requires_platform_validation: true;
   source: string;
   warnings: PlanWarning[];
-  errors: string[];
+  errors: ValidationError[];
 }
 
 export interface PlanWarning {
@@ -89,10 +95,20 @@ export interface PlanWarning {
   message: string;
 }
 
+// ── Structured validation error ─────────────────────────────────────
+
+export interface ValidationError {
+  code: string;
+  path?: string;
+  message: string;
+  action_name?: string;
+  step_index?: number;
+}
+
 // ── Validation result ───────────────────────────────────────────────
 
 export interface PlanValidationResult {
   valid: boolean;
-  errors: string[];
+  errors: ValidationError[];
   warnings: PlanWarning[];
 }
