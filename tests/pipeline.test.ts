@@ -38,7 +38,7 @@ describe("Action Pipeline", () => {
   it("executes a known safe action through the full pipeline", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "read_file", params: { path: "README.md" } },
     });
     expect(res.statusCode).toBe(200);
@@ -53,7 +53,7 @@ describe("Action Pipeline", () => {
   it("returns ACTION_NOT_FOUND for unknown actions", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "nonexistent_action", params: {} },
     });
     expect(res.statusCode).toBe(200);
@@ -66,7 +66,7 @@ describe("Action Pipeline", () => {
   it("returns ACTION_PERMISSION_ERROR for policy-denied actions", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "commit", params: { message: "test" } },
     });
     expect(res.statusCode).toBe(200);
@@ -88,7 +88,7 @@ describe("Action Pipeline", () => {
     // Execute pipeline with session_id
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: {
         action_name: "grep",
         params: { pattern: "test" },
@@ -111,7 +111,7 @@ describe("Action Pipeline", () => {
     // When task_type is provided, the Letta rule solver checks scope
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: {
         action_name: "read_file",
         params: { path: "index.ts" },

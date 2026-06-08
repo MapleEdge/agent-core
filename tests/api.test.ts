@@ -313,7 +313,7 @@ describe("Actions", () => {
   it("executes a mock action", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/execute",
+      url: "/actions/mock-execute",
       payload: { action_name: "run_tests", params: {} },
     });
     expect(res.statusCode).toBe(200);
@@ -323,7 +323,7 @@ describe("Actions", () => {
   it("blocks approval-required actions", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/execute",
+      url: "/actions/mock-execute",
       payload: { action_name: "commit", params: {} },
     });
     expect(res.statusCode).toBe(200);
