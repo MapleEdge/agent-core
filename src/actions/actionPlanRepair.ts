@@ -89,6 +89,18 @@ export function attemptPlanRepair(
       repairs.push(`Step ${i}: injected empty params.`);
     }
 
+    // Reject read_file with empty path
+    if (step.action_name === "read_file" && (!step.params.path || step.params.path === "")) {
+      repairs.push(`Removed step ${i}: read_file has empty path.`);
+      continue;
+    }
+
+    // Reject grep with empty pattern
+    if (step.action_name === "grep" && (!step.params.pattern || step.params.pattern === "")) {
+      repairs.push(`Removed step ${i}: grep has empty pattern.`);
+      continue;
+    }
+
     validSteps.push(step);
   }
 

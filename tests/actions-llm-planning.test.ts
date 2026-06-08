@@ -226,13 +226,14 @@ describe("POST /actions/validate-plan — deterministic validation", () => {
       method: "POST",
       url: "/actions/validate-plan",
       payload: {
-        allowed_actions: ["grep", "read_file", "run_tests"],
+        allowed_actions: ["grep", "read_file", "apply_patch", "run_tests"],
         plan: {
           goal: "Find and fix bug",
           mode: "finite",
           steps: [
             { action_name: "grep", params: { pattern: "TODO" }, requires_platform_validation: true },
             { action_name: "read_file", params: { path: "src/index.ts" }, requires_platform_validation: true },
+            { action_name: "apply_patch", params: { file: "src/index.ts" }, requires_platform_validation: true },
             { action_name: "run_tests", params: {}, requires_platform_validation: true },
           ],
         },
@@ -338,6 +339,7 @@ describe("POST /actions/validate-plan — deterministic validation", () => {
           steps: [
             { action_name: "retrieve_context", params: {}, requires_platform_validation: true },
             { action_name: "grep", params: { pattern: "FIXME" }, requires_platform_validation: true },
+            { action_name: "apply_patch", params: { file: "src/fix.ts" }, requires_platform_validation: true },
             { action_name: "run_tests", params: {}, requires_platform_validation: true },
             { action_name: "commit", params: { message: "improvement" }, requires_platform_validation: true },
           ],
