@@ -1,0 +1,400 @@
+{
+  "question_id": "conv0_q3",
+  "conversation_idx": 0,
+  "category": 1,
+  "category_name": "multi-hop",
+  "question": "What did Caroline research?",
+  "ground_truth_answer": "Adoption agencies",
+  "evidence": [
+    "D2:8"
+  ],
+  "user_id": "locomo_0_83893c2c",
+  "reference_date": "9:55 am on 22 October, 2023",
+  "retrieval": {
+    "search_query": "What did Caroline research?",
+    "search_results": [
+      {
+        "memory": "Caroline mentors a transgender teen, working on building confidence and finding positive strategies, and they attended an LGBT pride event together in May 2026.",
+        "score": 0.5701529584171672,
+        "id": "55c20549-bebc-43b1-a346-7289bd72e571",
+        "created_at": "2026-06-07T21:08:19.631420+00:00",
+        "updated_at": "2026-06-07T21:08:19.631420+00:00"
+      },
+      {
+        "memory": "Melanie finished another pottery project around June 7, 2026, and offered to show Caroline a picture.",
+        "score": 0.5491276724737996,
+        "id": "b7bf087e-2fd4-46b8-b015-10bf749b55a2",
+        "created_at": "2026-06-07T21:09:56.557275+00:00",
+        "updated_at": "2026-06-07T21:09:56.557275+00:00"
+      },
+      {
+        "memory": "Melanie finds pottery a creative outlet and form of therapy, and asked Caroline if she has considered trying pottery or another art form.",
+        "score": 0.5457430330789007,
+        "id": "0e7bcc7c-3fd2-4b6d-8d3a-675425b227b0",
+        "created_at": "2026-06-07T21:13:20.325969+00:00",
+        "updated_at": "2026-06-07T21:13:20.325969+00:00"
+      },
+      {
+        "memory": "Melanie has been reading a book recommended by Caroline and painting to keep busy during her break from pottery.",
+        "score": 0.5361729336549967,
+        "id": "3e2900e2-dc19-4096-83fb-e32184ace01f",
+        "created_at": "2026-06-07T21:14:12.589180+00:00",
+        "updated_at": "2026-06-07T21:14:12.589180+00:00"
+      },
+      {
+        "memory": "Melanie shared a photo of a person holding a purple bowl on June 7, 2026, and expressed interest in seeing another painting by Caroline.",
+        "score": 0.5359974999532363,
+        "id": "5d823723-6aff-49fb-aa56-047c77dfdeaf",
+        "created_at": "2026-06-07T21:09:44.369913+00:00",
+        "updated_at": "2026-06-07T21:09:44.369913+00:00"
+      },
+      {
+        "memory": "Melanie is reading the book recommended by Caroline and has been painting to keep busy after her pottery setback, as of June 7, 2026.",
+        "score": 0.527721502156348,
+        "id": "22806e2f-4444-4bf3-a270-ec725b9bb900",
+        "created_at": "2026-06-07T21:13:54.917085+00:00",
+        "updated_at": "2026-06-07T21:13:54.917085+00:00"
+      },
+      {
+        "memory": "Caroline and Melanie are planning a special summer trip together, just the two of them, to explore nature and catch up.",
+        "score": 0.5134615605858823,
+        "id": "a55dfe50-829a-46bf-8f70-b6b863208107",
+        "created_at": "2026-06-07T21:10:34.502573+00:00",
+        "updated_at": "2026-06-07T21:10:34.502573+00:00"
+      },
+      {
+        "memory": "Caroline and Melanie attended Pride fest together last year and had a blast with a group of friends.",
+        "score": 0.49854914652394466,
+        "id": "cf6f5df3-8574-4478-bdf7-00ce2212bc1d",
+        "created_at": "2026-06-07T21:10:34.500670+00:00",
+        "updated_at": "2026-06-07T21:10:34.500670+00:00"
+      },
+      {
+        "memory": "Caroline associates sunflowers with warmth and happiness, and roses with love and beauty.",
+        "score": 0.4984743935564926,
+        "id": "1278da9b-5b2c-42bd-8f0e-6500c192ba57",
+        "created_at": "2026-06-07T21:07:23.173998+00:00",
+        "updated_at": "2026-06-07T21:07:23.173998+00:00"
+      },
+      {
+        "memory": "Caroline and Melanie attended a Pride festival together in 2025, and Caroline shared a photo of a group of people walking down a street with balloons, recalling it as a fun time with supportive friends.",
+        "score": 0.49298883404077637,
+        "id": "c283a244-49d1-49db-9fbd-58a4a241f047",
+        "created_at": "2026-06-07T21:10:17.760721+00:00",
+        "updated_at": "2026-06-07T21:10:17.760721+00:00"
+      },
+      {
+        "memory": "Caroline plans to continue her education and explore career options as of June 7, 2026.",
+        "score": 0.3868946528606542,
+        "id": "7f834744-ca6c-43a3-9cd3-b90dc2157c63",
+        "created_at": "2026-06-07T21:03:14.937339+00:00",
+        "updated_at": "2026-06-07T21:03:14.937339+00:00"
+      },
+      {
+        "memory": "Caroline wants to help make a difference in advancing LGBTQ rights, as of June 7, 2026.",
+        "score": 0.37283379405388506,
+        "id": "906670af-fe38-44fe-85d2-329a0de6cdda",
+        "created_at": "2026-06-07T21:06:25.643460+00:00",
+        "updated_at": "2026-06-07T21:06:25.643460+00:00"
+      },
+      {
+        "memory": "Caroline is looking into counseling or mental health work, passionate about helping people and making a positive impact.",
+        "score": 0.3671350642792062,
+        "id": "4f7e35f8-650d-4a06-83db-2e6bac175f31",
+        "created_at": "2026-06-07T21:06:12.331638+00:00",
+        "updated_at": "2026-06-07T21:06:12.331638+00:00"
+      },
+      {
+        "memory": "Caroline is inspired by seeing her work make a difference for the LGBTQ+ community and is thankful for support from friends, family, and mentors.",
+        "score": 0.3657422207829572,
+        "id": "9ac6186b-dfda-40c7-91cd-a93f6acd920b",
+        "created_at": "2026-06-07T21:13:11.193075+00:00",
+        "updated_at": "2026-06-07T21:13:11.193075+00:00"
+      },
+      {
+        "memory": "Caroline is interested in pursuing a career in counseling or mental health to support people with similar issues, as of June 7, 2026.",
+        "score": 0.36552827904235435,
+        "id": "6e27ca04-abf7-4e5f-a4c0-1ef6d7a74ab0",
+        "created_at": "2026-06-07T21:03:19.097078+00:00",
+        "updated_at": "2026-06-07T21:03:19.097078+00:00"
+      },
+      {
+        "memory": "Caroline was inspired by the passion of professionals at the LGBTQ+ counseling workshop who were dedicated to creating safe spaces for trans people.",
+        "score": 0.36414663159527066,
+        "id": "076fac57-b68c-4ed1-b3f5-084254955c12",
+        "created_at": "2026-06-07T21:05:15.493492+00:00",
+        "updated_at": "2026-06-07T21:05:15.493492+00:00"
+      },
+      {
+        "memory": "Caroline is considering working with trans people to help them accept themselves and support their mental health, as of June 7, 2026.",
+        "score": 0.36152655420884233,
+        "id": "86678b5f-91d9-45b1-afbf-20f0e1cc682d",
+        "created_at": "2026-06-07T21:05:15.484087+00:00",
+        "updated_at": "2026-06-07T21:05:15.484087+00:00"
+      },
+      {
+        "memory": "Caroline wants to help make a difference in LGBTQ rights, recognizing progress made but acknowledging more work needed.",
+        "score": 0.3577882867549791,
+        "id": "9b339bc3-a395-4ecd-9cbf-dc180a4e2962",
+        "created_at": "2026-06-07T21:06:34.475399+00:00",
+        "updated_at": "2026-06-07T21:06:34.475399+00:00"
+      },
+      {
+        "memory": "Caroline has been looking into counseling or mental health work since June 7, 2026, finding it tough but rewarding.",
+        "score": 0.3572888334665387,
+        "id": "c2fdbf1d-078a-4010-8377-52bacf4e5ea5",
+        "created_at": "2026-06-07T21:05:56.333158+00:00",
+        "updated_at": "2026-06-07T21:05:56.333158+00:00"
+      },
+      {
+        "memory": "Caroline is looking into counseling or mental health work, passionate about helping people and making a positive impact, as of June 7, 2026.",
+        "score": 0.35678337532169396,
+        "id": "94778f5e-df3c-4377-a377-6a0ec0a9ba51",
+        "created_at": "2026-06-07T21:05:59.215850+00:00",
+        "updated_at": "2026-06-07T21:05:59.215850+00:00"
+      },
+      {
+        "memory": "Caroline is looking into counseling and mental health as a career, wanting to help people who have gone through similar experiences as her, as of June 7, 2026.",
+        "score": 0.3531892326836883,
+        "id": "901d7744-d7d4-4177-ab22-e5d8187317df",
+        "created_at": "2026-06-07T21:05:10.867967+00:00",
+        "updated_at": "2026-06-07T21:05:10.867967+00:00"
+      },
+      {
+        "memory": "Caroline used to go horseback riding with her dad as a child, riding through fields and feeling the wind, and has always loved horses.",
+        "score": 0.3518347219128331,
+        "id": "737198ad-82e7-4bf6-a2dc-20f5dff798b8",
+        "created_at": "2026-06-07T21:10:45.868773+00:00",
+        "updated_at": "2026-06-07T21:10:45.868773+00:00"
+      },
+      {
+        "memory": "Caroline used to go horseback riding with her dad as a child, riding through fields and feeling the wind, and has always loved horses.",
+        "score": 0.35165435723026556,
+        "id": "f3285f04-f2f3-4187-bac1-9f40196d60ea",
+        "created_at": "2026-06-07T21:10:53.676281+00:00",
+        "updated_at": "2026-06-07T21:10:53.676281+00:00"
+      },
+      {
+        "memory": "Caroline is motivated to pursue a career in counseling and mental health because of her own journey and the support she received, which made a huge difference in her life.",
+        "score": 0.35154679680807016,
+        "id": "0413a848-b4fc-45e6-87c2-b5c3d0a971fc",
+        "created_at": "2026-06-07T21:05:19.561744+00:00",
+        "updated_at": "2026-06-07T21:05:19.561744+00:00"
+      },
+      {
+        "memory": "Caroline's friends, family, and mentors are her rocks who motivate her and give her strength, as of June 7, 2026.",
+        "score": 0.3497697927848296,
+        "id": "bcf1ef3e-6c28-4c07-a4c8-aa42a1156664",
+        "created_at": "2026-06-07T21:04:27.374069+00:00",
+        "updated_at": "2026-06-07T21:04:27.374069+00:00"
+      },
+      {
+        "memory": "Caroline is passionate about creating a safe, inviting place for people to grow, inspired by how counseling and support groups improved her life and helped her understand herself.",
+        "score": 0.3486790941821041,
+        "id": "17019379-8d3b-46dc-841c-3e772b783bec",
+        "created_at": "2026-06-07T21:05:19.570131+00:00",
+        "updated_at": "2026-06-07T21:05:19.570131+00:00"
+      },
+      {
+        "memory": "Caroline's own positive experience with mental health support inspired her to pursue a career in counseling and mental health to help others on their journeys.",
+        "score": 0.3455602444380909,
+        "id": "1094f3f8-6451-491d-b06f-2ce52157bc4b",
+        "created_at": "2026-06-07T21:06:30.888766+00:00",
+        "updated_at": "2026-06-07T21:06:30.888766+00:00"
+      },
+      {
+        "memory": "Caroline was inspired by a transgender poetry reading to create art, and shared a drawing of a woman in a dress with a transgender flag on June 7, 2026.",
+        "score": 0.34355079575917385,
+        "id": "c5be4c5c-e129-4f9c-8d0c-7413a5cad22c",
+        "created_at": "2026-06-07T21:14:19.647950+00:00",
+        "updated_at": "2026-06-07T21:14:19.647950+00:00"
+      },
+      {
+        "memory": "Caroline uses her art to represent inclusivity and diversity, and to speak up for the LGBTQ+ community and push for acceptance.",
+        "score": 0.3430826097835092,
+        "id": "1bdbb393-e0ff-4e24-ad43-4f9f315198ae",
+        "created_at": "2026-06-07T21:09:38.580111+00:00",
+        "updated_at": "2026-06-07T21:09:38.580111+00:00"
+      },
+      {
+        "memory": "Caroline's dream is to create a safe and loving home for children, believing love and acceptance should be everyone's right.",
+        "score": 0.3419000582068706,
+        "id": "fa46f0c7-81d7-4206-984c-b9bc2e02a25a",
+        "created_at": "2026-06-07T21:15:31.140638+00:00",
+        "updated_at": "2026-06-07T21:15:31.140638+00:00"
+      },
+      {
+        "memory": "Caroline joined a mentorship program for LGBTQ youth around June 6-7, 2026, finding it rewarding to help the community.",
+        "score": 0.3404263502987887,
+        "id": "18ce32f0-c6b6-44cb-821d-4aec39c0bc54",
+        "created_at": "2026-06-07T21:08:13.046342+00:00",
+        "updated_at": "2026-06-07T21:08:13.046342+00:00"
+      },
+      {
+        "memory": "Caroline enjoys drawing flowers and finds joy in appreciating and sharing nature through art.",
+        "score": 0.3393589969040652,
+        "id": "6fd2e613-1bee-4d4c-b3e1-babd188d6abe",
+        "created_at": "2026-06-07T21:11:59.588294+00:00",
+        "updated_at": "2026-06-07T21:11:59.588294+00:00"
+      },
+      {
+        "memory": "Caroline was asked by Melanie what made her decide to transition and join the transgender community, as of June 7, 2026.",
+        "score": 0.338929147586299,
+        "id": "0f6c797b-8b5e-426a-bb54-54c0d3a75ae4",
+        "created_at": "2026-06-07T21:11:29.548388+00:00",
+        "updated_at": "2026-06-07T21:11:29.548388+00:00"
+      },
+      {
+        "memory": "Caroline is looking into counseling and mental health jobs because she wants to help people have someone to talk to, inspired by her own struggles and the support she received.",
+        "score": 0.33775812558467005,
+        "id": "f2a48ba9-347e-46d5-b614-ae303cf8502c",
+        "created_at": "2026-06-07T21:06:34.478406+00:00",
+        "updated_at": "2026-06-07T21:06:34.478406+00:00"
+      },
+      {
+        "memory": "Caroline plays guitar as her primary instrument and finds it helps her express her emotions.",
+        "score": 0.33718037785495575,
+        "id": "b9f67289-1216-40b0-a47d-5ee9ede87c98",
+        "created_at": "2026-06-07T21:12:41.885523+00:00",
+        "updated_at": "2026-06-07T21:12:41.885523+00:00"
+      },
+      {
+        "memory": "Caroline created a self-portrait painting with a blue face around late May or early June 2026, which made her feel liberated and empowered, and she finds painting therapeutic and a way to explore her identity.",
+        "score": 0.3357754847451877,
+        "id": "d2a6f951-e5c2-4b5c-b7db-388c4ab6e9a9",
+        "created_at": "2026-06-07T21:11:10.670753+00:00",
+        "updated_at": "2026-06-07T21:11:10.670753+00:00"
+      },
+      {
+        "memory": "Caroline wants to pass on the same support she received to anyone who needs it, finding joy in bringing others comfort and helping them grow.",
+        "score": 0.33470654387216653,
+        "id": "ad7d39b1-2909-4030-a573-c844122a36de",
+        "created_at": "2026-06-07T21:15:26.236422+00:00",
+        "updated_at": "2026-06-07T21:15:26.236422+00:00"
+      },
+      {
+        "memory": "Caroline is inspired by seeing her art make a difference for the LGBTQ+ community and is thankful for the support from friends, family, and mentors, which motivates her to keep creating art.",
+        "score": 0.33388490658650216,
+        "id": "e53f609c-9b19-4f2e-8b0a-b68ba0d4b741",
+        "created_at": "2026-06-07T21:13:07.423354+00:00",
+        "updated_at": "2026-06-07T21:13:07.423354+00:00"
+      },
+      {
+        "memory": "Caroline was inspired by the transgender poetry reading to create art, and shared a drawing of a woman in a dress with a transgender flag.",
+        "score": 0.3333586130504465,
+        "id": "b5b1b3a0-8bb3-4e29-ad02-3f3115d2bc11",
+        "created_at": "2026-06-07T21:14:22.163984+00:00",
+        "updated_at": "2026-06-07T21:14:22.163984+00:00"
+      },
+      {
+        "memory": "Caroline expressed sympathy for Melanie's pottery setback and offered help, showing her supportive nature.",
+        "score": 0.33302547509213615,
+        "id": "91043645-9549-40f1-af53-d6b84fc554a4",
+        "created_at": "2026-06-07T21:13:53.071786+00:00",
+        "updated_at": "2026-06-07T21:13:53.071786+00:00"
+      },
+      {
+        "memory": "Caroline plays music and finds it cathartic and uplifting, allowing her to express herself and connect with others.",
+        "score": 0.33290794840688426,
+        "id": "750066d9-2a79-4978-9e89-9c9abe1c2520",
+        "created_at": "2026-06-07T21:12:40.047203+00:00",
+        "updated_at": "2026-06-07T21:12:40.047203+00:00"
+      },
+      {
+        "memory": "Caroline finds freedom in art and also in having supportive people around, promoting LGBTQ rights, and being true to herself; she wants to live authentically and help others do the same.",
+        "score": 0.33281587370534327,
+        "id": "dc1b5356-8e0d-47c5-9a25-e479afb7e626",
+        "created_at": "2026-06-07T21:11:01.027633+00:00",
+        "updated_at": "2026-06-07T21:11:01.027633+00:00"
+      },
+      {
+        "memory": "Caroline is grateful for the chance to share her story and give others hope, and is committed to using her voice to make a change and lift others up, as of June 7, 2026.",
+        "score": 0.331956611927167,
+        "id": "01aa8e64-ae7b-4200-bc39-e0d8ec31f00b",
+        "created_at": "2026-06-07T21:04:19.569116+00:00",
+        "updated_at": "2026-06-07T21:04:19.569116+00:00"
+      },
+      {
+        "memory": "Caroline's favorite color is blue, which makes her feel relaxed.",
+        "score": 0.3318137293948437,
+        "id": "4ceb6801-a1e6-4d87-9179-3b7d8afea632",
+        "created_at": "2026-06-07T21:07:23.168932+00:00",
+        "updated_at": "2026-06-07T21:07:23.168932+00:00"
+      },
+      {
+        "memory": "Caroline created a self-portrait painting with vibrant colors around late May or early June 2026, depicting a woman with a blue face, and finds painting a great way to express herself.",
+        "score": 0.3301046230022409,
+        "id": "e56d52d0-a319-4ceb-b97e-ae9f08282791",
+        "created_at": "2026-06-07T21:10:56.199386+00:00",
+        "updated_at": "2026-06-07T21:10:56.199386+00:00"
+      },
+      {
+        "memory": "Caroline is creating a library of children's books, including classics, stories from different cultures, and educational books, in preparation for having kids and looks forward to reading to them.",
+        "score": 0.32956619112600566,
+        "id": "f7e8961c-c314-49a3-8954-c6e1c4e7d999",
+        "created_at": "2026-06-07T21:06:16.443163+00:00",
+        "updated_at": "2026-06-07T21:06:16.443163+00:00"
+      },
+      {
+        "memory": "Caroline is enjoying her mentorship program for LGBTQ youth as of June 7, 2026, finding it inspiring to see the resilience and strength of the young people she supports.",
+        "score": 0.3283714600842937,
+        "id": "7f1af442-ebc3-4688-8de1-9720f56e6257",
+        "created_at": "2026-06-07T21:08:16.205490+00:00",
+        "updated_at": "2026-06-07T21:08:16.205490+00:00"
+      },
+      {
+        "memory": "Caroline expressed that painting and drawing have helped her express her feelings and explore her gender identity, and that creating art was important during her transition, helping her understand and accept herself.",
+        "score": 0.328046618233839,
+        "id": "d2b86a79-8e76-41fc-aaff-848d5c2a7689",
+        "created_at": "2026-06-07T21:13:17.754751+00:00",
+        "updated_at": "2026-06-07T21:13:17.754751+00:00"
+      },
+      {
+        "memory": "Caroline applied to adoption agencies around June 2026, taking the first step towards becoming a mom, and attended an adoption advice/assistance group for help.",
+        "score": 0.32796380343436915,
+        "id": "2a9fba42-bc92-44cd-be43-7aedf4daacb5",
+        "created_at": "2026-06-07T21:10:53.670712+00:00",
+        "updated_at": "2026-06-07T21:10:53.670712+00:00"
+      },
+      {
+        "memory": "Caroline spoke at a school event around late May or early June 2026 about her transgender journey and encouraged students to get involved in the LGBTQ community, reflecting on how far she has come since starting her transition three years ago.",
+        "score": 0.32746995693521724,
+        "id": "2aa9b413-5818-4f0a-b296-6ac3f0ae3d2b",
+        "created_at": "2026-06-07T21:04:08.093800+00:00",
+        "updated_at": "2026-06-07T21:04:08.093800+00:00"
+      }
+    ],
+    "search_latency_ms": 226.1,
+    "total_results": 50
+  },
+  "cutoff_results": {
+    "top_10": {
+      "judgment": "WRONG",
+      "score": 0.0,
+      "generated_answer": "The memories do not mention Caroline researching anything.",
+      "memories_evaluated": 10,
+      "reason": "The generated answer states that Caroline did not research anything, which contradicts the gold answer that she researched adoption agencies."
+    },
+    "top_20": {
+      "judgment": "WRONG",
+      "score": 0.0,
+      "generated_answer": "Caroline researched counseling or mental health work.",
+      "memories_evaluated": 20,
+      "reason": "The generated answer mentions 'counseling or mental health work', which is a different topic from 'adoption agencies' and does not include any correct item from the gold answer."
+    },
+    "top_50": {
+      "judgment": "CORRECT",
+      "score": 1.0,
+      "generated_answer": "Caroline researched counseling and mental health as a career, and also researched adoption (applying to agencies and attending an adoption advice/assistance group).",
+      "memories_evaluated": 50,
+      "reason": "The generated answer includes 'adoption' and 'agencies', matching the gold answer's core concept."
+    },
+    "top_200": {
+      "judgment": "CORRECT",
+      "score": 1.0,
+      "generated_answer": "Caroline researched counseling and mental health careers, and also researched adoption (applying to agencies and attending an adoption advice/assistance group).",
+      "memories_evaluated": 50,
+      "reason": "The generated answer includes 'adoption' and 'agencies', matching the gold answer's core concept."
+    }
+  }
+}

@@ -1,0 +1,400 @@
+{
+  "question_id": "conv0_q1",
+  "conversation_idx": 0,
+  "category": 2,
+  "category_name": "temporal",
+  "question": "When did Melanie paint a sunrise?",
+  "ground_truth_answer": "2022",
+  "evidence": [
+    "D1:12"
+  ],
+  "user_id": "locomo_0_83893c2c",
+  "reference_date": "9:55 am on 22 October, 2023",
+  "retrieval": {
+    "search_query": "When did Melanie paint a sunrise?",
+    "search_results": [
+      {
+        "memory": "Caroline complimented Melanie's painting of a sunset with a pink sky, noting the stunning colors and chilled-out vibe, and asked what inspired it.",
+        "score": 0.6157945678333656,
+        "id": "4816bd53-793c-4cd0-a1ab-6251212a2fbb",
+        "created_at": "2026-06-07T21:14:00.641844+00:00",
+        "updated_at": "2026-06-07T21:14:00.641844+00:00"
+      },
+      {
+        "memory": "Caroline complimented Melanie's painting of a sunset with a palm tree, noting the bold colors and beauty of nature, and asked if Melanie and her kids worked on it together.",
+        "score": 0.608474253702172,
+        "id": "2ad90782-b725-4975-b4ab-a29c3db188da",
+        "created_at": "2026-06-07T21:07:15.424952+00:00",
+        "updated_at": "2026-06-07T21:07:15.424952+00:00"
+      },
+      {
+        "memory": "Caroline complimented Melanie's lake sunrise painting, noting the colors blend nicely and that painting seems like a great outlet for self-expression.",
+        "score": 0.6073580866808219,
+        "id": "74c8ff3c-e452-4a63-b4ce-1dcb25477673",
+        "created_at": "2026-06-07T21:03:26.641148+00:00",
+        "updated_at": "2026-06-07T21:03:26.641148+00:00"
+      },
+      {
+        "memory": "Caroline shared a painting with red and blue brush strokes on June 7, 2026, and Melanie complimented it, asking what inspired the piece.",
+        "score": 0.5655826528376224,
+        "id": "4595a185-eb6c-4337-9469-720a0dc3c7aa",
+        "created_at": "2026-06-07T21:13:24.403929+00:00",
+        "updated_at": "2026-06-07T21:13:24.403929+00:00"
+      },
+      {
+        "memory": "Caroline felt connected and appreciated Melanie's kind words about her sunset beach painting, which conveyed peace and serenity, as of June 7, 2026.",
+        "score": 0.5549911475229868,
+        "id": "4672cf6b-a44a-4de3-b26b-018ab37d4b55",
+        "created_at": "2026-06-07T21:11:23.585302+00:00",
+        "updated_at": "2026-06-07T21:11:23.585302+00:00"
+      },
+      {
+        "memory": "Caroline complimented Melanie's abstract painting with a blue background, noting the blue adds to it, and asked what feelings Melanie was hoping to portray.",
+        "score": 0.538789458083114,
+        "id": "aa3ba99a-67bb-42a5-a7cf-685f4f10eda3",
+        "created_at": "2026-06-07T21:14:04.488851+00:00",
+        "updated_at": "2026-06-07T21:14:04.488851+00:00"
+      },
+      {
+        "memory": "Caroline complimented Melanie's horse painting, noting the details and the horse's grace and strength, and asked if Melanie likes painting animals.",
+        "score": 0.5259947564922905,
+        "id": "e22821e8-0675-4dd0-aae6-8ae33438e195",
+        "created_at": "2026-06-07T21:10:48.191288+00:00",
+        "updated_at": "2026-06-07T21:10:48.191288+00:00"
+      },
+      {
+        "memory": "Melanie and Caroline attended a Pride festival together last year (around 2025) and had a blast with friends, as shown in a photo of a group walking down a street with balloons.",
+        "score": 0.5136840784536931,
+        "id": "12fb223d-e23f-4625-bb83-c145b51e053f",
+        "created_at": "2026-06-07T21:10:20.300712+00:00",
+        "updated_at": "2026-06-07T21:10:20.300712+00:00"
+      },
+      {
+        "memory": "Caroline and Melanie attended a Pride festival together in 2025, and Caroline shared a photo of a group of people walking down a street with balloons, recalling it as a fun time with supportive friends.",
+        "score": 0.5079977057915254,
+        "id": "c283a244-49d1-49db-9fbd-58a4a241f047",
+        "created_at": "2026-06-07T21:10:17.760721+00:00",
+        "updated_at": "2026-06-07T21:10:17.760721+00:00"
+      },
+      {
+        "memory": "Caroline complimented Melanie on a plate with flowers, asking if Melanie made it, on June 7, 2026.",
+        "score": 0.5040376257301885,
+        "id": "96411e88-5789-453a-929e-ab149dda6537",
+        "created_at": "2026-06-07T21:11:12.917250+00:00",
+        "updated_at": "2026-06-07T21:11:12.917250+00:00"
+      },
+      {
+        "memory": "Melanie painted a lake sunrise painting in 2025 and it is special to her.",
+        "score": 0.49927250424498376,
+        "id": "6988a9dd-aaf5-411f-b90e-dc5c222e4b38",
+        "created_at": "2026-06-07T21:03:24.528419+00:00",
+        "updated_at": "2026-06-07T21:03:24.528419+00:00"
+      },
+      {
+        "memory": "Caroline complimented Melanie's colorful pottery bowl and asked what inspired the colors and patterns.",
+        "score": 0.4990266572030371,
+        "id": "28b22704-2db6-46d0-88d2-2978456ba96a",
+        "created_at": "2026-06-07T21:10:01.188092+00:00",
+        "updated_at": "2026-06-07T21:10:01.188092+00:00"
+      },
+      {
+        "memory": "Caroline and Melanie are planning a special summer trip together, just the two of them, to explore nature and catch up.",
+        "score": 0.49741466168100645,
+        "id": "a55dfe50-829a-46bf-8f70-b6b863208107",
+        "created_at": "2026-06-07T21:10:34.502573+00:00",
+        "updated_at": "2026-06-07T21:10:34.502573+00:00"
+      },
+      {
+        "memory": "Caroline and Melanie attended Pride fest together last year and had a blast with a group of friends.",
+        "score": 0.4859110578293955,
+        "id": "cf6f5df3-8574-4478-bdf7-00ce2212bc1d",
+        "created_at": "2026-06-07T21:10:34.500670+00:00",
+        "updated_at": "2026-06-07T21:10:34.500670+00:00"
+      },
+      {
+        "memory": "Melanie's kids made a cup with a dog face on it at a pottery workshop on June 5, 2026, and Melanie found it special to watch their creativity and imagination come to life.",
+        "score": 0.48559971018349585,
+        "id": "1f2493e4-ca9b-46aa-b894-486a4298f771",
+        "created_at": "2026-06-07T21:07:09.824646+00:00",
+        "updated_at": "2026-06-07T21:07:09.824646+00:00"
+      },
+      {
+        "memory": "Caroline expressed that she wishes she had known Melanie during Melanie's wedding, after Melanie shared that flowers were an important part of her wedding decor and remind her of that day.",
+        "score": 0.47773972079562177,
+        "id": "25bb0270-994a-4244-8b54-22b0f915ad9c",
+        "created_at": "2026-06-07T21:07:26.794245+00:00",
+        "updated_at": "2026-06-07T21:07:26.794245+00:00"
+      },
+      {
+        "memory": "Caroline complimented Melanie's bowl with a black and white flower design, calling it gorgeous and fancy, and asked if Melanie made it.",
+        "score": 0.4766171801627442,
+        "id": "4dec20b3-a4d7-4a6b-bc6f-176d03ac0270",
+        "created_at": "2026-06-07T21:05:37.802715+00:00",
+        "updated_at": "2026-06-07T21:05:37.802715+00:00"
+      },
+      {
+        "memory": "Melanie's youngest child took her first steps, and Melanie found it a poignant reminder of how fleeting life is and how lucky she is to share such moments.",
+        "score": 0.4744677296965758,
+        "id": "fe328cf4-19fc-48a7-a5a3-2ea65252f9b4",
+        "created_at": "2026-06-07T21:09:15.875659+00:00",
+        "updated_at": "2026-06-07T21:09:15.875659+00:00"
+      },
+      {
+        "memory": "Caroline expressed gratitude for having Melanie as a friend to share her journey, calling her awesome, as of June 7, 2026.",
+        "score": 0.4706402544048656,
+        "id": "a1830849-15cf-4998-a31f-716d2e17fab1",
+        "created_at": "2026-06-07T21:08:05.917716+00:00",
+        "updated_at": "2026-06-07T21:08:05.917716+00:00"
+      },
+      {
+        "memory": "Caroline complimented Melanie's photo of yellow leaves, finding it cozy and fun, and expressed that seeing children's excitement for little things is awesome and contagious.",
+        "score": 0.4702518727089851,
+        "id": "4b4008f1-7809-413c-8624-62bd99a469c8",
+        "created_at": "2026-06-07T21:13:02.629153+00:00",
+        "updated_at": "2026-06-07T21:13:02.629153+00:00"
+      },
+      {
+        "memory": "Caroline complimented Melanie on her pottery bowl, acknowledging the work Melanie put into it and praising her creativity.",
+        "score": 0.46992743930217906,
+        "id": "57763a3b-043b-4e10-805f-917b4d133494",
+        "created_at": "2026-06-07T21:05:41.796625+00:00",
+        "updated_at": "2026-06-07T21:05:41.796625+00:00"
+      },
+      {
+        "memory": "Melanie painted a landscape painting of a sunset with a pink sky, inspired by sunsets, finding the colors calming.",
+        "score": 0.4688331899160061,
+        "id": "7eeb810a-5300-4bfd-a8ec-bcd0851e2cb0",
+        "created_at": "2026-06-07T21:14:12.590934+00:00",
+        "updated_at": "2026-06-07T21:14:12.590934+00:00"
+      },
+      {
+        "memory": "Caroline asked Melanie how long she has been married, after seeing a photo of Melanie's husband and daughter.",
+        "score": 0.46480578866756844,
+        "id": "096a3fdb-8eef-4202-94b7-098fdcf5e5e7",
+        "created_at": "2026-06-07T21:04:36.088106+00:00",
+        "updated_at": "2026-06-07T21:04:36.088106+00:00"
+      },
+      {
+        "memory": "Caroline suggested planning a special outing just for herself and Melanie this summer (2026) to catch up and explore nature, as an alternative to a family outing.",
+        "score": 0.4583315747219912,
+        "id": "26970200-f74b-4406-a911-ad964be846a8",
+        "created_at": "2026-06-07T21:10:22.540532+00:00",
+        "updated_at": "2026-06-07T21:10:22.540532+00:00"
+      },
+      {
+        "memory": "Caroline expressed appreciation for Melanie's friendship and support, stating it means a lot having Melanie in her corner, as of June 7, 2026.",
+        "score": 0.4582380232483722,
+        "id": "888110ba-73ee-461d-9c94-d5892b94d8f2",
+        "created_at": "2026-06-07T21:10:14.103879+00:00",
+        "updated_at": "2026-06-07T21:10:14.103879+00:00"
+      },
+      {
+        "memory": "Caroline shared a photo of a baby in a white crib with a blue blanket on June 7, 2026, in response to Melanie's story about her youngest child's first steps.",
+        "score": 0.45799934825636496,
+        "id": "d3c57b2f-f088-4843-9ab9-e6bad92b8c69",
+        "created_at": "2026-06-07T21:09:17.504261+00:00",
+        "updated_at": "2026-06-07T21:09:17.504261+00:00"
+      },
+      {
+        "memory": "Melanie has a friend who adopted a child last year (around 2025) and is now very happy; the experience makes Melanie consider adoption herself.",
+        "score": 0.45490728513458617,
+        "id": "621e82ec-b0da-48ea-b575-4bbdb4092a11",
+        "created_at": "2026-06-07T21:13:44.592209+00:00",
+        "updated_at": "2026-06-07T21:13:44.592209+00:00"
+      },
+      {
+        "memory": "Caroline expressed appreciation for a book shared by Melanie, noting that books guide, motivate, and help her discover who she is, and are a huge part of her journey, as of June 7, 2026.",
+        "score": 0.44908638362441416,
+        "id": "d246d00c-747e-4ad4-8847-17a905d84ebc",
+        "created_at": "2026-06-07T21:06:36.601962+00:00",
+        "updated_at": "2026-06-07T21:06:36.601962+00:00"
+      },
+      {
+        "memory": "Caroline shared a photo of a family walking through a forest with a toddler, asking Melanie what else her family likes doing together, as of June 7, 2026.",
+        "score": 0.44885387542824,
+        "id": "3e2672ae-a912-4390-97bc-a7be098e69a9",
+        "created_at": "2026-06-07T21:07:59.754981+00:00",
+        "updated_at": "2026-06-07T21:07:59.754981+00:00"
+      },
+      {
+        "memory": "Melanie and her kids enjoy painting together, especially nature-inspired paintings, and created a painting of a sunset with a palm tree around May 31-June 1, 2026.",
+        "score": 0.44861559503387066,
+        "id": "eea952d1-d670-4bdc-8831-a072571423fd",
+        "created_at": "2026-06-07T21:07:13.439996+00:00",
+        "updated_at": "2026-06-07T21:07:13.439996+00:00"
+      },
+      {
+        "memory": "Melanie shared a painting of a sunflower on a canvas on June 7, 2026, and mentioned that painting landscapes and still life is her favorite.",
+        "score": 0.44297640579847725,
+        "id": "8d0ef94f-aeee-402d-b8bf-58af0e1c53a6",
+        "created_at": "2026-06-07T21:12:01.254800+00:00",
+        "updated_at": "2026-06-07T21:12:01.254800+00:00"
+      },
+      {
+        "memory": "Melanie painted a landscape of a vibrant purple sunset with a pink sky around May 31-June 6, 2026, inspired by sunsets, and finds the colors calming.",
+        "score": 0.44116887203994387,
+        "id": "645328ce-4f69-43f0-a89b-1b06fbafb5b2",
+        "created_at": "2026-06-07T21:13:58.305856+00:00",
+        "updated_at": "2026-06-07T21:13:58.305856+00:00"
+      },
+      {
+        "memory": "Caroline asked Melanie for the names of her dog and cat, as of June 7, 2026.",
+        "score": 0.43920858126747014,
+        "id": "fbc505bb-172c-44f7-961f-741583e26a74",
+        "created_at": "2026-06-07T21:06:49.787909+00:00",
+        "updated_at": "2026-06-07T21:06:49.787909+00:00"
+      },
+      {
+        "memory": "Caroline expressed sympathy for Melanie's pottery setback and offered help, showing her supportive nature.",
+        "score": 0.4364605153048217,
+        "id": "91043645-9549-40f1-af53-d6b84fc554a4",
+        "created_at": "2026-06-07T21:13:53.071786+00:00",
+        "updated_at": "2026-06-07T21:13:53.071786+00:00"
+      },
+      {
+        "memory": "Caroline asked Melanie if her new purple running shoes are for walking or running, as of June 7, 2026.",
+        "score": 0.435214864265127,
+        "id": "391c7078-1df0-4c46-996f-12c43a10d313",
+        "created_at": "2026-06-07T21:06:53.632854+00:00",
+        "updated_at": "2026-06-07T21:06:53.632854+00:00"
+      },
+      {
+        "memory": "Caroline was asked by Melanie what made her decide to transition and join the transgender community, as of June 7, 2026.",
+        "score": 0.4303899081608593,
+        "id": "0f6c797b-8b5e-426a-bb54-54c0d3a75ae4",
+        "created_at": "2026-06-07T21:11:29.548388+00:00",
+        "updated_at": "2026-06-07T21:11:29.548388+00:00"
+      },
+      {
+        "memory": "Caroline has a guinea pig named Oscar, and Melanie asked to see a picture of him, as of June 7, 2026.",
+        "score": 0.42898879726100764,
+        "id": "344ff106-2d55-42f1-a63d-15e0885965b5",
+        "created_at": "2026-06-07T21:10:36.908271+00:00",
+        "updated_at": "2026-06-07T21:10:36.908271+00:00"
+      },
+      {
+        "memory": "Melanie and her kids finished another nature-inspired painting together around June 7, 2026, similar to their previous painting.",
+        "score": 0.4164547936193285,
+        "id": "fdda3e9a-5a47-4484-879a-958cd63e9158",
+        "created_at": "2026-06-07T21:08:39.557886+00:00",
+        "updated_at": "2026-06-07T21:08:39.557886+00:00"
+      },
+      {
+        "memory": "Melanie painted a horse on a wooden wall and enjoys painting animals, finding it peaceful and special.",
+        "score": 0.41401857857748764,
+        "id": "bb81043d-eb32-4e64-8df3-f3bb3ad158c7",
+        "created_at": "2026-06-07T21:10:53.684951+00:00",
+        "updated_at": "2026-06-07T21:10:53.684951+00:00"
+      },
+      {
+        "memory": "Melanie shared a photo of a horse painting she did recently on June 7, 2026.",
+        "score": 0.41379417818480874,
+        "id": "0019d291-c0ba-427a-b50f-5a61db4a5d6a",
+        "created_at": "2026-06-07T21:10:45.870759+00:00",
+        "updated_at": "2026-06-07T21:10:45.870759+00:00"
+      },
+      {
+        "memory": "Caroline expressed support for Melanie's potential adoption journey, offering to help if Melanie decides to adopt.",
+        "score": 0.4124024060820311,
+        "id": "2140459b-10b6-4f49-8289-5a04866772ca",
+        "created_at": "2026-06-07T21:13:46.467076+00:00",
+        "updated_at": "2026-06-07T21:13:46.467076+00:00"
+      },
+      {
+        "memory": "Melanie shared an abstract painting with a blue background on June 7, 2026, and said she painted it because it was calming.",
+        "score": 0.4101293749810524,
+        "id": "3a5ea3d5-0b34-4877-a7f7-662cffcbe511",
+        "created_at": "2026-06-07T21:14:02.888232+00:00",
+        "updated_at": "2026-06-07T21:14:02.888232+00:00"
+      },
+      {
+        "memory": "Caroline expressed sympathy to Melanie about her son's car accident during a road trip around June 5-7, 2026, noting it must have been traumatizing and expressing relief that he was okay.",
+        "score": 0.4093567865188126,
+        "id": "194c50b0-6aee-453c-801a-230f2d8c981d",
+        "created_at": "2026-06-07T21:14:31.458402+00:00",
+        "updated_at": "2026-06-07T21:14:31.458402+00:00"
+      },
+      {
+        "memory": "Melanie painted an abstract painting with a blue background and vibrant colors, aiming for a serene vibe with blue streaks to portray tranquility.",
+        "score": 0.4087550703909382,
+        "id": "4014a812-3b21-40bb-8c71-b913bbb7409b",
+        "created_at": "2026-06-07T21:14:12.593172+00:00",
+        "updated_at": "2026-06-07T21:14:12.593172+00:00"
+      },
+      {
+        "memory": "Caroline asked Melanie how her kids handled the car accident that occurred during their road trip around June 5-7, 2026, after commenting that the kids look cute and bring lots of joy.",
+        "score": 0.4080372348632883,
+        "id": "2cd5c42b-b442-44c8-a076-6dc640966576",
+        "created_at": "2026-06-07T21:14:39.804558+00:00",
+        "updated_at": "2026-06-07T21:14:39.804558+00:00"
+      },
+      {
+        "memory": "Melanie enjoys painting animals, especially horses, and finds it peaceful and special.",
+        "score": 0.39862335556496253,
+        "id": "1ef1d324-6157-4e7c-828a-424c2286dc78",
+        "created_at": "2026-06-07T21:10:49.991632+00:00",
+        "updated_at": "2026-06-07T21:10:49.991632+00:00"
+      },
+      {
+        "memory": "Melanie finds painting a fun way to express feelings, get creative, and relax after a long day.",
+        "score": 0.397541450006015,
+        "id": "6044b74e-5358-47c8-b0ae-bcf0664a4053",
+        "created_at": "2026-06-07T21:03:28.726930+00:00",
+        "updated_at": "2026-06-07T21:03:28.726930+00:00"
+      },
+      {
+        "memory": "Caroline expressed relief that Melanie's son is okay after the car accident, reflecting that life is unpredictable and moments like these remind us how important loved ones are, emphasizing that family is everything.",
+        "score": 0.39346891194204997,
+        "id": "0ccf1055-544a-4d43-935b-67504b0b6cf6",
+        "created_at": "2026-06-07T21:14:35.622296+00:00",
+        "updated_at": "2026-06-07T21:14:35.622296+00:00"
+      },
+      {
+        "memory": "Melanie painted an abstract painting with blue streaks to convey tranquility and serenity, as blue is calming to her, while still incorporating vibrant colors.",
+        "score": 0.3817416518608601,
+        "id": "864066c2-adbd-4502-a05d-8c5501aa81a6",
+        "created_at": "2026-06-07T21:14:06.593515+00:00",
+        "updated_at": "2026-06-07T21:14:06.593515+00:00"
+      },
+      {
+        "memory": "Melanie and her kids painted a nature-inspired painting together around May 31-June 1, 2026, bonding over it and chatting about nature, and they found lovely flowers during the activity.",
+        "score": 0.38154606281137554,
+        "id": "3ba439ee-1d1e-469e-9986-f6e7d715c550",
+        "created_at": "2026-06-07T21:07:17.213650+00:00",
+        "updated_at": "2026-06-07T21:07:17.213650+00:00"
+      }
+    ],
+    "search_latency_ms": 296.4,
+    "total_results": 50
+  },
+  "cutoff_results": {
+    "top_10": {
+      "judgment": "WRONG",
+      "score": 0.0,
+      "generated_answer": "June 7, 2026",
+      "memories_evaluated": 10,
+      "reason": "The generated answer gives a date in 2026, which is more than 14 days away from the gold answer's 2022, so it is incorrect."
+    },
+    "top_20": {
+      "judgment": "WRONG",
+      "score": 0.0,
+      "generated_answer": "2025",
+      "memories_evaluated": 20,
+      "reason": "The generated answer '2025' is more than 14 days away from the gold answer '2022', so it is incorrect."
+    },
+    "top_50": {
+      "judgment": "WRONG",
+      "score": 0.0,
+      "generated_answer": "2025",
+      "memories_evaluated": 50,
+      "reason": "The generated answer '2025' is more than 14 days away from the gold answer '2022', so it is incorrect."
+    },
+    "top_200": {
+      "judgment": "WRONG",
+      "score": 0.0,
+      "generated_answer": "2025",
+      "memories_evaluated": 50,
+      "reason": "The generated answer '2025' is more than 14 days away from the gold answer '2022', so it is incorrect."
+    }
+  }
+}

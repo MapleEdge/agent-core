@@ -491,7 +491,7 @@ describe("Regression", () => {
     expect(res.statusCode).toBe(201);
   });
 
-  it("existing execute endpoint still works", async () => {
+  it("mock-execute endpoint works", async () => {
     const res = await app.inject({
       method: "POST",
       url: "/actions/mock-execute",
@@ -501,7 +501,7 @@ describe("Regression", () => {
     expect(res.json().executed).toBe(true);
   });
 
-  it("pipeline still handles approval-required actions", async () => {
+  it("simulate-pipeline still handles approval-required actions", async () => {
     const res = await app.inject({
       method: "POST",
       url: "/actions/simulate-pipeline",

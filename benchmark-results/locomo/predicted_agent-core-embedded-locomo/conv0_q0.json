@@ -1,0 +1,400 @@
+{
+  "question_id": "conv0_q0",
+  "conversation_idx": 0,
+  "category": 2,
+  "category_name": "temporal",
+  "question": "When did Caroline go to the LGBTQ support group?",
+  "ground_truth_answer": "7 May 2023",
+  "evidence": [
+    "D1:3"
+  ],
+  "user_id": "locomo_0_83893c2c",
+  "reference_date": "9:55 am on 22 October, 2023",
+  "retrieval": {
+    "search_query": "When did Caroline go to the LGBTQ support group?",
+    "search_results": [
+      {
+        "memory": "Caroline attended an LGBTQ support group on June 6, 2026 and found the experience powerful.",
+        "score": 0.8470673898572666,
+        "id": "b358e56d-5036-47d4-8967-6f6ae3840c2e",
+        "created_at": "2026-06-07T21:03:03.164362+00:00",
+        "updated_at": "2026-06-07T21:03:03.164362+00:00"
+      },
+      {
+        "memory": "Caroline feels that the LGBTQ support group she attended on June 6, 2026 has made her feel accepted and given her courage to embrace herself.",
+        "score": 0.8442754315039793,
+        "id": "dd42f7d1-13eb-43ca-8597-74a89e4db20d",
+        "created_at": "2026-06-07T21:03:11.054321+00:00",
+        "updated_at": "2026-06-07T21:03:11.054321+00:00"
+      },
+      {
+        "memory": "Caroline found the transgender stories shared at the LGBTQ support group on June 6, 2026 inspiring and felt happy and thankful for the support.",
+        "score": 0.8067261613147814,
+        "id": "8c293d84-7cf4-42a2-8326-aa8534e9dc8e",
+        "created_at": "2026-06-07T21:03:07.219875+00:00",
+        "updated_at": "2026-06-07T21:03:07.219875+00:00"
+      },
+      {
+        "memory": "Caroline is part of an LGBTQ activist group called 'Connected LGBTQ Activists' that holds regular meetings, plans events and campaigns, and supports each other.",
+        "score": 0.7835832606844116,
+        "id": "293dd36b-5d1d-4c6d-92c5-2112febc2959",
+        "created_at": "2026-06-07T21:08:47.356359+00:00",
+        "updated_at": "2026-06-07T21:08:47.356359+00:00"
+      },
+      {
+        "memory": "Caroline joined a new LGBTQ activist group on June 2, 2026, where she is meeting passionate people and finding it fulfilling to make a difference in rights and community support.",
+        "score": 0.7669926151480838,
+        "id": "d4d23ee1-9428-456d-8f86-cd303837d807",
+        "created_at": "2026-06-07T21:08:43.735052+00:00",
+        "updated_at": "2026-06-07T21:08:43.735052+00:00"
+      },
+      {
+        "memory": "Caroline is inspired by seeing her work make a difference for the LGBTQ+ community and is thankful for support from friends, family, and mentors.",
+        "score": 0.7646701657787235,
+        "id": "9ac6186b-dfda-40c7-91cd-a93f6acd920b",
+        "created_at": "2026-06-07T21:13:11.193075+00:00",
+        "updated_at": "2026-06-07T21:13:11.193075+00:00"
+      },
+      {
+        "memory": "Caroline joined a new LGBTQ activist group called 'Connected LGBTQ Activists' around June 2, 2026, and finds it fulfilling to make a difference for rights and community support.",
+        "score": 0.7644023519287874,
+        "id": "adb55228-2e82-4c68-9699-379827baf2fa",
+        "created_at": "2026-06-07T21:08:54.728475+00:00",
+        "updated_at": "2026-06-07T21:08:54.728475+00:00"
+      },
+      {
+        "memory": "Caroline spoke at a school event around late May or early June 2026 about her transgender journey and encouraged students to get involved in the LGBTQ community, reflecting on how far she has come since starting her transition three years ago.",
+        "score": 0.7371734377976095,
+        "id": "2aa9b413-5818-4f0a-b296-6ac3f0ae3d2b",
+        "created_at": "2026-06-07T21:04:08.093800+00:00",
+        "updated_at": "2026-06-07T21:04:08.093800+00:00"
+      },
+      {
+        "memory": "Caroline was inspired by the passion of professionals at the LGBTQ+ counseling workshop who were dedicated to creating safe spaces for trans people.",
+        "score": 0.7332158315900883,
+        "id": "076fac57-b68c-4ed1-b3f5-084254955c12",
+        "created_at": "2026-06-07T21:05:15.493492+00:00",
+        "updated_at": "2026-06-07T21:05:15.493492+00:00"
+      },
+      {
+        "memory": "Caroline mentors a transgender teen, working on building confidence and finding positive strategies, and they attended an LGBT pride event together in May 2026.",
+        "score": 0.7318749352600737,
+        "id": "55c20549-bebc-43b1-a346-7289bd72e571",
+        "created_at": "2026-06-07T21:08:19.631420+00:00",
+        "updated_at": "2026-06-07T21:08:19.631420+00:00"
+      },
+      {
+        "memory": "Caroline attended an LGBTQ conference on June 5, 2026, where she connected with people who shared similar journeys and felt welcomed and accepted.",
+        "score": 0.730288422548774,
+        "id": "b08204fd-7cec-4de7-b9b3-29e9fed83fa4",
+        "created_at": "2026-06-07T21:06:34.472690+00:00",
+        "updated_at": "2026-06-07T21:06:34.472690+00:00"
+      },
+      {
+        "memory": "Caroline joined a mentorship program for LGBTQ youth around June 6-7, 2026, finding it rewarding to help the community.",
+        "score": 0.7290581854588446,
+        "id": "18ce32f0-c6b6-44cb-821d-4aec39c0bc54",
+        "created_at": "2026-06-07T21:08:13.046342+00:00",
+        "updated_at": "2026-06-07T21:08:13.046342+00:00"
+      },
+      {
+        "memory": "Caroline wants to help make a difference in LGBTQ rights, recognizing progress made but acknowledging more work needed.",
+        "score": 0.7268348601606337,
+        "id": "9b339bc3-a395-4ecd-9cbf-dc180a4e2962",
+        "created_at": "2026-06-07T21:06:34.475399+00:00",
+        "updated_at": "2026-06-07T21:06:34.475399+00:00"
+      },
+      {
+        "memory": "Caroline wants to help make a difference in advancing LGBTQ rights, as of June 7, 2026.",
+        "score": 0.7249538691236098,
+        "id": "906670af-fe38-44fe-85d2-329a0de6cdda",
+        "created_at": "2026-06-07T21:06:25.643460+00:00",
+        "updated_at": "2026-06-07T21:06:25.643460+00:00"
+      },
+      {
+        "memory": "Caroline attended an LGBTQ conference on June 5, 2026, where she met and connected with people who have gone through similar journeys, felt totally accepted, and was inspired to fight for trans rights and spread awareness.",
+        "score": 0.7232793222846162,
+        "id": "36562e99-238b-4c34-9f2a-bd7e72f608bd",
+        "created_at": "2026-06-07T21:06:22.989283+00:00",
+        "updated_at": "2026-06-07T21:06:22.989283+00:00"
+      },
+      {
+        "memory": "Caroline is inspired by seeing her art make a difference for the LGBTQ+ community and is thankful for the support from friends, family, and mentors, which motivates her to keep creating art.",
+        "score": 0.7203894280058946,
+        "id": "e53f609c-9b19-4f2e-8b0a-b68ba0d4b741",
+        "created_at": "2026-06-07T21:13:07.423354+00:00",
+        "updated_at": "2026-06-07T21:13:07.423354+00:00"
+      },
+      {
+        "memory": "Caroline uses her art to represent inclusivity and diversity, and to speak up for the LGBTQ+ community and push for acceptance.",
+        "score": 0.7040541293225182,
+        "id": "1bdbb393-e0ff-4e24-ad43-4f9f315198ae",
+        "created_at": "2026-06-07T21:09:38.580111+00:00",
+        "updated_at": "2026-06-07T21:09:38.580111+00:00"
+      },
+      {
+        "memory": "Caroline volunteered at an LGBTQ+ youth center around June 7, 2026, finding it gratifying to talk to similar young people and remembering the importance of kindness and support.",
+        "score": 0.7037181059281861,
+        "id": "9c6cc2eb-8594-40c8-bfa6-de5abe4ac541",
+        "created_at": "2026-06-07T21:12:15.127171+00:00",
+        "updated_at": "2026-06-07T21:12:15.127171+00:00"
+      },
+      {
+        "memory": "Caroline volunteered at an LGBTQ+ youth center around June 7, 2026, and felt fulfilled guiding and supporting young people, sharing her story to let them know they're not alone, describing it as a powerful and emotional experience.",
+        "score": 0.6974102513980288,
+        "id": "8511d825-465c-4187-8dcb-873b3fe2a6a4",
+        "created_at": "2026-06-07T21:12:18.432147+00:00",
+        "updated_at": "2026-06-07T21:12:18.432147+00:00"
+      },
+      {
+        "memory": "Caroline is enjoying her mentorship program for LGBTQ youth as of June 7, 2026, finding it inspiring to see the resilience and strength of the young people she supports.",
+        "score": 0.6973875760327598,
+        "id": "7f1af442-ebc3-4688-8de1-9720f56e6257",
+        "created_at": "2026-06-07T21:08:16.205490+00:00",
+        "updated_at": "2026-06-07T21:08:16.205490+00:00"
+      },
+      {
+        "memory": "Caroline found volunteering at an LGBTQ+ youth center around June 7, 2026 special because it reminded her of her own past struggles with feeling alone, and she felt she could make a difference by sharing her story and offering support.",
+        "score": 0.6941332553826487,
+        "id": "e4890e51-792a-4b07-9f36-5e4c7a843cc3",
+        "created_at": "2026-06-07T21:12:21.775790+00:00",
+        "updated_at": "2026-06-07T21:12:21.775790+00:00"
+      },
+      {
+        "memory": "Caroline attended an LGBT pride event in May 2026 with the transgender teen she mentors, and found it encouraging to be surrounded by love and acceptance, as shown in a photo of a woman holding a rainbow umbrella.",
+        "score": 0.6938782178956703,
+        "id": "1982a36f-029d-4fa4-9e92-46a0de8479fd",
+        "created_at": "2026-06-07T21:08:23.153270+00:00",
+        "updated_at": "2026-06-07T21:08:23.153270+00:00"
+      },
+      {
+        "memory": "Caroline attended an LGBTQ+ counseling workshop on June 5, 2026, which she found enlightening, covering therapeutic methods for working with trans people.",
+        "score": 0.6935430555945118,
+        "id": "32ce1539-c86b-4129-a25c-defa0eed3b5f",
+        "created_at": "2026-06-07T21:05:15.487728+00:00",
+        "updated_at": "2026-06-07T21:05:15.487728+00:00"
+      },
+      {
+        "memory": "Caroline values having supportive people around, promoting LGBTQ rights, and being true to herself; she wants to live authentically and help others do the same.",
+        "score": 0.6916287700275547,
+        "id": "f463f679-e38c-4ef2-ba2b-08a96fe8804c",
+        "created_at": "2026-06-07T21:11:10.674644+00:00",
+        "updated_at": "2026-06-07T21:11:10.674644+00:00"
+      },
+      {
+        "memory": "Caroline is helping organize a talent show for kids at the LGBTQ+ youth center in July 2026 and is looking forward to seeing the kids have fun and feel proud of their talents.",
+        "score": 0.6910218208539592,
+        "id": "6fdbecb5-f461-4a4b-be16-99312450028b",
+        "created_at": "2026-06-07T21:12:28.080047+00:00",
+        "updated_at": "2026-06-07T21:12:28.080047+00:00"
+      },
+      {
+        "memory": "Caroline plans to continue volunteering at the LGBTQ+ youth center as of June 7, 2026, considering it an important part of her life where she has made strong connections and believes in community and supporting each other.",
+        "score": 0.6906979752524509,
+        "id": "f5731831-1abf-45d5-ba4a-9627ebd96791",
+        "created_at": "2026-06-07T21:12:25.234179+00:00",
+        "updated_at": "2026-06-07T21:12:25.234179+00:00"
+      },
+      {
+        "memory": "Caroline painted a tree with a bright sun for her upcoming LGBTQ art show, inspired by a visit to an LGBTQ center where she wanted to capture everyone's unity and strength.",
+        "score": 0.6871157165760065,
+        "id": "a79838d8-6838-4837-8273-79b55f269053",
+        "created_at": "2026-06-07T21:08:37.340454+00:00",
+        "updated_at": "2026-06-07T21:08:37.340454+00:00"
+      },
+      {
+        "memory": "Caroline's favorite memory from the LGBT pride event in May 2026 was seeing her mentee's face light up when they saw the support, describing it as a special moment.",
+        "score": 0.6854131699527047,
+        "id": "e915565f-4d57-4bc2-baa8-14efb7a59b69",
+        "created_at": "2026-06-07T21:08:26.812817+00:00",
+        "updated_at": "2026-06-07T21:08:26.812817+00:00"
+      },
+      {
+        "memory": "Caroline had a negative experience on a hike around June 7, 2026, when she encountered a group of religious conservatives who said something upsetting, reminding her of the work still needed for LGBTQ rights.",
+        "score": 0.6837887519881538,
+        "id": "5b769c2f-b8ea-413c-9ac2-cd198a3efe62",
+        "created_at": "2026-06-07T21:09:54.953628+00:00",
+        "updated_at": "2026-06-07T21:09:54.953628+00:00"
+      },
+      {
+        "memory": "Caroline attended a pride parade on June 5, 2026 and found it inspiring, with a crowd of people celebrating love and acceptance, which motivated her to keep fighting for LGBTQ rights.",
+        "score": 0.6798763150494461,
+        "id": "ab7e72d1-67ee-4e62-9be4-cb18805e4f1f",
+        "created_at": "2026-06-07T21:09:34.169488+00:00",
+        "updated_at": "2026-06-07T21:09:34.169488+00:00"
+      },
+      {
+        "memory": "Caroline attended an LGBTQ+ pride parade around late May or early June 2026 and felt a sense of belonging and happiness, seeing the growth of the community.",
+        "score": 0.6796552696150794,
+        "id": "f1a5a83f-f476-43cc-9497-76b1e842febb",
+        "created_at": "2026-06-07T21:05:26.395506+00:00",
+        "updated_at": "2026-06-07T21:05:26.395506+00:00"
+      },
+      {
+        "memory": "Melanie shared a photo of a band playing on a stage in a park, expressing her love for live music and excitement about the talent show Caroline is organizing at the LGBTQ+ youth center in July 2026.",
+        "score": 0.6777640537335259,
+        "id": "8652bdcf-bc49-40a2-912d-6a30034d7c22",
+        "created_at": "2026-06-07T21:12:30.165481+00:00",
+        "updated_at": "2026-06-07T21:12:30.165481+00:00"
+      },
+      {
+        "memory": "Caroline and Melanie attended Pride fest together last year and had a blast with a group of friends.",
+        "score": 0.6697609162684132,
+        "id": "cf6f5df3-8574-4478-bdf7-00ce2212bc1d",
+        "created_at": "2026-06-07T21:10:34.500670+00:00",
+        "updated_at": "2026-06-07T21:10:34.500670+00:00"
+      },
+      {
+        "memory": "Caroline finds freedom in art and also in having supportive people around, promoting LGBTQ rights, and being true to herself; she wants to live authentically and help others do the same.",
+        "score": 0.6636006024887188,
+        "id": "dc1b5356-8e0d-47c5-9a25-e479afb7e626",
+        "created_at": "2026-06-07T21:11:01.027633+00:00",
+        "updated_at": "2026-06-07T21:11:01.027633+00:00"
+      },
+      {
+        "memory": "Caroline was asked by Melanie what made her decide to transition and join the transgender community, as of June 7, 2026.",
+        "score": 0.6601551774980036,
+        "id": "0f6c797b-8b5e-426a-bb54-54c0d3a75ae4",
+        "created_at": "2026-06-07T21:11:29.548388+00:00",
+        "updated_at": "2026-06-07T21:11:29.548388+00:00"
+      },
+      {
+        "memory": "Caroline chose an adoption agency because it helps LGBTQ+ folks with adoption, and their inclusivity and support spoke to her as of June 7, 2026.",
+        "score": 0.6564928840688383,
+        "id": "361a1740-82b6-424a-8943-7803a94bac4c",
+        "created_at": "2026-06-07T21:03:56.562806+00:00",
+        "updated_at": "2026-06-07T21:03:56.562806+00:00"
+      },
+      {
+        "memory": "Caroline and Melanie attended a Pride festival together in 2025, and Caroline shared a photo of a group of people walking down a street with balloons, recalling it as a fun time with supportive friends.",
+        "score": 0.6559280404731435,
+        "id": "c283a244-49d1-49db-9fbd-58a4a241f047",
+        "created_at": "2026-06-07T21:10:17.760721+00:00",
+        "updated_at": "2026-06-07T21:10:17.760721+00:00"
+      },
+      {
+        "memory": "Caroline is passionate about creating a safe, inviting place for people to grow, inspired by how counseling and support groups improved her life and helped her understand herself.",
+        "score": 0.654408857919438,
+        "id": "17019379-8d3b-46dc-841c-3e772b783bec",
+        "created_at": "2026-06-07T21:05:19.570131+00:00",
+        "updated_at": "2026-06-07T21:05:19.570131+00:00"
+      },
+      {
+        "memory": "Caroline is organizing an LGBTQ art show in July 2026 featuring LGBTQ artists to promote understanding and acceptance, and she is very excited about it.",
+        "score": 0.6503067612738127,
+        "id": "7ae6eb3a-248a-42d9-a5bc-57e85a6c0011",
+        "created_at": "2026-06-07T21:12:09.638544+00:00",
+        "updated_at": "2026-06-07T21:12:09.638544+00:00"
+      },
+      {
+        "memory": "Caroline is considering working with trans people to help them accept themselves and support their mental health, as of June 7, 2026.",
+        "score": 0.6399307821884492,
+        "id": "86678b5f-91d9-45b1-afbf-20f0e1cc682d",
+        "created_at": "2026-06-07T21:05:15.484087+00:00",
+        "updated_at": "2026-06-07T21:05:15.484087+00:00"
+      },
+      {
+        "memory": "Caroline is putting together an LGBTQ art show in July 2026 where she will show her paintings, and she is very excited about it.",
+        "score": 0.6382737925830323,
+        "id": "0771d1fb-b58b-4b44-9b20-37ebab38ff89",
+        "created_at": "2026-06-07T21:12:06.169411+00:00",
+        "updated_at": "2026-06-07T21:12:06.169411+00:00"
+      },
+      {
+        "memory": "Caroline is planning an LGBTQ art show featuring her paintings in July 2026.",
+        "score": 0.6370216420627863,
+        "id": "295a0b6c-b53a-43e2-8d38-5e59caee4457",
+        "created_at": "2026-06-07T21:08:30.419614+00:00",
+        "updated_at": "2026-06-07T21:08:30.419614+00:00"
+      },
+      {
+        "memory": "Caroline is planning to attend a transgender conference in June 2026 and is excited to meet others in the community and learn more about advocacy.",
+        "score": 0.6355285254519797,
+        "id": "1bb160c7-e2df-4792-8f7c-19491eed1b9d",
+        "created_at": "2026-06-07T21:05:48.107988+00:00",
+        "updated_at": "2026-06-07T21:05:48.107988+00:00"
+      },
+      {
+        "memory": "Caroline believes conversations about gender identity and inclusion are necessary and is thankful for being able to give a voice to the trans community.",
+        "score": 0.6222729860572821,
+        "id": "e27b7e1a-d9bd-4bf4-a08f-f224d5f52588",
+        "created_at": "2026-06-07T21:04:12.639615+00:00",
+        "updated_at": "2026-06-07T21:04:12.639615+00:00"
+      },
+      {
+        "memory": "Caroline attended a pride parade on June 5, 2026 (last Friday) and felt proud and energized by the love and support, reinforcing her commitment to standing up for equality.",
+        "score": 0.6220707780674798,
+        "id": "16c9c056-2f01-43f2-b08b-72535a22a9ca",
+        "created_at": "2026-06-07T21:09:29.347241+00:00",
+        "updated_at": "2026-06-07T21:09:29.347241+00:00"
+      },
+      {
+        "memory": "Caroline missed the pride parade in her city on the weekend of June 5-6, 2026, but saw it as a powerful reminder that the community is not alone in the fight for equality and inclusivity.",
+        "score": 0.6174842299247283,
+        "id": "f2af5d5d-952a-4dc6-9a8d-67785abd68a0",
+        "created_at": "2026-06-07T21:08:51.388958+00:00",
+        "updated_at": "2026-06-07T21:08:51.388958+00:00"
+      },
+      {
+        "memory": "Melanie and Caroline attended a Pride festival together last year (around 2025) and had a blast with friends, as shown in a photo of a group walking down a street with balloons.",
+        "score": 0.6174376339278481,
+        "id": "12fb223d-e23f-4625-bb83-c145b51e053f",
+        "created_at": "2026-06-07T21:10:20.300712+00:00",
+        "updated_at": "2026-06-07T21:10:20.300712+00:00"
+      },
+      {
+        "memory": "Caroline attended a transgender poetry reading around June 2026 where transgender people shared their stories through poetry, describing it as a safe space for self-expression and empowering to hear others celebrate their identities.",
+        "score": 0.6155889202283862,
+        "id": "886bca0c-4d96-4b90-b9da-b9781c26c94b",
+        "created_at": "2026-06-07T21:14:17.071259+00:00",
+        "updated_at": "2026-06-07T21:14:17.071259+00:00"
+      },
+      {
+        "memory": "Caroline was inspired by a transgender poetry reading to create art, and shared a drawing of a woman in a dress with a transgender flag on June 7, 2026.",
+        "score": 0.6143568585658353,
+        "id": "c5be4c5c-e129-4f9c-8d0c-7413a5cad22c",
+        "created_at": "2026-06-07T21:14:19.647950+00:00",
+        "updated_at": "2026-06-07T21:14:19.647950+00:00"
+      },
+      {
+        "memory": "Caroline attended a pride parade around late May or early June 2026, joined in, and felt accepted and happy, describing it as a top memory.",
+        "score": 0.6131259902888044,
+        "id": "718b9bd5-862b-466b-b310-509907969dea",
+        "created_at": "2026-06-07T21:07:38.192362+00:00",
+        "updated_at": "2026-06-07T21:07:38.192362+00:00"
+      }
+    ],
+    "search_latency_ms": 287.8,
+    "total_results": 50
+  },
+  "cutoff_results": {
+    "top_10": {
+      "judgment": "WRONG",
+      "score": 0.0,
+      "generated_answer": "June 6, 2026",
+      "memories_evaluated": 10,
+      "reason": "The generated answer (June 6, 2026) is more than 14 days away from the gold answer (7 May 2023), so it does not match under date tolerance."
+    },
+    "top_20": {
+      "judgment": "WRONG",
+      "score": 0.0,
+      "generated_answer": "June 6, 2026",
+      "memories_evaluated": 20,
+      "reason": "The generated answer 'June 6, 2026' is more than 14 days away from the gold answer '7 May 2023', so it does not match under date tolerance."
+    },
+    "top_50": {
+      "judgment": "WRONG",
+      "score": 0.0,
+      "generated_answer": "June 6, 2026",
+      "memories_evaluated": 50,
+      "reason": "The generated answer 'June 6, 2026' is more than 14 days away from the gold answer '7 May 2023', so it does not meet the date tolerance rule."
+    },
+    "top_200": {
+      "judgment": "WRONG",
+      "score": 0.0,
+      "generated_answer": "June 6, 2026",
+      "memories_evaluated": 50,
+      "reason": "The generated answer 'June 6, 2026' is more than 14 days away from the gold answer '7 May 2023', so it does not meet the date tolerance rule."
+    }
+  }
+}
