@@ -56,7 +56,7 @@ describe("Timeline — Successful Execution Sequence", () => {
 
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: {
         action_name: "grep",
         params: { pattern: "timeline-seq" },
@@ -95,7 +95,7 @@ describe("Timeline — Failed Execution Sequence", () => {
 
     await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: {
         action_name: "read_file",
         params: {},
@@ -115,7 +115,7 @@ describe("Timeline — Failed Execution Sequence", () => {
 
     await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: {
         action_name: "nonexistent_action",
         params: {},
@@ -135,7 +135,7 @@ describe("Timeline — Failed Execution Sequence", () => {
 
     await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: {
         action_name: "commit",
         params: { message: "test" },
@@ -157,7 +157,7 @@ describe("Timeline — Audit Reference Integrity", () => {
 
     const pipelineRes = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: {
         action_name: "grep",
         params: { pattern: "audit-ref-test" },
@@ -189,7 +189,7 @@ describe("Timeline — Rationale Persistence", () => {
 
     await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: {
         action_name: "grep",
         params: { pattern: "rationale-check" },
@@ -209,7 +209,7 @@ describe("Timeline — Rationale Persistence", () => {
 
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: {
         action_name: "grep",
         params: { pattern: "no-rationale" },
@@ -227,7 +227,7 @@ describe("Timeline — No Events Without Session", () => {
   it("pipeline without session_id does not create timeline events", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/actions/pipeline",
+      url: "/actions/simulate-pipeline",
       payload: { action_name: "grep", params: { pattern: "no-session" } },
     });
     expect(res.json().success).toBe(true);

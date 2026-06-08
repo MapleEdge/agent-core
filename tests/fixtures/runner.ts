@@ -110,7 +110,7 @@ export async function runPipelineFixture(
 
   const res = await app.inject({
     method: "POST",
-    url: "/actions/pipeline",
+    url: "/actions/simulate-pipeline",
     payload,
   });
 

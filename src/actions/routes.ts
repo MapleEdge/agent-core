@@ -49,6 +49,8 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
         side_effects: [],
         requires_platform_validation: true,
       })),
+      advisory_only: true,
+      requires_platform_validation: true,
     };
   });
 
@@ -64,6 +66,8 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
       schema: row.jsonSchema ?? row.parameters,
       risk_level: row.risk_level,
       requires_approval: row.requires_approval,
+      advisory_only: true,
+      requires_platform_validation: true,
     };
   });
 
@@ -76,21 +80,31 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
         action_name: input.action_name,
         errors: validation.errors,
         issues: validation.issues,
+        advisory_only: true,
+        requires_platform_validation: true,
       };
     }
-    return { valid: true, action_name: input.action_name, params: input.params };
+    return {
+      valid: true,
+      action_name: input.action_name,
+      params: input.params,
+      advisory_only: true,
+      requires_platform_validation: true,
+    };
   });
 
-  /**
-   * Mock-only execution endpoint.
-   * Real side effects belong in the platform (jubilant-goggles).
-   * Retained for testing/demonstration; never executes real actions.
-   */
-  app.post("/actions/execute", async (req) => {
+  // agent-core is an action-knowledge service, not the live execution plane.
+  // These simulation routes exist for local tests and contract validation only.
+  app.post("/actions/mock-execute", async (req) => {
     const input = ActionExecuteInput.parse(req.body);
     const result = await getProvider("action").execute(input.action_name, input.params);
     if (result.error?.startsWith("Unknown action:")) {
-      return { error: `Unknown action: ${input.action_name}`, executed: false };
+      return {
+        error: `Unknown action: ${input.action_name}`,
+        executed: false,
+        advisory_only: true,
+        requires_platform_validation: true,
+      };
     }
     if (result.error === "Action requires platform approval") {
       return {
@@ -98,6 +112,8 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
         reason: "Action requires platform approval",
         action_name: input.action_name,
         approval_required: true,
+        advisory_only: true,
+        requires_platform_validation: true,
       };
     }
     return {
@@ -107,10 +123,12 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
       execution_mode: result.execution_mode,
       result: result.output,
       rationale: input.rationale ?? null,
+      advisory_only: true,
+      requires_platform_validation: true,
     };
   });
 
-  app.post("/actions/pipeline", async (req) => {
+  app.post("/actions/simulate-pipeline", async (req) => {
     const input = ActionPipelineInput.parse(req.body);
     const ruleSolver = hasProvider("ruleSolver")
       ? (getProvider("ruleSolver") as RuleSolverProvider)
@@ -135,7 +153,34 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
       traceProvider,
       sessionProvider,
     );
-    return result;
+    return {
+      ...result,
+      simulation: true,
+      advisory_only: true,
+      requires_platform_validation: true,
+    };
+  });
+
+  app.post("/actions/execute", async (_req, reply) => {
+    reply.code(410);
+    return {
+      error: "deprecated_endpoint",
+      message: "Use /actions/mock-execute for local simulation. Live execution belongs to the platform control plane.",
+      replacement: "/actions/mock-execute",
+      advisory_only: true,
+      requires_platform_validation: true,
+    };
+  });
+
+  app.post("/actions/pipeline", async (_req, reply) => {
+    reply.code(410);
+    return {
+      error: "deprecated_endpoint",
+      message: "Use /actions/simulate-pipeline for local simulation. Live pipelines belong to the platform control plane.",
+      replacement: "/actions/simulate-pipeline",
+      advisory_only: true,
+      requires_platform_validation: true,
+    };
   });
 
   // ── ActionKnowledgeProvider endpoints ─────────────────────────────

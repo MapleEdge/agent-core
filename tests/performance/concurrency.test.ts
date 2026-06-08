@@ -64,7 +64,7 @@ describe("Concurrency — Parallel Audits", () => {
     const promises = Array.from({ length: 100 }, (_, i) =>
       app.inject({
         method: "POST",
-        url: "/actions/pipeline",
+        url: "/actions/simulate-pipeline",
         payload: {
           action_name: "grep",
           params: { pattern: `concurrent_${i}` },
@@ -93,7 +93,7 @@ describe("Concurrency — Parallel Timeline Writes", () => {
     const promises = Array.from({ length: 100 }, (_, i) =>
       app.inject({
         method: "POST",
-        url: "/actions/pipeline",
+        url: "/actions/simulate-pipeline",
         payload: {
           action_name: "grep",
           params: { pattern: `timeline_${i}` },
@@ -134,7 +134,7 @@ describe("Concurrency — Session Isolation", () => {
     const pipelinePromises = sessionIds.map((sessionId, i) =>
       app.inject({
         method: "POST",
-        url: "/actions/pipeline",
+        url: "/actions/simulate-pipeline",
         payload: {
           action_name: "grep",
           params: { pattern: `isolation_${i}` },
@@ -190,7 +190,7 @@ describe("Concurrency Metrics", () => {
       promises.push(
         app.inject({
           method: "POST",
-          url: "/actions/pipeline",
+          url: "/actions/simulate-pipeline",
           payload: { action_name: "run_tests", params: {} },
         }),
       );
