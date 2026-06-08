@@ -94,6 +94,37 @@ export async function validatePlanDeterministic(
     errors.push(`Plan contains "commit" but commit is not in allowed_actions.`);
   }
 
+  // 5. Semantic ordering: run_tests must come after at least one edit action
+  const editActions = new Set(["apply_patch", "write_file"]);
+  let hasEdit = false;
+  for (let i = 0; i < plan.steps.length; i++) {
+    const step = plan.steps[i]!;
+    if (editActions.has(step.action_name)) hasEdit = true;
+    if (step.action_name === "run_tests" && !hasEdit) {
+      errors.push(
+        `Step ${i}: run_tests appears before any edit action (apply_patch/write_file). Tests should only run after changes are made.`,
+      );
+    }
+  }
+
+  // 6. Empty path check: read_file must have a non-empty path
+  for (let i = 0; i < plan.steps.length; i++) {
+    const step = plan.steps[i]!;
+    if (step.action_name === "read_file") {
+      const path = (step.params as Record<string, unknown>).path;
+      if (!path || (typeof path === "string" && path.trim() === "")) {
+        errors.push(`Step ${i}: read_file has empty path. Must specify a file to read.`);
+      }
+    }
+    // grep pattern must not just be words from the user prompt
+    if (step.action_name === "grep") {
+      const pattern = (step.params as Record<string, unknown>).pattern;
+      if (!pattern || (typeof pattern === "string" && pattern.trim() === "")) {
+        errors.push(`Step ${i}: grep has empty pattern.`);
+      }
+    }
+  }
+
   // 5. Advisory rule solver warnings (not blocking unless configured)
   if (ruleSolver && input.taskType) {
     try {

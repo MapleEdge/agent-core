@@ -99,11 +99,12 @@ describe("validatePlanDeterministic", () => {
         mode: "open_ended",
         steps: [
           { action_name: "grep", params: { pattern: "x" }, requires_platform_validation: true },
+          { action_name: "apply_patch", params: { file: "src/index.ts" }, requires_platform_validation: true },
           { action_name: "run_tests", params: {}, requires_platform_validation: true },
         ],
         loop_condition: "Continue improving",
       },
-      allowedActions: ["grep", "run_tests"],
+      allowedActions: ["grep", "apply_patch", "run_tests"],
     });
     expect(result.valid).toBe(true);
   });
@@ -149,12 +150,13 @@ describe("validatePlanDeterministic", () => {
         mode: "loop",
         steps: [
           { action_name: "grep", params: { pattern: "FIXME" }, requires_platform_validation: true },
+          { action_name: "apply_patch", params: { file: "src/fix.ts" }, requires_platform_validation: true },
           { action_name: "run_tests", params: {}, requires_platform_validation: true },
           { action_name: "commit", params: { message: "fix" }, requires_platform_validation: true },
         ],
         loop_condition: "Until all FIXMEs resolved",
       },
-      allowedActions: ["grep", "run_tests", "commit"],
+      allowedActions: ["grep", "apply_patch", "run_tests", "commit"],
     });
     expect(result.valid).toBe(true);
   });

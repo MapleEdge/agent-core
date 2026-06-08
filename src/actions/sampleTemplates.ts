@@ -75,4 +75,39 @@ export const SAMPLE_TEMPLATES: SampleTemplate[] = [
     mode: "finite",
     steps: ["retrieve_context", "search_memory", "grep", "read_file"],
   },
+  {
+    name: "feature_implementation",
+    description:
+      "Implement a new feature: discover existing code, add new files/code, write tests, validate.",
+    mode: "finite",
+    steps: [
+      "grep",
+      "read_file",
+      "read_file",
+      "apply_patch",
+      "apply_patch",
+      "apply_patch",
+      "run_tests",
+      "summarize_diff",
+      "commit",
+    ],
+  },
+  {
+    name: "add_provider_or_adapter",
+    description:
+      "Add a new provider/adapter: inspect interface, create adapter, add routes, add schemas, write tests.",
+    mode: "finite",
+    steps: [
+      "grep",
+      "read_file",
+      "read_file",
+      "apply_patch",
+      "apply_patch",
+      "apply_patch",
+      "apply_patch",
+      "run_tests",
+      "summarize_diff",
+      "commit",
+    ],
+  },
 ];
