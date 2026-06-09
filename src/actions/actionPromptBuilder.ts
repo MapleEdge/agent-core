@@ -138,6 +138,35 @@ Each step may include these fields:
     parts.push("```");
   }
 
+  // Bug-fix / investigation guidance
+  parts.push(`\n## Plan Quality Guidance for Bug-Fix Prompts
+
+If the user prompt describes a bug, issue, or broken behavior:
+
+1. Use mode "finite" — bugs have a definite resolution.
+2. Start with targeted searches, not broad repo listing. If the prompt mentions specific subsystems (e.g. "stop button", "executor", "cancel"), use grep for those terms first.
+3. Prefer grep patterns derived from the bug description:
+   - stop, cancel, resume → grep for cancel, running_tasks, CancelledError, stop, interrupt
+   - UI bug → grep for relevant component names, event handlers
+   - API bug → grep for endpoint paths, handler functions
+4. Read only relevant file ranges. Use line-range params when the file is large.
+5. Edit only after gathering evidence from reads and searches.
+6. Each step should include a "title" field for UI rendering. Examples:
+   - "Read server.py:640-719"
+   - "Searched for _cancelled_sessions"
+   - "Edited agentic_executor.py"
+   - "Ran targeted tests"
+7. Include a "ui_event_hint" on each step to help the UI render compact labels:
+   - read_file steps: "file_read"
+   - grep/search steps: "code_searched"
+   - apply_patch steps: "file_edited"
+   - run_tests steps: "test_run"
+   - bash/command steps: "command_run"
+8. After edits, run targeted tests (not full test suite unless needed).
+9. End with summarize_diff before commit.
+10. Stop planning after the fix is validated — do not pad with unnecessary steps.
+`);
+
   parts.push(`\n## Required Output Schema
 
 \`\`\`json
