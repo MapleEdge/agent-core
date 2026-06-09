@@ -31,6 +31,7 @@ export interface PlannerInput {
   prompt: string;
   allowed_actions: string[];
   mode_preference?: string;
+  max_iterations?: number;
   recent_memories?: Record<string, unknown>[];
   context_summaries?: string[];
   recent_action_outcomes?: Record<string, unknown>[];
@@ -88,6 +89,7 @@ export async function generatePlan(
     context_summaries: input.context_summaries ?? [],
     recent_action_outcomes: input.recent_action_outcomes ?? [],
     mode_preference: input.mode_preference,
+    max_iterations: input.max_iterations,
   });
 
   // Call LLM with schema validation

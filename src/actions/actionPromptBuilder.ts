@@ -27,6 +27,7 @@ export interface PlanPromptInput {
   context_summaries: string[];
   recent_action_outcomes: Record<string, unknown>[];
   mode_preference?: string;
+  max_iterations?: number;
 }
 
 export function buildPlanPrompt(input: PlanPromptInput): LLMMessage[] {
@@ -59,7 +60,7 @@ The plan must be useful to an executor, but it is not authorization. Every step 
    - "loop": repeat bounded iterations until stopped by the platform, the user, a guard, or goal satisfaction.
    - "open_ended": ongoing autonomous work with periodic checkpoints, validation, trace reporting, and plan refreshes.
 5. For "loop" and "open_ended" modes, include a "loop_condition" string.
-6. Do NOT impose an artificial maximum number of steps.
+6. The executor has a budget of ${input.max_iterations ?? 50} iterations. Each plan step costs at least one iteration, and complex steps (e.g. autonomous_code_edit, investigate_and_patch) may consume multiple iterations internally. Plan accordingly — keep plans focused within this budget. Do NOT pad with unnecessary steps, but do NOT artificially truncate a plan that genuinely needs more steps.
 7. "commit" may appear ONLY if "commit" is in the catalog AND the user explicitly requested commit-capable work.
 8. If "commit" appears, it only means "recommend commit"; jubilant-goggles decides whether commit is allowed and performs it.
 9. "merge_pr" may appear ONLY if "merge_pr" is in the catalog. Check CI status first unless user override says skip.
