@@ -56,6 +56,7 @@ export const LLMPlanRequestSchema = z.object({
   prompt: z.string().min(1),
   allowed_actions: z.array(z.string()).min(1),
   mode_preference: PlanModeSchema.optional(),
+  max_iterations: z.number().int().positive().optional(),
   recent_memories: z.array(z.record(z.unknown())).default([]),
   context_summaries: z.array(z.string()).default([]),
   recent_action_outcomes: z.array(z.record(z.unknown())).default([]),
@@ -88,6 +89,8 @@ export interface PlanResponse {
   source: string;
   warnings: PlanWarning[];
   errors: ValidationError[];
+  /** The messages array sent to the LLM, if available. */
+  llm_messages?: Array<{ role: string; content: string }>;
 }
 
 export interface PlanWarning {
