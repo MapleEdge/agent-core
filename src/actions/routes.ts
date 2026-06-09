@@ -333,6 +333,7 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
         prompt: input.prompt,
         allowed_actions: input.allowed_actions,
         mode_preference: input.mode_preference,
+        max_iterations: input.max_iterations,
         recent_memories: input.recent_memories,
         context_summaries: input.context_summaries,
         recent_action_outcomes: input.recent_action_outcomes,
