@@ -67,6 +67,7 @@ export async function generatePlan(
       source: "llm_plan_validated_by_agent_core",
       warnings: [],
       errors: [strError("No visible actions in catalog for the given allowed_actions.")],
+      llm_messages: [],
     };
   }
 
@@ -138,6 +139,7 @@ export async function generatePlan(
       source: "llm_plan_validated_by_agent_core",
       warnings,
       errors,
+      llm_messages: messages,
     };
   }
 
@@ -160,6 +162,7 @@ export async function generatePlan(
       source: "llm_plan_validated_by_agent_core",
       warnings: [...warnings, ...validation.warnings],
       errors: [...errors, ...validation.errors],
+      llm_messages: messages,
     };
   }
 
@@ -171,5 +174,6 @@ export async function generatePlan(
     source: "llm_plan_validated_by_agent_core",
     warnings: [...warnings, ...validation.warnings],
     errors: [],
+    llm_messages: messages,
   };
 }

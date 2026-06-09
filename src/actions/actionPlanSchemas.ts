@@ -88,6 +88,8 @@ export interface PlanResponse {
   source: string;
   warnings: PlanWarning[];
   errors: ValidationError[];
+  /** The messages array sent to the LLM, if available. */
+  llm_messages?: Array<{ role: string; content: string }>;
 }
 
 export interface PlanWarning {
