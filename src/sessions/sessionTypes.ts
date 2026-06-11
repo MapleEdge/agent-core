@@ -228,6 +228,38 @@ export const PROJECTION_MODES = [
 
 export type ProjectionMode = (typeof PROJECTION_MODES)[number];
 
+export const PROJECTION_SOURCES = [
+  "heuristic",
+  "mapping_based",
+  "retrieval_based",
+] as const;
+
+export type ProjectionSource = (typeof PROJECTION_SOURCES)[number];
+
+export const PROJECTION_SELECTORS = [
+  "summary",
+  "facets",
+  "relationships",
+  "capabilities",
+  "behaviors",
+  "interfaces",
+  "relevant_files",
+  "termination_conditions",
+  "adapter_mappings",
+  "success_criteria",
+  "known_commands",
+  "known_paths",
+  "api_contracts",
+  "security_constraints",
+  "unrelated_ui",
+  "deployment",
+  "plugins",
+  "historical_noise",
+  "unrelated_capabilities",
+] as const;
+
+export type ProjectionSelector = (typeof PROJECTION_SELECTORS)[number];
+
 export const SESSION_UPDATE_CLASSIFICATIONS = [
   "no_change",
   "continue_active",
@@ -250,6 +282,10 @@ export interface SessionPolicy {
   visibility: "public" | "workspace" | "private";
   allow_mount: boolean;
   allow_adapt: boolean;
+  allow_outbound_mount: boolean;
+  allow_inbound_mount: boolean;
+  allow_outbound_adapt: boolean;
+  allow_inbound_adapt: boolean;
   /**
    * Whether this session inherits policy constraints from its parent/root chain.
    * Effective policy computation must never let a child loosen an ancestor policy.
@@ -266,6 +302,30 @@ export interface SessionPolicy {
   effective_policy_source_ids: string[];
   license?: string;
   security_constraints: string[];
+}
+
+export interface PolicyAuthorizationContext {
+  allow_private_projection?: boolean;
+  authorized_by?: string;
+  reason?: string;
+  grants?: string[];
+}
+
+export interface PolicyCheckEvidence {
+  code: string;
+  ok: boolean;
+  message: string;
+  source_session_id?: string;
+  target_session_id?: string;
+}
+
+export interface PolicyEvidence {
+  source_effective_policy: SessionPolicy;
+  target_effective_policy: SessionPolicy;
+  source_policy_source_ids: string[];
+  target_policy_source_ids: string[];
+  authorization?: PolicyAuthorizationContext;
+  checks: PolicyCheckEvidence[];
 }
 
 export interface BaseFacet {
@@ -387,6 +447,39 @@ export interface DeploymentFacet extends BaseFacet {
   url?: string;
 }
 
+export interface AdapterMappingEndpoint {
+  session_id: string;
+  facet?: SessionFacetName;
+  path?: string;
+  symbol?: string;
+  endpoint?: string;
+  capability?: string;
+  description: string;
+}
+
+export interface AdapterMapping {
+  id: string;
+  source: AdapterMappingEndpoint;
+  target: AdapterMappingEndpoint;
+  relationship: AdapterMappingRelationship;
+  confidence: number;
+  evidence: string[];
+  status: AdapterMappingItemStatus;
+}
+
+export interface AdapterFacet extends BaseFacet {
+  source_session_id: string;
+  target_session_id: string;
+  source_role: AdapterSourceRole;
+  target_role: AdapterTargetRole;
+  preservation_mode: PreservationMode;
+  adaptation_mode: AdaptationMode;
+  mapping_status: AdapterMappingStatus;
+  mappings: AdapterMapping[];
+  constraints: string[];
+  non_goals: string[];
+}
+
 export interface SessionFacets {
   repo: RepoFacet;
   app: AppFacet;
@@ -438,39 +531,6 @@ export interface SessionEvent {
   created_at: string;
 }
 
-export interface AdapterMappingEndpoint {
-  session_id: string;
-  facet?: SessionFacetName;
-  path?: string;
-  symbol?: string;
-  endpoint?: string;
-  capability?: string;
-  description: string;
-}
-
-export interface AdapterMapping {
-  id: string;
-  source: AdapterMappingEndpoint;
-  target: AdapterMappingEndpoint;
-  relationship: AdapterMappingRelationship;
-  confidence: number;
-  evidence: string[];
-  status: AdapterMappingItemStatus;
-}
-
-export interface AdapterFacet extends BaseFacet {
-  source_session_id: string;
-  target_session_id: string;
-  source_role: AdapterSourceRole;
-  target_role: AdapterTargetRole;
-  preservation_mode: PreservationMode;
-  adaptation_mode: AdaptationMode;
-  mapping_status: AdapterMappingStatus;
-  mappings: AdapterMapping[];
-  constraints: string[];
-  non_goals: string[];
-}
-
 export interface ContextProjectionBudget {
   max_tokens: number;
   max_files: number;
@@ -483,8 +543,11 @@ export interface ContextProjection {
   active_session_id: string;
   source_session_ids: string[];
   projection_mode: ProjectionMode;
-  include_selectors: string[];
-  exclude_selectors: string[];
+  projection_source: ProjectionSource;
+  relevance_score: number;
+  evidence: string[];
+  include_selectors: ProjectionSelector[];
+  exclude_selectors: ProjectionSelector[];
   budget: ContextProjectionBudget;
   rationale: string;
 }
@@ -496,6 +559,7 @@ export interface MountSessionRequest {
   mount_mode: MountMode;
   create_adaptation_session: boolean;
   make_active?: boolean;
+  authorization?: PolicyAuthorizationContext;
 }
 
 export interface MountSessionResult {
@@ -503,6 +567,7 @@ export interface MountSessionResult {
   adaptation_session?: Session;
   adaptation_edges: SessionEdge[];
   context_projection_delta: ContextProjection;
+  policy_evidence: PolicyEvidence;
   warnings: string[];
   events: SessionEvent[];
 }
