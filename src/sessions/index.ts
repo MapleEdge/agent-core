@@ -4,7 +4,6 @@ export * from "./sessionGraph.js";
 export * from "./sessionEvents.js";
 export * from "./sessionPolicy.js";
 export * from "./sessionProjection.js";
-export * from "./sessionAdapterTypes.js";
 export * from "./sessionAdapterEngine.js";
 export * from "./sessionUpdateProposal.js";
 export * from "./sessionJsonSchemas.js";

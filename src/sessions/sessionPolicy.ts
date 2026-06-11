@@ -17,8 +17,14 @@ export function validatePolicyCompatibility(
   if (!source.policy.allow_mount) {
     errors.push(`Source session ${source.id} policy does not allow mounting.`);
   }
+  if (!target.policy.allow_mount) {
+    errors.push(`Target session ${target.id} policy does not allow inbound mounts.`);
+  }
   if (request.create_adaptation_session && !source.policy.allow_adapt) {
     errors.push(`Source session ${source.id} policy does not allow adaptation.`);
+  }
+  if (request.create_adaptation_session && !target.policy.allow_adapt) {
+    errors.push(`Target session ${target.id} policy does not allow inbound adaptation.`);
   }
   if (source.policy.visibility === "private" && source.root_id !== target.root_id) {
     warnings.push("Source visibility is private; platform authorization must approve cross-root projection.");
