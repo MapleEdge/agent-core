@@ -35,6 +35,32 @@ describe("Session graph scaffold", () => {
     expect(result.issues[0].code).toBe("missing_target");
   });
 
+  it("rejects duplicate sessions and duplicate edges", () => {
+    const source = createSession({ id: "source", kind: "repo", title: "Source" });
+    const target = createSession({ id: "target", kind: "goal", title: "Target" });
+    const edgeA = createEdge({ id: "edge-a", type: "references", source_session_id: "source", target_session_id: "target" });
+    const edgeB = createEdge({ id: "edge-b", type: "references", source_session_id: "source", target_session_id: "target" });
+
+    const result = validateSessionGraphUpdate({
+      sessions: [source, source, target],
+      edges: [edgeA, edgeB],
+      events: [],
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.issues.some((issue) => issue.code === "duplicate_session")).toBe(true);
+    expect(result.issues.some((issue) => issue.code === "duplicate_edge")).toBe(true);
+  });
+
+  it("rejects missing parent sessions", () => {
+    const child = createSession({ id: "child", kind: "work", title: "Child", parent_id: "missing-parent" });
+
+    const result = validateSessionGraphUpdate({ sessions: [child], edges: [], events: [] });
+
+    expect(result.valid).toBe(false);
+    expect(result.issues.some((issue) => issue.code === "missing_parent")).toBe(true);
+  });
+
   it("exports JSON Schema contracts for control-plane validation", () => {
     const adapterFacet: Pick<AdapterFacet, "preservation_mode"> = {
       preservation_mode: "lossless_reference",
