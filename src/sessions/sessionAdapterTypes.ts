@@ -1,0 +1,18 @@
+export type {
+  AdapterFacet,
+  AdapterMapping,
+  AdapterMappingEndpoint,
+  AdapterMappingItemStatus,
+  AdapterMappingRelationship,
+  AdapterMappingStatus,
+  AdapterSourceRole,
+  AdapterTargetRole,
+  AdaptationMode,
+  ContextProjection,
+  ContextProjectionBudget,
+  MountMode,
+  MountSessionRequest,
+  MountSessionResult,
+  PreservationMode,
+  ProjectionMode,
+} from "./sessionTypes.js";

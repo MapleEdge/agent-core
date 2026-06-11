@@ -1,4 +1,5 @@
 import type { ProposedActionPlanType, ProposedActionType } from "../schemas/actions.js";
+import type { NextActionWithSessionUpdate, SessionUpdateProposal } from "../sessions/sessionUpdateProposal.js";
 
 export interface PlanValidationIssue {
   action_index?: number;
@@ -27,4 +28,6 @@ export interface RecommendNextActionResult {
   issues: PlanValidationIssue[];
   requires_platform_validation: true;
   advisory_only: true;
+  session_update?: SessionUpdateProposal;
+  next_action?: NextActionWithSessionUpdate;
 }

@@ -1,0 +1,98 @@
+{
+  "scenario_a": {
+    "sessions": [
+      {
+        "id": "session-repo-agent-core",
+        "kind": "repo",
+        "title": "agent-core",
+        "summary": "Advisory domain layer, schemas, planning contracts, validation logic, and provider-facing types."
+      },
+      {
+        "id": "session-repo-jubilant-goggles",
+        "kind": "repo",
+        "title": "jubilant-goggles",
+        "summary": "Control plane, persistence, UI, runtime/session orchestration, and execution-facing APIs."
+      },
+      {
+        "id": "session-app-agent-platform",
+        "kind": "app",
+        "title": "Agent Platform",
+        "summary": "Composed application session spanning advisory and control-plane repositories."
+      },
+      {
+        "id": "session-goal-open-terminal",
+        "kind": "goal",
+        "title": "Add Open Terminal button end-to-end",
+        "summary": "Expose terminal launch behavior from API through the dashboard."
+      },
+      {
+        "id": "session-work-backend-terminal",
+        "kind": "work",
+        "title": "backend terminal endpoint",
+        "summary": "Control-plane endpoint work session."
+      },
+      {
+        "id": "session-work-frontend-terminal",
+        "kind": "work",
+        "title": "frontend desktop button",
+        "summary": "Dashboard interaction work session."
+      },
+      {
+        "id": "session-validation-terminal",
+        "kind": "validation",
+        "title": "full-stack terminal action validation",
+        "summary": "Validation session for terminal action flow."
+      }
+    ],
+    "edges": [
+      ["session-repo-agent-core", "session-app-agent-platform", "component_of"],
+      ["session-repo-jubilant-goggles", "session-app-agent-platform", "component_of"],
+      ["session-work-backend-terminal", "session-goal-open-terminal", "component_of"],
+      ["session-work-frontend-terminal", "session-goal-open-terminal", "component_of"],
+      ["session-validation-terminal", "session-goal-open-terminal", "validates"]
+    ]
+  },
+  "scenario_b": {
+    "source": {
+      "id": "session-repo-openhands",
+      "kind": "repo",
+      "title": "OpenHands",
+      "summary": "Reference repo for executor behavior.",
+      "capabilities": [
+        "shell execution",
+        "browser interaction",
+        "file editing",
+        "agent loop",
+        "task completion detection",
+        "cancellation handling"
+      ]
+    },
+    "target": {
+      "id": "session-goal-integrate-openhands",
+      "kind": "goal",
+      "title": "Integrate OpenHands executor functionality",
+      "summary": "Adapt executor behavior into the platform."
+    }
+  },
+  "scenario_c": {
+    "source_session_id": "session-repo-openhands",
+    "target_title": "Make my executor stop looping",
+    "projection_includes": [
+      "loop termination",
+      "task completion detection",
+      "cancellation handling"
+    ],
+    "projection_excludes": [
+      "unrelated UI",
+      "deployment",
+      "plugin features"
+    ]
+  },
+  "merge_example": {
+    "sources": [
+      "session-repo-agent-core",
+      "session-repo-jubilant-goggles"
+    ],
+    "target": "session-app-agent-platform"
+  }
+}
