@@ -41,6 +41,10 @@ The engine validates source outbound mount/adapt rights and target inbound mount
 
 License and security constraints are carried into policy evidence and adapter constraints so downstream execution can preserve them.
 
+## Mapping fallback
+
+Mapping generation is seeded from explicit repo capabilities first, then known commands. If neither exists, the engine emits neutral scaffold concepts such as session summary, documented capabilities, known interfaces, and relevant constraints. It must not infer vendor-specific capabilities unless they are present in the source session or recovered by inspection.
+
 ## Current limitations
 
 - Role inference is heuristic.
