@@ -17,6 +17,9 @@ const DEFAULT_POLICY: SessionPolicy = {
   visibility: "workspace",
   allow_mount: true,
   allow_adapt: true,
+  inherit_from_parent: true,
+  allow_policy_override: false,
+  effective_policy_source_ids: [],
   security_constraints: [],
 };
 
@@ -90,6 +93,7 @@ export function createEdge(input: {
 export function createSessionEvent(input: {
   type: SessionEventType;
   session_id: string;
+  root_session_id?: string | null;
   data?: Record<string, unknown>;
   now?: string;
   id?: string;
@@ -236,6 +240,7 @@ export function mergeSessions(input: {
   const event = createEvent({
     type: "session.merged",
     session_id: session.id,
+    root_session_id: session.root_id,
     data: { source_session_ids: input.source_sessions.map((source) => source.id), edge_ids: edges.map((edge) => edge.id) },
     now: input.now,
   });
