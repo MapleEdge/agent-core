@@ -99,7 +99,11 @@ export function generateDefaultMappings(input: {
     },
     relationship: input.adaptationMode === "migration_plan" ? "ports" : "informs",
     confidence: 0.55,
-    evidence: ["default scaffold mapping"],
+    evidence: [
+      "default scaffold mapping",
+      `source_session:${input.source.id}`,
+      `target_session:${input.target.id}`,
+    ],
     status: "hypothesis",
   }));
 }
@@ -139,7 +143,7 @@ export function createAdaptationSession(input: {
     kind: "adapter",
     title: `Adapt ${input.source.title} into ${input.target.title}`,
     summary: input.request.user_intent,
-    facets: { adapter: facet as unknown as Record<string, unknown> },
+    facets: { adapter: facet },
     root_id: input.target.root_id ?? input.target.id,
     now: input.now,
   });
@@ -165,11 +169,13 @@ export function mountSession(graph: SessionGraph, request: MountSessionRequest):
   const mountedEvent = createEvent({
     type: "session.mounted",
     session_id: target.id,
+    root_session_id: target.root_id,
     data: {
       source_session_id: source.id,
       target_session_id: target.id,
       mount_mode: request.mount_mode,
       preserves_source_identity: true,
+      policy_evidence: policy.evidence,
     },
   });
   const mountedEdge = createEdge({
@@ -187,13 +193,16 @@ export function mountSession(graph: SessionGraph, request: MountSessionRequest):
   let adaptationSession: Session | undefined;
   const adaptationEdges: SessionEdge[] = [];
   const events = [mountedEvent];
+  let mappings: AdapterMapping[] | undefined;
 
   if (request.create_adaptation_session) {
     const adapter = createAdaptationSession({ source, target, request, warnings });
     adaptationSession = adapter.session;
+    mappings = adapter.facet.mappings;
     const adapterCreatedEvent = createEvent({
       type: "session.adapter_created",
       session_id: adaptationSession.id,
+      root_session_id: adaptationSession.root_id,
       data: { source_session_id: source.id, target_session_id: target.id, facet: adapter.facet },
     });
     events.push(adapterCreatedEvent);
@@ -220,10 +229,11 @@ export function mountSession(graph: SessionGraph, request: MountSessionRequest):
     );
   }
 
-  const contextProjectionDelta = buildContextProjection({ source, target, request });
+  const contextProjectionDelta = buildContextProjection({ source, target, request, mappings });
   const projectedEvent = createEvent({
     type: "session.adapter_projection_created",
     session_id: adaptationSession?.id ?? target.id,
+    root_session_id: adaptationSession?.root_id ?? target.root_id,
     data: { projection: contextProjectionDelta },
   });
   events.push(projectedEvent);
@@ -243,6 +253,7 @@ export function mountSession(graph: SessionGraph, request: MountSessionRequest):
     adaptation_session: adaptationSession,
     adaptation_edges: adaptationEdges,
     context_projection_delta: contextProjectionDelta,
+    policy_evidence: policy.evidence,
     warnings,
     events,
   };
