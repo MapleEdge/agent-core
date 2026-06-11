@@ -127,6 +127,36 @@ describe("SessionAdapter Engine", () => {
     })).toThrow("does not allow outbound mounting");
   });
 
+  it("requires authorization for private cross-root projection", () => {
+    const privateSource = createSession({
+      id: "private-source",
+      kind: "repo",
+      title: "Private Source",
+      root_id: "root-a",
+      policy: { visibility: "private" },
+    });
+    const target = createSession({ id: "target", kind: "goal", title: "Target", root_id: "root-b" });
+
+    expect(() => mountSession({ sessions: [privateSource, target], edges: [], events: [] }, {
+      source_session_id: "private-source",
+      target_session_id: "target",
+      user_intent: "Project private source.",
+      mount_mode: "reference",
+      create_adaptation_session: true,
+    })).toThrow("cross-root projection requires explicit authorization");
+
+    const result = mountSession({ sessions: [privateSource, target], edges: [], events: [] }, {
+      source_session_id: "private-source",
+      target_session_id: "target",
+      user_intent: "Project private source with authorization.",
+      mount_mode: "reference",
+      create_adaptation_session: true,
+      authorization: { allow_private_projection: true, authorized_by: "test" },
+    });
+
+    expect(result.policy_evidence.authorization?.allow_private_projection).toBe(true);
+  });
+
   it("rejects target policy-blocked mounts and adaptations", () => {
     const source = createSession({ id: "source", kind: "repo", title: "Source" });
     const blockedMountTarget = createSession({
