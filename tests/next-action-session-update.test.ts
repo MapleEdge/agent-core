@@ -45,7 +45,7 @@ describe("next-action session_update scaffold", () => {
       target_session_ids: [child.id],
       params: { path: "control-plane/api" },
       certainty: 0.74,
-      stakes: "medium",
+      stakes: "modification",
       risk: "medium",
       reason: "The endpoint is the next dependency.",
       expected_result: "A control-plane terminal action endpoint exists.",
@@ -53,6 +53,7 @@ describe("next-action session_update scaffold", () => {
       forbidden_actions: ["Do not mutate unrelated sessions"],
     });
 
+    expect(parsed.stakes).toBe("modification");
     expect(parsed.session_update.created_sessions[0].kind).toBe("work");
   });
 });
