@@ -1,8 +1,6 @@
 # Session graph
 
-The session graph is an append-only model for durable work context.
-Zod is the primary schema layer, and JSON Schema exports are available for the
-control plane and contract tests.
+The session graph is an append-only model for durable work context. Zod is the primary schema layer, and JSON Schema exports are available for the control plane and contract tests.
 
 ## Core records
 
@@ -38,13 +36,19 @@ control plane and contract tests.
 - `id`
 - `type`
 - `session_id`
+- `root_session_id`
+- `actor`
 - `data`
 - `created_at`
 
 ## Invariants
 
+- Session IDs must be unique.
+- Edge IDs must be unique.
+- Duplicate edge triples are rejected.
 - Source sessions must exist.
 - Target sessions must exist.
+- Parent sessions must exist.
 - Edge types must be known.
 - Containment cycles are rejected.
 - Mounting never rewrites title, purpose, parent, or history.
@@ -52,11 +56,10 @@ control plane and contract tests.
 - Context projections must include a budget.
 - Policy compatibility is validated before applying graph changes.
 
-Odd mounts are allowed when graph integrity and policy allow them. They should
-produce warnings rather than hard failures.
+Odd mounts are allowed when graph integrity and policy allow them. They should produce warnings rather than hard failures.
+
+Private cross-root projection is not an odd mount. It is blocked unless explicit authorization is present on the mount request.
 
 ## Event replay
 
-`reduceSessionEventsToGraph` is intentionally scaffolded. It currently recognizes
-session creation and edge creation events. A later reducer can apply the full
-event catalog while preserving append-only replay semantics.
+`reduceSessionEventsToGraph` is intentionally scaffolded. It currently recognizes session creation and edge creation events. A later reducer can apply the full event catalog while preserving append-only replay semantics.
