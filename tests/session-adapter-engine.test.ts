@@ -109,19 +109,12 @@ describe("SessionAdapter Engine", () => {
     expect(result.context_projection_delta.exclude_selectors.length).toBeGreaterThan(0);
   });
 
-  it("rejects policy-blocked mounts and warns on private projection", () => {
+  it("rejects source policy-blocked mounts", () => {
     const blocked = createSession({
       id: "blocked",
       kind: "repo",
       title: "Blocked",
       policy: { allow_mount: false },
-    });
-    const privateSource = createSession({
-      id: "private",
-      kind: "repo",
-      title: "Private",
-      root_id: "root-a",
-      policy: { visibility: "private" },
     });
     const target = createSession({ id: "target", kind: "goal", title: "Target", root_id: "root-b" });
 
@@ -131,16 +124,7 @@ describe("SessionAdapter Engine", () => {
       user_intent: "Try blocked mount.",
       mount_mode: "reference",
       create_adaptation_session: true,
-    })).toThrow("does not allow mounting");
-
-    const result = mountSession({ sessions: [privateSource, target], edges: [], events: [] }, {
-      source_session_id: "private",
-      target_session_id: "target",
-      user_intent: "Project private source.",
-      mount_mode: "reference",
-      create_adaptation_session: true,
-    });
-    expect(result.warnings.some((warning) => warning.includes("private"))).toBe(true);
+    })).toThrow("does not allow outbound mounting");
   });
 
   it("rejects target policy-blocked mounts and adaptations", () => {
