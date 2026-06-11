@@ -1,21 +1,21 @@
 # SessionAdapter Engine
 
-The SessionAdapter Engine is a pure service scaffold for contextual mounts and
-adaptations.
+The SessionAdapter Engine is a pure service scaffold for contextual mounts and adaptations.
 
 ## Pipeline
 
 1. Resolve source session.
 2. Resolve target session.
-3. Infer source role.
-4. Infer target role.
-5. Determine mount mode.
-6. Create an adaptation session when requested or required.
-7. Create semantic mappings.
-8. Create graph edges.
-9. Generate context projection rules.
-10. Validate policy and cycle invariants.
-11. Append events.
+3. Validate source and target policy.
+4. Infer source role.
+5. Infer target role.
+6. Determine mount mode.
+7. Create an adaptation session when requested or required.
+8. Create semantic mappings.
+9. Create graph edges.
+10. Generate context projection rules.
+11. Validate graph integrity and cycle invariants.
+12. Append events.
 
 ## Mount result
 
@@ -25,22 +25,25 @@ adaptations.
 - optional `adaptation_session`
 - `adaptation_edges`
 - `context_projection_delta`
+- `policy_evidence`
 - `warnings`
 - `events`
 
 ## Preservation model
 
-The mounted source remains unchanged. The mounted edge records contextual
-placement, and the adapter session records interpretation.
+The mounted source remains unchanged. The mounted edge records contextual placement, and the adapter session records interpretation.
 
-For a broad source mounted under a tiny goal, the projection uses a smaller
-budget and excludes unrelated UI, deployment, plugin, and historical-noise
-selectors.
+For a broad source mounted under a focused goal, the projection uses a smaller budget and excludes unrelated UI, deployment, plugin, and historical-noise selectors.
+
+## Policy boundary
+
+The engine validates source outbound mount/adapt rights and target inbound mount/adapt rights. Private cross-root projection is blocked unless the mount request carries explicit authorization.
+
+License and security constraints are carried into policy evidence and adapter constraints so downstream execution can preserve them.
 
 ## Current limitations
 
 - Role inference is heuristic.
-- Mapping generation is seeded from repo capabilities or default behavior names.
+- Mapping generation is seeded from repo capabilities or known commands when available, otherwise from neutral scaffold concepts.
 - Event reduction is a replay scaffold, not a full materializer.
-- Policy validation handles source and target mount/adapt allowance, visibility
-  warnings, license carry-through, and security constraints.
+- Effective policy inheritance requires callers to provide parent chains when policy needs to be computed across ancestry.
