@@ -59,15 +59,9 @@ function adapterRequired(source: Session, target: Session, request: MountSession
 
 function warningsFor(source: Session, target: Session, request: MountSessionRequest): string[] {
   const warnings: string[] = [];
-  if (source.kind !== target.kind) {
-    warnings.push(`Cross-kind mount ${source.kind} → ${target.kind} requires semantic adaptation.`);
-  }
-  if (["repo", "app", "container"].includes(source.kind) && ["goal", "work", "question"].includes(target.kind)) {
-    warnings.push("Source is much broader than target; semantic projection should exclude unrelated context.");
-  }
-  if (request.mount_mode === "unknown") {
-    warnings.push("Mount mode is unknown; adapter mapping should be confirmed before execution use.");
-  }
+  if (source.kind !== target.kind) warnings.push(`Cross-kind mount ${source.kind} → ${target.kind} requires semantic adaptation.`);
+  if (["repo", "app", "container"].includes(source.kind) && ["goal", "work", "question"].includes(target.kind)) warnings.push("Source is much broader than target; semantic projection should exclude unrelated context.");
+  if (request.mount_mode === "unknown") warnings.push("Mount mode is unknown; adapter mapping should be confirmed before execution use.");
   return warnings;
 }
 
@@ -76,66 +70,31 @@ function repoCapabilities(source: Session): string[] {
     ? source.facets.repo.capabilities.filter((capability): capability is string => typeof capability === "string")
     : [];
   if (capabilities.length > 0) return capabilities;
-
   const knownCommands = source.facets.repo?.known_commands;
-  if (knownCommands && typeof knownCommands === "object") {
-    return Object.keys(knownCommands).map((name) => `${name} command`);
-  }
-
+  if (knownCommands && typeof knownCommands === "object") return Object.keys(knownCommands).map((name) => `${name} command`);
   return [];
 }
 
-export function generateDefaultMappings(input: {
-  source: Session;
-  target: Session;
-  adaptationMode: AdaptationMode;
-}): AdapterMapping[] {
+export function generateDefaultMappings(input: { source: Session; target: Session; adaptationMode: AdaptationMode }): AdapterMapping[] {
   const capabilities = repoCapabilities(input.source);
-  const defaultCapabilities = capabilities.length > 0
-    ? capabilities
-    : ["session summary", "documented capabilities", "known interfaces", "relevant constraints"];
-
+  const defaultCapabilities = capabilities.length > 0 ? capabilities : ["session summary", "documented capabilities", "known interfaces", "relevant constraints"];
   return defaultCapabilities.map((capability) => ({
     id: `mapping-${randomUUID()}`,
-    source: {
-      session_id: input.source.id,
-      facet: input.source.kind === "repo" ? "repo" : undefined,
-      capability,
-      description: `${input.source.title}: ${capability}`,
-    },
-    target: {
-      session_id: input.target.id,
-      facet: input.target.kind === "goal" ? "goal" : undefined,
-      capability,
-      description: `${input.target.title}: projected ${capability}`,
-    },
+    source: { session_id: input.source.id, facet: input.source.kind === "repo" ? "repo" : undefined, capability, description: `${input.source.title}: ${capability}` },
+    target: { session_id: input.target.id, facet: input.target.kind === "goal" ? "goal" : undefined, capability, description: `${input.target.title}: projected ${capability}` },
     relationship: input.adaptationMode === "migration_plan" ? "ports" : "informs",
     confidence: capabilities.length > 0 ? 0.55 : 0.35,
-    evidence: [
-      capabilities.length > 0 ? "source capability mapping" : "neutral scaffold mapping",
-      `source_session:${input.source.id}`,
-      `target_session:${input.target.id}`,
-    ],
+    evidence: [capabilities.length > 0 ? "source capability mapping" : "neutral scaffold mapping", `source_session:${input.source.id}`, `target_session:${input.target.id}`],
     status: "hypothesis",
   }));
 }
 
-export function createAdaptationSession(input: {
-  source: Session;
-  target: Session;
-  request: MountSessionRequest;
-  warnings: string[];
-  now?: string;
-}): { session: Session; facet: AdapterFacet } {
+export function createAdaptationSession(input: { source: Session; target: Session; request: MountSessionRequest; warnings: string[]; now?: string }): { session: Session; facet: AdapterFacet } {
   const sourceRole = inferSourceRole(input.source, input.request.mount_mode);
   const targetRole = inferTargetRole(input.target, input.request.mount_mode);
   const preservationMode = preservationModeFor(input.request.mount_mode);
   const adaptationMode = adaptationModeFor(input.request.mount_mode, input.source, input.target);
-  const mappings = generateDefaultMappings({
-    source: input.source,
-    target: input.target,
-    adaptationMode,
-  });
+  const mappings = generateDefaultMappings({ source: input.source, target: input.target, adaptationMode });
   const facet: AdapterFacet = {
     source_session_id: input.source.id,
     target_session_id: input.target.id,
@@ -145,20 +104,10 @@ export function createAdaptationSession(input: {
     adaptation_mode: adaptationMode,
     mapping_status: "proposed",
     mappings,
-    constraints: [
-      ...input.source.policy.security_constraints,
-      ...(input.source.policy.license ? [`license:${input.source.policy.license}`] : []),
-    ],
+    constraints: [...input.source.policy.security_constraints, ...(input.source.policy.license ? [`license:${input.source.policy.license}`] : [])],
     non_goals: ["Do not rewrite source session identity.", "Do not collapse source event history."],
   };
-  const session = createSession({
-    kind: "adapter",
-    title: `Adapt ${input.source.title} into ${input.target.title}`,
-    summary: input.request.user_intent,
-    facets: { adapter: facet },
-    root_id: input.target.root_id ?? input.target.id,
-    now: input.now,
-  });
+  const session = createSession({ kind: "adapter", title: `Adapt ${input.source.title} into ${input.target.title}`, summary: input.request.user_intent, facets: { adapter: facet }, root_id: input.target.root_id ?? input.target.id, now: input.now });
   return { session, facet };
 }
 
@@ -173,35 +122,23 @@ export function mountSession(graph: SessionGraph, request: MountSessionRequest):
   const policy = validatePolicyCompatibility(source, target, request);
   if (!policy.ok) throw new Error(policy.errors.join(" "));
   warnings.push(...policy.warnings);
+  if (adapterRequired(source, target, request) && !request.create_adaptation_session) throw new Error("Adapter session is required for this mount.");
 
-  if (adapterRequired(source, target, request) && !request.create_adaptation_session) {
-    throw new Error("Adapter session is required for this mount.");
-  }
-
+  const mountedEventId = `event-${randomUUID()}`;
   const mountedEdge = createEdge({
     type: "mounted_under",
     source_session_id: source.id,
     target_session_id: target.id,
-    metadata: {
-      mount_mode: request.mount_mode,
-      user_intent: request.user_intent,
-      preserves_source_identity: true,
-    },
+    metadata: { mount_mode: request.mount_mode, user_intent: request.user_intent, preserves_source_identity: true },
+    created_from_event_id: mountedEventId,
   });
   const mountedEvent = createEvent({
+    id: mountedEventId,
     type: "session.mounted",
     session_id: target.id,
     root_session_id: target.root_id,
-    data: {
-      source_session_id: source.id,
-      target_session_id: target.id,
-      mount_mode: request.mount_mode,
-      preserves_source_identity: true,
-      policy_evidence: policy.evidence,
-      edge: mountedEdge,
-    },
+    data: { source_session_id: source.id, target_session_id: target.id, mount_mode: request.mount_mode, preserves_source_identity: true, policy_evidence: policy.evidence, edge: mountedEdge },
   });
-  mountedEdge.created_from_event_id = mountedEvent.id;
 
   let adaptationSession: Session | undefined;
   const adaptationEdges: SessionEdge[] = [];
@@ -212,64 +149,23 @@ export function mountSession(graph: SessionGraph, request: MountSessionRequest):
     const adapter = createAdaptationSession({ source, target, request, warnings });
     adaptationSession = adapter.session;
     mappings = adapter.facet.mappings;
-    const adapterCreatedEvent = createEvent({
-      type: "session.adapter_created",
-      session_id: adaptationSession.id,
-      root_session_id: adaptationSession.root_id,
-      data: { source_session_id: source.id, target_session_id: target.id, session: adaptationSession, facet: adapter.facet },
-    });
+    const adapterCreatedEvent = createEvent({ type: "session.adapter_created", session_id: adaptationSession.id, root_session_id: adaptationSession.root_id, data: { source_session_id: source.id, target_session_id: target.id, session: adaptationSession, facet: adapter.facet } });
     events.push(adapterCreatedEvent);
     adaptationEdges.push(
-      createEdge({
-        type: "adapts_from",
-        source_session_id: adaptationSession.id,
-        target_session_id: source.id,
-        created_from_event_id: adapterCreatedEvent.id,
-      }),
-      createEdge({
-        type: "adapts_into",
-        source_session_id: adaptationSession.id,
-        target_session_id: target.id,
-        created_from_event_id: adapterCreatedEvent.id,
-      }),
-      createEdge({
-        type: "adapted_under",
-        source_session_id: source.id,
-        target_session_id: adaptationSession.id,
-        metadata: { target_context_session_id: target.id },
-        created_from_event_id: adapterCreatedEvent.id,
-      }),
+      createEdge({ type: "adapts_from", source_session_id: adaptationSession.id, target_session_id: source.id, created_from_event_id: adapterCreatedEvent.id }),
+      createEdge({ type: "adapts_into", source_session_id: adaptationSession.id, target_session_id: target.id, created_from_event_id: adapterCreatedEvent.id }),
+      createEdge({ type: "adapted_under", source_session_id: source.id, target_session_id: adaptationSession.id, metadata: { target_context_session_id: target.id }, created_from_event_id: adapterCreatedEvent.id }),
     );
   }
 
   const contextProjectionDelta = buildContextProjection({ source, target, request, mappings });
-  const projectedEvent = createEvent({
-    type: "session.adapter_projection_created",
-    session_id: adaptationSession?.id ?? target.id,
-    root_session_id: adaptationSession?.root_id ?? target.root_id,
-    data: { projection: contextProjectionDelta },
-  });
-  events.push(projectedEvent);
+  events.push(createEvent({ type: "session.adapter_projection_created", session_id: adaptationSession?.id ?? target.id, root_session_id: adaptationSession?.root_id ?? target.root_id, data: { projection: contextProjectionDelta } }));
 
-  const candidateGraph = {
-    sessions: adaptationSession ? [...graph.sessions, adaptationSession] : graph.sessions,
-    edges: [...graph.edges, mountedEdge, ...adaptationEdges],
-    events: [...graph.events, ...events],
-  };
+  const candidateGraph = { sessions: adaptationSession ? [...graph.sessions, adaptationSession] : graph.sessions, edges: [...graph.edges, mountedEdge, ...adaptationEdges], events: [...graph.events, ...events] };
   const validation = validateSessionGraphUpdate(candidateGraph);
-  if (!validation.valid) {
-    throw new Error(validation.issues.map((issue) => issue.message).join(" "));
-  }
+  if (!validation.valid) throw new Error(validation.issues.map((issue) => issue.message).join(" "));
 
-  return {
-    mounted_edge: mountedEdge,
-    adaptation_session: adaptationSession,
-    adaptation_edges: adaptationEdges,
-    context_projection_delta: contextProjectionDelta,
-    policy_evidence: policy.evidence,
-    warnings,
-    events,
-  };
+  return { mounted_edge: mountedEdge, adaptation_session: adaptationSession, adaptation_edges: adaptationEdges, context_projection_delta: contextProjectionDelta, policy_evidence: policy.evidence, warnings, events };
 }
 
 export const adaptSession = createAdaptationSession;
