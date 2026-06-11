@@ -17,6 +17,10 @@ const DEFAULT_POLICY: SessionPolicy = {
   visibility: "workspace",
   allow_mount: true,
   allow_adapt: true,
+  allow_outbound_mount: true,
+  allow_inbound_mount: true,
+  allow_outbound_adapt: true,
+  allow_inbound_adapt: true,
   inherit_from_parent: true,
   allow_policy_override: false,
   effective_policy_source_ids: [],
@@ -174,9 +178,65 @@ export function validateNoCycle(sessions: Session[], edges: SessionEdge[]): Grap
   return issues;
 }
 
+function validateDuplicateSessions(sessions: Session[]): GraphValidationIssue[] {
+  const issues: GraphValidationIssue[] = [];
+  const seen = new Set<string>();
+  for (const session of sessions) {
+    if (seen.has(session.id)) {
+      issues.push({
+        code: "duplicate_session",
+        message: `Duplicate session id ${session.id}.`,
+        session_id: session.id,
+      });
+    }
+    seen.add(session.id);
+  }
+  return issues;
+}
+
+function validateDuplicateEdges(edges: SessionEdge[]): GraphValidationIssue[] {
+  const issues: GraphValidationIssue[] = [];
+  const seenIds = new Set<string>();
+  const seenKeys = new Set<string>();
+  for (const edge of edges) {
+    if (seenIds.has(edge.id)) {
+      issues.push({
+        code: "duplicate_edge_id",
+        message: `Duplicate edge id ${edge.id}.`,
+        edge_id: edge.id,
+      });
+    }
+    seenIds.add(edge.id);
+
+    const key = `${edge.type}:${edge.source_session_id}:${edge.target_session_id}`;
+    if (seenKeys.has(key)) {
+      issues.push({
+        code: "duplicate_edge",
+        message: `Duplicate edge ${edge.type} ${edge.source_session_id} -> ${edge.target_session_id}.`,
+        edge_id: edge.id,
+      });
+    }
+    seenKeys.add(key);
+  }
+  return issues;
+}
+
 export function validateSessionGraphUpdate(graph: SessionGraph): GraphValidationResult {
   const sessionIds = new Set(graph.sessions.map((session) => session.id));
   const issues: GraphValidationIssue[] = [];
+
+  issues.push(...validateDuplicateSessions(graph.sessions));
+  issues.push(...validateDuplicateEdges(graph.edges));
+
+  for (const session of graph.sessions) {
+    if (session.parent_id !== null && !sessionIds.has(session.parent_id)) {
+      issues.push({
+        code: "missing_parent",
+        message: `Session ${session.id} parent ${session.parent_id} does not exist.`,
+        session_id: session.id,
+      });
+    }
+  }
 
   for (const edge of graph.edges) {
     if (!sessionIds.has(edge.source_session_id)) {
