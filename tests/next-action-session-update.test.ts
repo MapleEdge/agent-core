@@ -10,14 +10,17 @@ describe("next-action session_update scaffold", () => {
       mount_request: {
         source_session_id: "repo-openhands",
         target_session_id: "goal-open-terminal",
+        user_intent: "Reference executor behavior under the active goal.",
         mount_mode: "reference",
         create_adaptation_session: true,
+        make_active: false,
         reason: "Reference executor behavior under the active goal.",
       },
       reason: "The next step needs source behavior projected into this goal.",
     });
 
     expect(parsed.classification).toBe("mount_session");
+    expect(parsed.mount_request?.user_intent).toBe("Reference executor behavior under the active goal.");
     expect(parsed.created_sessions).toEqual([]);
   });
 

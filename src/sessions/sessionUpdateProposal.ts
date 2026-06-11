@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AdapterMappingSchema, MountModeSchema, SessionEdgeSchema, SessionSchema } from "./sessionSchemas.js";
+import { AdapterMappingSchema, MountSessionRequestSchema, SessionEdgeSchema, SessionSchema } from "./sessionSchemas.js";
 import { SESSION_UPDATE_CLASSIFICATIONS } from "./sessionTypes.js";
 
 export const SessionUpdateClassificationSchema = z.enum(SESSION_UPDATE_CLASSIFICATIONS);
@@ -10,12 +10,8 @@ export const SessionUpdateProposalSchema = z.object({
   created_sessions: z.array(SessionSchema).default([]),
   created_edges: z.array(SessionEdgeSchema).default([]),
   updated_sessions: z.array(SessionSchema).default([]),
-  mount_request: z.object({
-    source_session_id: z.string().min(1),
-    target_session_id: z.string().min(1),
-    mount_mode: MountModeSchema,
-    create_adaptation_session: z.boolean(),
-    reason: z.string().min(1),
+  mount_request: MountSessionRequestSchema.extend({
+    reason: z.string().min(1).optional(),
   }).optional(),
   adapter_update: z.object({
     adaptation_session_id: z.string().min(1),
