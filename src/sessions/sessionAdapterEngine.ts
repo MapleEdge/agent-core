@@ -178,6 +178,16 @@ export function mountSession(graph: SessionGraph, request: MountSessionRequest):
     throw new Error("Adapter session is required for this mount.");
   }
 
+  const mountedEdge = createEdge({
+    type: "mounted_under",
+    source_session_id: source.id,
+    target_session_id: target.id,
+    metadata: {
+      mount_mode: request.mount_mode,
+      user_intent: request.user_intent,
+      preserves_source_identity: true,
+    },
+  });
   const mountedEvent = createEvent({
     type: "session.mounted",
     session_id: target.id,
@@ -188,19 +198,10 @@ export function mountSession(graph: SessionGraph, request: MountSessionRequest):
       mount_mode: request.mount_mode,
       preserves_source_identity: true,
       policy_evidence: policy.evidence,
+      edge: mountedEdge,
     },
   });
-  const mountedEdge = createEdge({
-    type: "mounted_under",
-    source_session_id: source.id,
-    target_session_id: target.id,
-    metadata: {
-      mount_mode: request.mount_mode,
-      user_intent: request.user_intent,
-      preserves_source_identity: true,
-    },
-    created_from_event_id: mountedEvent.id,
-  });
+  mountedEdge.created_from_event_id = mountedEvent.id;
 
   let adaptationSession: Session | undefined;
   const adaptationEdges: SessionEdge[] = [];
@@ -215,7 +216,7 @@ export function mountSession(graph: SessionGraph, request: MountSessionRequest):
       type: "session.adapter_created",
       session_id: adaptationSession.id,
       root_session_id: adaptationSession.root_id,
-      data: { source_session_id: source.id, target_session_id: target.id, facet: adapter.facet },
+      data: { source_session_id: source.id, target_session_id: target.id, session: adaptationSession, facet: adapter.facet },
     });
     events.push(adapterCreatedEvent);
     adaptationEdges.push(
