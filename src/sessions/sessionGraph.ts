@@ -261,20 +261,30 @@ export function validateSessionGraphUpdate(graph: SessionGraph): GraphValidation
   return { valid: issues.length === 0, issues };
 }
 
+function asSession(value: unknown): Session | null {
+  return typeof value === "object" && value !== null ? value as Session : null;
+}
+
+function asEdge(value: unknown): SessionEdge | null {
+  return typeof value === "object" && value !== null ? value as SessionEdge : null;
+}
+
 export function reduceSessionEventsToGraph(events: SessionEvent[]): SessionGraph {
-  const sessions: Session[] = [];
-  const edges: SessionEdge[] = [];
+  const sessions = new Map<string, Session>();
+  const edges = new Map<string, SessionEdge>();
 
   for (const event of events) {
-    if (event.type === "session.created" && typeof event.data.session === "object" && event.data.session !== null) {
-      sessions.push(event.data.session as Session);
+    if (event.type === "session.created" || event.type === "session.adapter_created") {
+      const session = asSession(event.data.session);
+      if (session) sessions.set(session.id, session);
     }
-    if (event.type === "session.linked" && typeof event.data.edge === "object" && event.data.edge !== null) {
-      edges.push(event.data.edge as SessionEdge);
+    if (event.type === "session.linked" || event.type === "session.mounted") {
+      const edge = asEdge(event.data.edge);
+      if (edge) edges.set(edge.id, edge);
     }
   }
 
-  return { sessions, edges, events };
+  return { sessions: Array.from(sessions.values()), edges: Array.from(edges.values()), events };
 }
 
 export function mergeSessions(input: {
