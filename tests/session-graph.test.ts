@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createEdge, createSession, validateSessionGraphUpdate } from "../src/sessions/sessionGraph.js";
 import { sessionJsonSchemas } from "../src/sessions/sessionJsonSchemas.js";
 import { SessionGraphSchema } from "../src/sessions/sessionSchemas.js";
+import type { AdapterFacet } from "../src/sessions/index.js";
 
 describe("Session graph scaffold", () => {
   it("validates repo sessions composed into an app session", () => {
@@ -35,6 +36,11 @@ describe("Session graph scaffold", () => {
   });
 
   it("exports JSON Schema contracts for control-plane validation", () => {
+    const adapterFacet: Pick<AdapterFacet, "preservation_mode"> = {
+      preservation_mode: "lossless_reference",
+    };
+
+    expect(adapterFacet.preservation_mode).toBe("lossless_reference");
     expect(sessionJsonSchemas.Session).toBeDefined();
     expect(sessionJsonSchemas.SessionUpdateProposal).toBeDefined();
   });

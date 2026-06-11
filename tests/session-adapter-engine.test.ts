@@ -143,6 +143,38 @@ describe("SessionAdapter Engine", () => {
     expect(result.warnings.some((warning) => warning.includes("private"))).toBe(true);
   });
 
+  it("rejects target policy-blocked mounts and adaptations", () => {
+    const source = createSession({ id: "source", kind: "repo", title: "Source" });
+    const blockedMountTarget = createSession({
+      id: "blocked-mount-target",
+      kind: "goal",
+      title: "Blocked mount target",
+      policy: { allow_mount: false },
+    });
+    const blockedAdaptTarget = createSession({
+      id: "blocked-adapt-target",
+      kind: "goal",
+      title: "Blocked adapt target",
+      policy: { allow_adapt: false },
+    });
+
+    expect(() => mountSession({ sessions: [source, blockedMountTarget], edges: [], events: [] }, {
+      source_session_id: "source",
+      target_session_id: "blocked-mount-target",
+      user_intent: "Try blocked inbound mount.",
+      mount_mode: "reference",
+      create_adaptation_session: true,
+    })).toThrow("does not allow inbound mounts");
+
+    expect(() => mountSession({ sessions: [source, blockedAdaptTarget], edges: [], events: [] }, {
+      source_session_id: "source",
+      target_session_id: "blocked-adapt-target",
+      user_intent: "Try blocked inbound adaptation.",
+      mount_mode: "reference",
+      create_adaptation_session: true,
+    })).toThrow("does not allow inbound adaptation");
+  });
+
   it("merges by creating a composition session instead of mutating sources", () => {
     const api = createSession({ id: "api", kind: "repo", title: "agent-core" });
     const web = createSession({ id: "web", kind: "repo", title: "jubilant-goggles" });

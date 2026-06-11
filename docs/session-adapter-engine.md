@@ -42,5 +42,5 @@ selectors.
 - Role inference is heuristic.
 - Mapping generation is seeded from repo capabilities or default behavior names.
 - Event reduction is a replay scaffold, not a full materializer.
-- Policy validation only handles mount/adapt allowance, visibility warnings,
-  license carry-through, and security constraints.
+- Policy validation handles source and target mount/adapt allowance, visibility
+  warnings, license carry-through, and security constraints.

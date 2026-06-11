@@ -32,8 +32,10 @@ applies them.
   "mount_request": {
     "source_session_id": "repo-openhands",
     "target_session_id": "goal-open-terminal",
+    "user_intent": "Reference executor behavior under the active goal.",
     "mount_mode": "reference",
     "create_adaptation_session": true,
+    "make_active": false,
     "reason": "Reference executor behavior under the active goal."
   },
   "reason": "The next action needs source behavior projected into this goal."
@@ -45,3 +47,7 @@ applies them.
 The planner can only propose. The control plane is responsible for policy,
 authorization, cycle checks, event append, persistence, and active-session
 switching.
+
+`mount_request` uses the executable mount request schema so it can be passed to
+the mount engine after platform authorization. `reason` is optional proposal
+metadata for audit or UI display.
