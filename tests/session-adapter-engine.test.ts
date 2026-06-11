@@ -9,11 +9,7 @@ function baseGraph(): SessionGraph {
     kind: "repo",
     title: "Reference Repo",
     summary: "Reference implementation for behavior mapping.",
-    facets: {
-      repo: {
-        capabilities: ["shell execution", "browser interaction", "file editing", "agent loop", "task completion detection", "cancellation handling"],
-      },
-    },
+    facets: { repo: { capabilities: ["shell execution", "browser interaction", "file editing", "agent loop", "task completion detection", "cancellation handling"] } },
   });
   const target = createSession({
     id: "session-goal-integration",
