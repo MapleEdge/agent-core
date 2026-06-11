@@ -71,17 +71,29 @@ function warningsFor(source: Session, target: Session, request: MountSessionRequ
   return warnings;
 }
 
+function repoCapabilities(source: Session): string[] {
+  const capabilities = Array.isArray(source.facets.repo?.capabilities)
+    ? source.facets.repo.capabilities.filter((capability): capability is string => typeof capability === "string")
+    : [];
+  if (capabilities.length > 0) return capabilities;
+
+  const knownCommands = source.facets.repo?.known_commands;
+  if (knownCommands && typeof knownCommands === "object") {
+    return Object.keys(knownCommands).map((name) => `${name} command`);
+  }
+
+  return [];
+}
+
 export function generateDefaultMappings(input: {
   source: Session;
   target: Session;
   adaptationMode: AdaptationMode;
 }): AdapterMapping[] {
-  const capabilities = Array.isArray(input.source.facets.repo?.capabilities)
-    ? input.source.facets.repo.capabilities.filter((capability): capability is string => typeof capability === "string")
-    : [];
+  const capabilities = repoCapabilities(input.source);
   const defaultCapabilities = capabilities.length > 0
     ? capabilities
-    : ["shell execution", "browser interaction", "file editing", "task completion detection", "cancellation handling"];
+    : ["session summary", "documented capabilities", "known interfaces", "relevant constraints"];
 
   return defaultCapabilities.map((capability) => ({
     id: `mapping-${randomUUID()}`,
@@ -98,9 +110,9 @@ export function generateDefaultMappings(input: {
       description: `${input.target.title}: projected ${capability}`,
     },
     relationship: input.adaptationMode === "migration_plan" ? "ports" : "informs",
-    confidence: 0.55,
+    confidence: capabilities.length > 0 ? 0.55 : 0.35,
     evidence: [
-      "default scaffold mapping",
+      capabilities.length > 0 ? "source capability mapping" : "neutral scaffold mapping",
       `source_session:${input.source.id}`,
       `target_session:${input.target.id}`,
     ],
