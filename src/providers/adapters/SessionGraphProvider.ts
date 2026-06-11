@@ -1,16 +1,51 @@
+import type { GraphValidationResult } from "../../sessions/sessionGraph.js";
+import type { SessionUpdateProposal } from "../../sessions/sessionUpdateProposal.js";
 import type {
+  AdapterMapping,
+  ContextProjection,
   MountSessionRequest,
   MountSessionResult,
   Session,
   SessionEdge,
+  SessionEvent,
   SessionGraph,
 } from "../../sessions/sessionTypes.js";
 
 export interface SessionGraphProvider {
   readonly name: string;
+
   getGraph(): Promise<SessionGraph>;
+  getSession(id: string): Promise<Session | null>;
+
   createSession(session: Session): Promise<Session>;
   createEdge(edge: SessionEdge): Promise<SessionEdge>;
+  appendEvent(event: SessionEvent): Promise<SessionEvent>;
+
+  listEdges(filter?: {
+    source_session_id?: string;
+    target_session_id?: string;
+    type?: SessionEdge["type"];
+  }): Promise<SessionEdge[]>;
+
+  previewMountSession(request: MountSessionRequest): Promise<MountSessionResult>;
   mountSession(request: MountSessionRequest): Promise<MountSessionResult>;
-  validateGraph(graph: SessionGraph): Promise<{ valid: boolean; issues: string[] }>;
+
+  applySessionUpdateProposal(proposal: SessionUpdateProposal): Promise<SessionGraph>;
+
+  getProjection(sessionId: string): Promise<ContextProjection | null>;
+  buildProjection(input: {
+    active_session_id: string;
+    source_session_ids: string[];
+    projection_mode?: ContextProjection["projection_mode"];
+    budget?: Partial<ContextProjection["budget"]>;
+    rationale?: string;
+  }): Promise<ContextProjection>;
+
+  updateAdapterMappings(input: {
+    adaptation_session_id: string;
+    mappings: AdapterMapping[];
+    mode?: "replace" | "append";
+  }): Promise<Session>;
+
+  validateGraph(graph: SessionGraph): Promise<GraphValidationResult>;
 }
