@@ -58,8 +58,8 @@ The session graph is an append-only model for durable work context. Zod is the p
 
 Odd mounts are allowed when graph integrity and policy allow them. They should produce warnings rather than hard failures.
 
-Private cross-root projection is not an odd mount. It is blocked unless explicit authorization is present on the mount request.
+Private cross-root projection is blocked unless explicit authorization is present on the mount request.
 
 ## Event replay
 
-`reduceSessionEventsToGraph` is intentionally scaffolded. It currently recognizes session creation and edge creation events. A later reducer can apply the full event catalog while preserving append-only replay semantics.
+`reduceSessionEventsToGraph` is a replay scaffold. It recognizes session creation, adapter creation, linked-edge, and mounted-edge payloads. A later reducer can apply the full event catalog while preserving append-only replay semantics.
