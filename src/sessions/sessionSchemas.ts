@@ -7,6 +7,8 @@ import {
   MOUNT_MODES,
   PRESERVATION_MODES,
   PROJECTION_MODES,
+  PROJECTION_SELECTORS,
+  PROJECTION_SOURCES,
   SESSION_EDGE_TYPES,
   SESSION_EVENT_ACTORS,
   SESSION_EVENT_TYPES,
@@ -35,16 +37,46 @@ export const AdapterMappingStatusSchema = enumSchema(MAPPING_STATUSES);
 export const AdapterMappingRelationshipSchema = enumSchema(ADAPTER_MAPPING_RELATIONSHIPS);
 export const AdapterMappingItemStatusSchema = enumSchema(ADAPTER_MAPPING_ITEM_STATUSES);
 export const ProjectionModeSchema = enumSchema(PROJECTION_MODES);
+export const ProjectionSourceSchema = enumSchema(PROJECTION_SOURCES);
+export const ProjectionSelectorSchema = enumSchema(PROJECTION_SELECTORS);
+
+export const PolicyAuthorizationContextSchema = z.object({
+  allow_private_projection: z.boolean().optional(),
+  authorized_by: z.string().optional(),
+  reason: z.string().optional(),
+  grants: z.array(z.string()).optional(),
+});
 
 export const SessionPolicySchema = z.object({
   visibility: z.enum(["public", "workspace", "private"]).default("workspace"),
   allow_mount: z.boolean().default(true),
   allow_adapt: z.boolean().default(true),
+  allow_outbound_mount: z.boolean().default(true),
+  allow_inbound_mount: z.boolean().default(true),
+  allow_outbound_adapt: z.boolean().default(true),
+  allow_inbound_adapt: z.boolean().default(true),
   inherit_from_parent: z.boolean().default(true),
   allow_policy_override: z.boolean().default(false),
   effective_policy_source_ids: z.array(z.string().min(1)).default([]),
   license: z.string().optional(),
   security_constraints: z.array(z.string()).default([]),
+});
+
+export const PolicyCheckEvidenceSchema = z.object({
+  code: z.string().min(1),
+  ok: z.boolean(),
+  message: z.string().min(1),
+  source_session_id: z.string().min(1).optional(),
+  target_session_id: z.string().min(1).optional(),
+});
+
+export const PolicyEvidenceSchema = z.object({
+  source_effective_policy: SessionPolicySchema,
+  target_effective_policy: SessionPolicySchema,
+  source_policy_source_ids: z.array(z.string().min(1)),
+  target_policy_source_ids: z.array(z.string().min(1)),
+  authorization: PolicyAuthorizationContextSchema.optional(),
+  checks: z.array(PolicyCheckEvidenceSchema),
 });
 
 export const RepoFacetSchema = LooseObjectSchema.extend({
@@ -245,8 +277,11 @@ export const ContextProjectionSchema = z.object({
   active_session_id: z.string().min(1),
   source_session_ids: z.array(z.string().min(1)).min(1),
   projection_mode: ProjectionModeSchema,
-  include_selectors: z.array(z.string()).default([]),
-  exclude_selectors: z.array(z.string()).default([]),
+  projection_source: ProjectionSourceSchema.default("heuristic"),
+  relevance_score: z.number().min(0).max(1).default(0.5),
+  evidence: z.array(z.string()).default([]),
+  include_selectors: z.array(ProjectionSelectorSchema).default([]),
+  exclude_selectors: z.array(ProjectionSelectorSchema).default([]),
   budget: ContextProjectionBudgetSchema,
   rationale: z.string().min(1),
 });
@@ -258,6 +293,7 @@ export const MountSessionRequestSchema = z.object({
   mount_mode: MountModeSchema,
   create_adaptation_session: z.boolean(),
   make_active: z.boolean().optional(),
+  authorization: PolicyAuthorizationContextSchema.optional(),
 });
 
 export const MountSessionResultSchema = z.object({
@@ -265,6 +301,7 @@ export const MountSessionResultSchema = z.object({
   adaptation_session: SessionSchema.optional(),
   adaptation_edges: z.array(SessionEdgeSchema),
   context_projection_delta: ContextProjectionSchema,
+  policy_evidence: PolicyEvidenceSchema,
   warnings: z.array(z.string()),
   events: z.array(SessionEventSchema),
 });
