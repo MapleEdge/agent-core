@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { createEdge, createSession, validateSessionGraphUpdate } from "../src/sessions/sessionGraph.js";
+import { createEdge, createSession, reduceSessionEventsToGraph, validateSessionGraphUpdate } from "../src/sessions/sessionGraph.js";
+import { createEvent } from "../src/sessions/sessionEvents.js";
+import { mountSession } from "../src/sessions/sessionAdapterEngine.js";
 import { sessionJsonSchemas } from "../src/sessions/sessionJsonSchemas.js";
 import { SessionGraphSchema } from "../src/sessions/sessionSchemas.js";
 import type { AdapterFacet } from "../src/sessions/index.js";
@@ -59,6 +61,30 @@ describe("Session graph scaffold", () => {
 
     expect(result.valid).toBe(false);
     expect(result.issues.some((issue) => issue.code === "missing_parent")).toBe(true);
+  });
+
+  it("replays session creation, adapter creation, and mounted edges", () => {
+    const source = createSession({ id: "source", kind: "repo", title: "Source" });
+    const target = createSession({ id: "target", kind: "goal", title: "Target" });
+    const result = mountSession({ sessions: [source, target], edges: [], events: [] }, {
+      source_session_id: source.id,
+      target_session_id: target.id,
+      user_intent: "Reference source under target.",
+      mount_mode: "reference",
+      create_adaptation_session: true,
+    });
+    const events = [
+      createEvent({ type: "session.created", session_id: source.id, data: { session: source } }),
+      createEvent({ type: "session.created", session_id: target.id, data: { session: target } }),
+      ...result.events,
+    ];
+
+    const graph = reduceSessionEventsToGraph(events);
+
+    expect(graph.sessions.map((session) => session.id)).toContain("source");
+    expect(graph.sessions.map((session) => session.id)).toContain("target");
+    expect(graph.sessions.some((session) => session.kind === "adapter")).toBe(true);
+    expect(graph.edges.map((edge) => edge.type)).toContain("mounted_under");
   });
 
   it("exports JSON Schema contracts for control-plane validation", () => {
