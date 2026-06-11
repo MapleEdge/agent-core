@@ -8,6 +8,7 @@ import {
   PRESERVATION_MODES,
   PROJECTION_MODES,
   SESSION_EDGE_TYPES,
+  SESSION_EVENT_ACTORS,
   SESSION_EVENT_TYPES,
   SESSION_FACETS,
   SESSION_KINDS,
@@ -17,12 +18,14 @@ import {
 } from "./sessionTypes.js";
 
 const enumSchema = <T extends readonly [string, ...string[]]>(values: T) => z.enum(values);
+const LooseObjectSchema = z.record(z.unknown());
 
 export const SessionKindSchema = enumSchema(SESSION_KINDS);
 export const SessionStatusSchema = enumSchema(SESSION_STATUSES);
 export const SessionFacetNameSchema = enumSchema(SESSION_FACETS);
 export const SessionEdgeTypeSchema = enumSchema(SESSION_EDGE_TYPES);
 export const SessionEventTypeSchema = enumSchema(SESSION_EVENT_TYPES);
+export const SessionEventActorSchema = enumSchema(SESSION_EVENT_ACTORS);
 export const MountModeSchema = enumSchema(MOUNT_MODES);
 export const AdapterSourceRoleSchema = enumSchema(SOURCE_ROLES);
 export const AdapterTargetRoleSchema = enumSchema(TARGET_ROLES);
@@ -37,25 +40,113 @@ export const SessionPolicySchema = z.object({
   visibility: z.enum(["public", "workspace", "private"]).default("workspace"),
   allow_mount: z.boolean().default(true),
   allow_adapt: z.boolean().default(true),
+  inherit_from_parent: z.boolean().default(true),
+  allow_policy_override: z.boolean().default(false),
+  effective_policy_source_ids: z.array(z.string().min(1)).default([]),
   license: z.string().optional(),
   security_constraints: z.array(z.string()).default([]),
 });
 
-export const SessionSchema = z.object({
-  id: z.string().min(1),
-  kind: SessionKindSchema,
-  title: z.string().min(1),
-  summary: z.string().default(""),
-  status: SessionStatusSchema.default("proposed"),
-  parent_id: z.string().min(1).nullable().default(null),
-  root_id: z.string().min(1).nullable().default(null),
-  facets: z.record(SessionFacetNameSchema, z.record(z.unknown())).default({}),
-  policy: SessionPolicySchema.default({}),
-  state: z.record(z.unknown()).default({}),
-  metadata: z.record(z.unknown()).default({}),
-  created_at: z.string().min(1),
-  updated_at: z.string().min(1),
-  created_from_event_id: z.string().min(1).nullable().default(null),
+export const RepoFacetSchema = LooseObjectSchema.extend({
+  provider: z.enum(["github", "gitlab", "local", "unknown"]).optional(),
+  repo_full_name: z.string().optional(),
+  remote_url: z.string().optional(),
+  default_branch: z.string().optional(),
+  active_branch: z.string().optional(),
+  worktree_path: z.string().optional(),
+  role: z.enum(["backend", "frontend", "docs", "infra", "library", "vendor", "unknown"]).optional(),
+  capabilities: z.array(z.string()).optional(),
+  known_commands: z.record(z.array(z.string()).optional()).optional(),
+  known_paths: z.record(z.array(z.string()).optional()).optional(),
+});
+
+export const AppFacetSchema = LooseObjectSchema.extend({
+  components: z.array(z.object({
+    session_id: z.string().min(1),
+    role: z.string().min(1),
+    required: z.boolean().optional(),
+  })).optional(),
+  integration_contracts: z.array(z.object({
+    from_session_id: z.string().min(1),
+    to_session_id: z.string().min(1),
+    type: z.enum(["http_api", "package", "database", "message_queue", "shared_schema", "unknown"]),
+    contract_session_id: z.string().min(1).optional(),
+  })).optional(),
+  orchestration: z.object({
+    dev_command: z.string().optional(),
+    test_command: z.string().optional(),
+    compose_file: z.string().optional(),
+  }).optional(),
+});
+
+export const GoalFacetSchema = LooseObjectSchema.extend({
+  intent: z.string().optional(),
+  kind: z.enum(["primary", "feature", "bug_fix", "prerequisite", "research", "question", "validation", "cleanup"]).optional(),
+  priority: z.number().optional(),
+  success_criteria: z.array(z.string()).optional(),
+  non_goals: z.array(z.string()).optional(),
+  acceptance_state: z.enum(["unknown", "satisfied", "failed", "blocked"]).optional(),
+  owner_session_ids: z.array(z.string()).optional(),
+  blocked_by_session_ids: z.array(z.string()).optional(),
+  prerequisite_session_ids: z.array(z.string()).optional(),
+});
+
+export const WorkFacetSchema = LooseObjectSchema.extend({
+  goal_session_id: z.string().optional(),
+  target_session_ids: z.array(z.string()).optional(),
+  mode: z.enum(["investigate", "implement", "validate", "review", "explain", "operate"]).optional(),
+  current_phase: z.enum(["not_started", "reading", "planning", "editing", "testing", "blocked", "done"]).optional(),
+  changed_files: z.array(z.object({
+    repo_session_id: z.string().min(1),
+    path: z.string().min(1),
+    status: z.enum(["created", "modified", "deleted", "renamed"]),
+  })).optional(),
+});
+
+export const RuntimeFacetSchema = LooseObjectSchema.extend({
+  vm_id: z.string().optional(),
+  desktop_id: z.string().optional(),
+  executor_id: z.string().optional(),
+  process_ids: z.array(z.string()).optional(),
+  cancellation_token: z.string().optional(),
+  running_task_id: z.string().optional(),
+});
+
+export const ValidationFacetSchema = LooseObjectSchema.extend({
+  target_session_id: z.string().optional(),
+  command: z.string().optional(),
+  status: z.enum(["not_run", "running", "passed", "failed", "cancelled"]).optional(),
+  summary: z.string().optional(),
+  artifacts: z.array(z.string()).optional(),
+});
+
+export const MemoryFacetSchema = LooseObjectSchema.extend({
+  scope_session_ids: z.array(z.string()).optional(),
+  retrieval_modes: z.array(z.string()).optional(),
+  last_indexed_at: z.string().optional(),
+});
+
+export const ArtifactFacetSchema = LooseObjectSchema.extend({
+  artifact_type: z.string().optional(),
+  uri: z.string().optional(),
+  mime_type: z.string().optional(),
+  size_bytes: z.number().optional(),
+});
+
+export const PullRequestFacetSchema = LooseObjectSchema.extend({
+  provider: z.enum(["github", "gitlab", "unknown"]).optional(),
+  repo_session_id: z.string().optional(),
+  number: z.number().int().positive().optional(),
+  url: z.string().optional(),
+  branch: z.string().optional(),
+  status: z.enum(["draft", "open", "merged", "closed"]).optional(),
+});
+
+export const DeploymentFacetSchema = LooseObjectSchema.extend({
+  environment: z.string().optional(),
+  target_session_id: z.string().optional(),
+  status: z.enum(["not_started", "running", "succeeded", "failed", "cancelled"]).optional(),
+  url: z.string().optional(),
 });
 
 export const SessionEdgeSchema = z.object({
@@ -72,6 +163,8 @@ export const SessionEventSchema = z.object({
   id: z.string().min(1),
   type: SessionEventTypeSchema,
   session_id: z.string().min(1),
+  root_session_id: z.string().min(1).nullable().default(null),
+  actor: SessionEventActorSchema.default("system"),
   data: z.record(z.unknown()).default({}),
   created_at: z.string().min(1),
 });
@@ -96,7 +189,7 @@ export const AdapterMappingSchema = z.object({
   status: AdapterMappingItemStatusSchema.default("hypothesis"),
 });
 
-export const AdapterFacetSchema = z.object({
+export const AdapterFacetSchema = LooseObjectSchema.extend({
   source_session_id: z.string().min(1),
   target_session_id: z.string().min(1),
   source_role: AdapterSourceRoleSchema,
@@ -107,6 +200,37 @@ export const AdapterFacetSchema = z.object({
   mappings: z.array(AdapterMappingSchema).default([]),
   constraints: z.array(z.string()).default([]),
   non_goals: z.array(z.string()).default([]),
+});
+
+export const SessionFacetsSchema = z.object({
+  repo: RepoFacetSchema.optional(),
+  app: AppFacetSchema.optional(),
+  goal: GoalFacetSchema.optional(),
+  work: WorkFacetSchema.optional(),
+  adapter: AdapterFacetSchema.optional(),
+  runtime: RuntimeFacetSchema.optional(),
+  validation: ValidationFacetSchema.optional(),
+  memory: MemoryFacetSchema.optional(),
+  artifact: ArtifactFacetSchema.optional(),
+  pull_request: PullRequestFacetSchema.optional(),
+  deployment: DeploymentFacetSchema.optional(),
+}).default({});
+
+export const SessionSchema = z.object({
+  id: z.string().min(1),
+  kind: SessionKindSchema,
+  title: z.string().min(1),
+  summary: z.string().default(""),
+  status: SessionStatusSchema.default("proposed"),
+  parent_id: z.string().min(1).nullable().default(null),
+  root_id: z.string().min(1).nullable().default(null),
+  facets: SessionFacetsSchema,
+  policy: SessionPolicySchema.default({}),
+  state: z.record(z.unknown()).default({}),
+  metadata: z.record(z.unknown()).default({}),
+  created_at: z.string().min(1),
+  updated_at: z.string().min(1),
+  created_from_event_id: z.string().min(1).nullable().default(null),
 });
 
 export const ContextProjectionBudgetSchema = z.object({
