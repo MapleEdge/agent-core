@@ -1,8 +1,6 @@
 # Next-action session updates
 
-Next-action output can now carry a `session_update` proposal. This remains
-advisory: the model proposes graph changes, and the platform validates and
-applies them.
+Next-action output can carry a `session_update` proposal. This remains advisory: the model proposes graph changes, and the platform validates and applies them.
 
 ## Classifications
 
@@ -19,6 +17,21 @@ applies them.
 - `adapt_session`
 - `unmount_session`
 - `update_adapter`
+
+## Action stakes
+
+`stakes` is not a severity field. It describes what class of side effect the next action may have:
+
+- `read_only`
+- `execution`
+- `modification`
+- `external_side_effect`
+
+`risk` remains the severity field:
+
+- `low`
+- `medium`
+- `high`
 
 ## Proposal shape
 
@@ -44,10 +57,6 @@ applies them.
 
 ## Safety boundary
 
-The planner can only propose. The control plane is responsible for policy,
-authorization, cycle checks, event append, persistence, and active-session
-switching.
+The planner can only propose. The control plane is responsible for policy, authorization, cycle checks, event append, persistence, and active-session switching.
 
-`mount_request` uses the executable mount request schema so it can be passed to
-the mount engine after platform authorization. `reason` is optional proposal
-metadata for audit or UI display.
+`mount_request` uses the executable mount request schema so it can be passed to the mount engine after platform authorization. `reason` is optional proposal metadata for audit or UI display.
