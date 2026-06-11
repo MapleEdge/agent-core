@@ -22,8 +22,10 @@ export const SESSION_STATUSES = [
   "paused",
   "blocked",
   "completed",
+  "cancelled",
   "superseded",
   "merged",
+  "archived",
 ] as const;
 
 export type SessionStatus = (typeof SESSION_STATUSES)[number];
@@ -60,7 +62,7 @@ export const SESSION_EDGE_TYPES = [
   "merged_into",
   "forked_from",
   "delegates_to",
-  "moved_under",
+  "deprecated_moved_under",
   "mounted_under",
   "adapted_under",
   "adapts_from",
@@ -103,6 +105,15 @@ export const SESSION_EVENT_TYPES = [
 ] as const;
 
 export type SessionEventType = (typeof SESSION_EVENT_TYPES)[number];
+
+export const SESSION_EVENT_ACTORS = [
+  "user",
+  "assistant",
+  "system",
+  "executor",
+] as const;
+
+export type SessionEventActor = (typeof SESSION_EVENT_ACTORS)[number];
 
 export const MOUNT_MODES = [
   "reference",
@@ -239,8 +250,155 @@ export interface SessionPolicy {
   visibility: "public" | "workspace" | "private";
   allow_mount: boolean;
   allow_adapt: boolean;
+  /**
+   * Whether this session inherits policy constraints from its parent/root chain.
+   * Effective policy computation must never let a child loosen an ancestor policy.
+   */
+  inherit_from_parent: boolean;
+  /**
+   * Whether this session may request a narrower local override. Overrides are
+   * still bounded by effective ancestor policy.
+   */
+  allow_policy_override: boolean;
+  /**
+   * Session IDs that contributed to the effective policy projection, when known.
+   */
+  effective_policy_source_ids: string[];
   license?: string;
   security_constraints: string[];
+}
+
+export interface BaseFacet {
+  [key: string]: unknown;
+}
+
+export interface RepoFacet extends BaseFacet {
+  provider?: "github" | "gitlab" | "local" | "unknown";
+  repo_full_name?: string;
+  remote_url?: string;
+  default_branch?: string;
+  active_branch?: string;
+  worktree_path?: string;
+  role?: "backend" | "frontend" | "docs" | "infra" | "library" | "vendor" | "unknown";
+  capabilities?: string[];
+  known_commands?: {
+    test?: string[];
+    lint?: string[];
+    typecheck?: string[];
+    build?: string[];
+    dev?: string[];
+    [command_kind: string]: string[] | undefined;
+  };
+  known_paths?: {
+    source?: string[];
+    tests?: string[];
+    docs?: string[];
+    config?: string[];
+    [path_kind: string]: string[] | undefined;
+  };
+}
+
+export interface AppFacet extends BaseFacet {
+  components?: Array<{
+    session_id: string;
+    role: string;
+    required?: boolean;
+  }>;
+  integration_contracts?: Array<{
+    from_session_id: string;
+    to_session_id: string;
+    type: "http_api" | "package" | "database" | "message_queue" | "shared_schema" | "unknown";
+    contract_session_id?: string;
+  }>;
+  orchestration?: {
+    dev_command?: string;
+    test_command?: string;
+    compose_file?: string;
+  };
+}
+
+export interface GoalFacet extends BaseFacet {
+  intent?: string;
+  kind?: "primary" | "feature" | "bug_fix" | "prerequisite" | "research" | "question" | "validation" | "cleanup";
+  priority?: number;
+  success_criteria?: string[];
+  non_goals?: string[];
+  acceptance_state?: "unknown" | "satisfied" | "failed" | "blocked";
+  owner_session_ids?: string[];
+  blocked_by_session_ids?: string[];
+  prerequisite_session_ids?: string[];
+}
+
+export interface WorkFacet extends BaseFacet {
+  goal_session_id?: string;
+  target_session_ids?: string[];
+  mode?: "investigate" | "implement" | "validate" | "review" | "explain" | "operate";
+  current_phase?: "not_started" | "reading" | "planning" | "editing" | "testing" | "blocked" | "done";
+  changed_files?: Array<{
+    repo_session_id: string;
+    path: string;
+    status: "created" | "modified" | "deleted" | "renamed";
+  }>;
+}
+
+export interface RuntimeFacet extends BaseFacet {
+  vm_id?: string;
+  desktop_id?: string;
+  executor_id?: string;
+  process_ids?: string[];
+  cancellation_token?: string;
+  running_task_id?: string;
+}
+
+export interface ValidationFacet extends BaseFacet {
+  target_session_id?: string;
+  command?: string;
+  status?: "not_run" | "running" | "passed" | "failed" | "cancelled";
+  summary?: string;
+  artifacts?: string[];
+}
+
+export interface MemoryFacet extends BaseFacet {
+  scope_session_ids?: string[];
+  retrieval_modes?: string[];
+  last_indexed_at?: string;
+}
+
+export interface ArtifactFacet extends BaseFacet {
+  artifact_type?: string;
+  uri?: string;
+  mime_type?: string;
+  size_bytes?: number;
+}
+
+export interface PullRequestFacet extends BaseFacet {
+  provider?: "github" | "gitlab" | "unknown";
+  repo_session_id?: string;
+  number?: number;
+  url?: string;
+  branch?: string;
+  status?: "draft" | "open" | "merged" | "closed";
+}
+
+export interface DeploymentFacet extends BaseFacet {
+  environment?: string;
+  target_session_id?: string;
+  status?: "not_started" | "running" | "succeeded" | "failed" | "cancelled";
+  url?: string;
+}
+
+export interface SessionFacets {
+  repo: RepoFacet;
+  app: AppFacet;
+  goal: GoalFacet;
+  work: WorkFacet;
+  adapter: AdapterFacet;
+  runtime: RuntimeFacet;
+  validation: ValidationFacet;
+  memory: MemoryFacet;
+  artifact: ArtifactFacet;
+  pull_request: PullRequestFacet;
+  deployment: DeploymentFacet;
 }
 
 export interface Session {
@@ -251,7 +409,7 @@ export interface Session {
   status: SessionStatus;
   parent_id: string | null;
   root_id: string | null;
-  facets: Partial<Record<SessionFacetName, Record<string, unknown>>>;
+  facets: Partial<SessionFacets>;
   policy: SessionPolicy;
   state: Record<string, unknown>;
   metadata: Record<string, unknown>;
@@ -274,6 +432,8 @@ export interface SessionEvent {
   id: string;
   type: SessionEventType;
   session_id: string;
+  root_session_id: string | null;
+  actor: SessionEventActor;
   data: Record<string, unknown>;
   created_at: string;
 }
@@ -298,7 +458,7 @@ export interface AdapterMapping {
   status: AdapterMappingItemStatus;
 }
 
-export interface AdapterFacet {
+export interface AdapterFacet extends BaseFacet {
   source_session_id: string;
   target_session_id: string;
   source_role: AdapterSourceRole;
