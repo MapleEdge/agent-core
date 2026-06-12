@@ -73,3 +73,7 @@ The projection should be conservative when evidence is weak.
 ## Planner boundary
 
 The next-action planner may propose mounts, adapters, or graph updates. It does not apply them directly. The graph service applies proposals only after validation.
+
+## Control-plane boundary
+
+The control plane may implement the same behavior in Python/FastAPI, but it should preserve the TypeScript contract semantics. Divergence between API docs, SQL schema, Pydantic models, and `agent-core` contracts should be treated as a bug.
