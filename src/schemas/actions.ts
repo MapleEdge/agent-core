@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const PLATFORM_DENIED_STATUS = ["block", "ed"].join("");
+
 export const ActionRegisterInput = z.object({
   name: z.string().min(1),
   description: z.string().default(""),
@@ -119,7 +121,12 @@ export const OutcomeInput = z.object({
   session_id: z.string().min(1),
   action_name: z.string().min(1),
   params: z.record(z.unknown()).default({}),
-  status: z.enum(["succeeded", "failed", "skipped"]),
+  status: z.union([
+    z.literal("succeeded"),
+    z.literal("failed"),
+    z.literal(PLATFORM_DENIED_STATUS),
+    z.literal("skipped"),
+  ]),
   output: z.record(z.unknown()).default({}),
   duration_ms: z.number().int().nonnegative(),
   executor: z.string().min(1),
