@@ -329,6 +329,7 @@ export class MockActionKnowledgeProvider implements ActionKnowledgeProvider {
     total: number;
     succeeded: number;
     failed: number;
+    blocked: number;
     avg_duration_ms: number;
   }> {
     return getActionStatsFromStore(actionName);
@@ -383,7 +384,7 @@ export class MockActionKnowledgeProvider implements ActionKnowledgeProvider {
   private buildRationale(
     actionName: string,
     context: ActionRecommendationContext,
-    stats: { total: number; succeeded: number; failed: number },
+    stats: { total: number; succeeded: number; failed: number; blocked?: number },
   ): string {
     const completed = context.completed_actions;
     const last = completed.at(-1) ?? "start";
@@ -392,7 +393,8 @@ export class MockActionKnowledgeProvider implements ActionKnowledgeProvider {
       return `Next step after ${last} in ${context.task_type} workflow.`;
     }
     const rate = Math.round((stats.succeeded / stats.total) * 100);
-    return `Next step after ${last}. ${actionName} has ${rate}% success rate (${stats.total} executions).`;
+    const blocked = stats.blocked ? `, ${stats.blocked} blocked` : "";
+    return `Next step after ${last}. ${actionName} has ${rate}% success rate (${stats.total} executions${blocked}).`;
   }
 
   private enrichPlanParams(
