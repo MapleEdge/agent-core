@@ -104,11 +104,13 @@ export interface ActionPlanValidationResult {
 
 // ── Outcome ─────────────────────────────────────────────────────────
 
+export type ActionOutcomeStatus = "succeeded" | "failed" | "blocked" | "skipped";
+
 export interface ActionOutcomeRecord {
   session_id: string;
   action_name: string;
   params: Record<string, unknown>;
-  status: "succeeded" | "failed" | "skipped";
+  status: ActionOutcomeStatus;
   output: Record<string, unknown>;
   duration_ms: number;
   executor: string;
@@ -159,6 +161,7 @@ export interface ActionKnowledgeProvider extends ActionProvider {
     total: number;
     succeeded: number;
     failed: number;
+    blocked: number;
     avg_duration_ms: number;
   }>;
 }
