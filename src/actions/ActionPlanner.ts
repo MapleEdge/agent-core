@@ -48,6 +48,10 @@ function strError(message: string, code = "PLANNER_ERROR"): ValidationError {
   return { code, message };
 }
 
+function maybeDebugMessages(messages: Array<{ role: string; content: string }>): Array<{ role: string; content: string }> | undefined {
+  return process.env.AGENT_CORE_DEBUG_LLM_MESSAGES === "true" ? messages : undefined;
+}
+
 export async function generatePlan(
   input: PlannerInput,
   deps: PlannerDependencies,
@@ -141,7 +145,7 @@ export async function generatePlan(
       source: "llm_plan_validated_by_agent_core",
       warnings,
       errors,
-      llm_messages: messages,
+      llm_messages: maybeDebugMessages(messages),
     };
   }
 
@@ -164,7 +168,7 @@ export async function generatePlan(
       source: "llm_plan_validated_by_agent_core",
       warnings: [...warnings, ...validation.warnings],
       errors: [...errors, ...validation.errors],
-      llm_messages: messages,
+      llm_messages: maybeDebugMessages(messages),
     };
   }
 
@@ -176,6 +180,6 @@ export async function generatePlan(
     source: "llm_plan_validated_by_agent_core",
     warnings: [...warnings, ...validation.warnings],
     errors: [],
-    llm_messages: messages,
+    llm_messages: maybeDebugMessages(messages),
   };
 }
