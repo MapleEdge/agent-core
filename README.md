@@ -13,6 +13,20 @@ Standalone memory and action-knowledge service for an agent-aware development pl
 - Policy authorization belongs to the future platform.
 - The control plane records and authorizes everything.
 
+## Session platform intent
+
+The session platform treats repositories, goals, work sessions, app compositions, adapters, runtimes, validation runs, and questions as graph-addressable sessions. This lets the platform preserve provenance while moving context across different scales of work.
+
+Normative docs:
+
+- [Session platform intent](docs/session-platform-intent.md)
+- [Session graph](docs/session-graph.md)
+- [SessionAdapter Engine](docs/session-adapter-engine.md)
+- [Session adapter implementation notes](docs/session-adapter-implementation-notes.md)
+- [Next-action session updates](docs/next-action-session-update.md)
+
+Future implementation work should preserve source identity, prefer explicit graph structure over destructive mutation, validate policy before applying graph changes, and keep next-action session updates advisory until the control plane validates them.
+
 ## Quickstart
 
 ```bash
