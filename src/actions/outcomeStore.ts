@@ -120,6 +120,7 @@ export function getActionStats(actionName: string): {
   total: number;
   succeeded: number;
   failed: number;
+  blocked: number;
   avg_duration_ms: number;
 } {
   const row = getDb()
@@ -128,16 +129,18 @@ export function getActionStats(actionName: string): {
          COUNT(*) as total,
          COALESCE(SUM(CASE WHEN status = 'succeeded' THEN 1 ELSE 0 END), 0) as succeeded,
          COALESCE(SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END), 0) as failed,
+         COALESCE(SUM(CASE WHEN status = 'blocked' THEN 1 ELSE 0 END), 0) as blocked,
          COALESCE(AVG(duration_ms), 0) as avg_duration_ms
        FROM action_outcomes
        WHERE action_name = ?`,
     )
-    .get(actionName) as { total: number; succeeded: number; failed: number; avg_duration_ms: number };
+    .get(actionName) as { total: number; succeeded: number; failed: number; blocked: number; avg_duration_ms: number };
 
   return {
     total: row.total,
     succeeded: row.succeeded,
     failed: row.failed,
+    blocked: row.blocked,
     avg_duration_ms: Math.round(row.avg_duration_ms),
   };
 }
