@@ -15,7 +15,7 @@ function graphAction(
 ): CanonicalAction {
   return {
     name,
-    category: "session_graph",
+    category: "context",
     description,
     zodSchema,
     params_json_schema: {},
@@ -73,7 +73,7 @@ export const session_mount = graphAction(
       "session_graph.event:session.mounted",
       "session_graph.optional_session:adapter",
     ],
-    planner_guidance: "Use when a repo, runtime, app, memory, validation, or artifact session must become available to a goal or work session. jubilant-goggles applies this through /api/session-graph/actions/apply.",
+    planner_guidance: "Use when a repo, runtime, app, memory, validation, or artifact session must become available to a goal or work session. The platform applies this through its session graph action route.",
   },
 );
 
