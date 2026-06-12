@@ -90,6 +90,12 @@ The next-action planner may propose session updates, but the platform applies th
 
 `stakes` describes side-effect class, not severity. `risk` describes severity.
 
+## Control-plane intent
+
+The control plane should expose these semantics without weakening them. API endpoints, UI panels, workers, and persistence should all preserve the same distinction between source identity, target context, adapter interpretation, policy evidence, and projection budget.
+
+A UI may make session movement feel simple, but the backend should still record exact intent and graph evidence.
+
 ## Non-goals
 
 The session graph is not intended to be a loose tag system. Edges must preserve explicit semantics.
