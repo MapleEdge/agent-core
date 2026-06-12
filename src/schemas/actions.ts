@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const PLATFORM_DENIED_STATUS = ["block", "ed"].join("");
+const PLATFORM_DENIED_STATUS = "blocked" as const;
 
 export const ActionRegisterInput = z.object({
   name: z.string().min(1),
